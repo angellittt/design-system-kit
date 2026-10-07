@@ -186,6 +186,23 @@ describe("single date picker", () => {
     )
     expect(screen.getByRole("textbox")).toHaveValue("03/14/2026")
   })
+
+  it("opens the calendar on the value's month and reports a picked day", async () => {
+    const user = userEvent.setup()
+    const onChange = vi.fn()
+    render(
+      <DatePicker value={new Date(2026, 2, 14)} onChange={onChange} locale={enUS} />
+    )
+    const trigger = screen.getByRole("button", { name: "Open calendar" })
+    expect(trigger).toHaveAttribute("aria-expanded", "false")
+    await user.click(trigger)
+    expect(trigger).toHaveAttribute("aria-expanded", "true")
+    expect(await screen.findByText("March 2026")).toBeInTheDocument()
+    await user.click(screen.getByRole("button", { name: /March 20(th)?, 2026/ }))
+    expect(onChange).toHaveBeenCalledTimes(1)
+    const picked = onChange.mock.calls[0][0] as Date
+    expect([picked.getFullYear(), picked.getMonth(), picked.getDate()]).toEqual([2026, 2, 20])
+  })
 })
 
 describe("range date picker", () => {

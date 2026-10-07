@@ -3,7 +3,10 @@ import { enUS } from "date-fns/locale"
 import type { Locale } from "date-fns"
 
 // Path from this file to the repo config. Setup adjusts it if lib/ isn't at src/lib.
-import { settings } from "../../.ttt/design-system.json"
+// A default import: bundlers are dropping named imports from JSON.
+import dsConfig from "../../.ttt/design-system.json"
+
+const { settings } = dsConfig
 
 /**
  * Client settings — locale, week start and date format.

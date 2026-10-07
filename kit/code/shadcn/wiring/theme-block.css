@@ -5,8 +5,9 @@
  * with this. Keep the file's own `@import "tailwindcss"`, `tw-animate-css`
  * and `shadcn/tailwind.css` lines above it.
  *
- * {{TOKENS_IMPORT}}  path from the global CSS to `tokensOut`, e.g. "../styles/ds-tokens.css"
- * {{SOURCE_ROOT}}    the source directory relative to the global CSS, e.g. "../"
+ * Setup fills the two paths: `@source` is the source directory relative to
+ * the global CSS (e.g. "../"), and `@import` is the path from the global CSS
+ * to `tokensOut` (e.g. "../styles/ds-tokens.css").
  */
 
 /* Automatic source detection walks up from this file and can miss the

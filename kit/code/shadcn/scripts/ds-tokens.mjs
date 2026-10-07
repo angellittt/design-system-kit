@@ -107,6 +107,13 @@ const ALIAS = /^\{([^}]+)\}$/;
 /** A custom-property name. '.' must be escaped — idents cannot contain it raw. */
 const cssName = (name) => "--" + String(name).replace(/\./g, "\\.");
 
+/**
+ * A family's font stack: the loaded face, then the design system's fallback.
+ * `var(--font-x, …)` keeps the declaration valid when nothing loaded a face.
+ */
+const fontStack = (key) =>
+  `var(--font-${key}, var(--font-fallback-${key})), var(--font-fallback-${key})`;
+
 /** A length in px, or null if it isn't one ("4px" -> 4, "0.25rem" -> 4). */
 function px(value) {
   const m = /^(-?[\d.]+)(px|rem)?$/.exec(String(value).trim());
@@ -297,8 +304,14 @@ function main() {
 
   if (Object.keys(families).length) {
     w("");
-    w("  /* Type families */");
-    for (const key of Object.keys(families)) w(`  --font-${key}: var(--font-${key});`);
+    w("  /* Type families. The framework's font loader sets --font-<family>; until");
+    w("   * it does (or for a family with no font file) the fallback stack applies. */");
+    for (const key of Object.keys(families)) w(`  --font-${key}: ${fontStack(key)};`);
+    // shadcn's headings use `font-heading`; it reads the display family.
+    if (!("heading" in families)) {
+      const heading = "display" in families ? "display" : "sans" in families ? "sans" : null;
+      if (heading) w(`  --font-heading: ${fontStack(heading)};`);
+    }
   }
   w("}");
 
@@ -312,7 +325,7 @@ function main() {
       w(`/* ${group.name} — ${fam} */`);
       for (const s of group.styles) {
         w(`.${typePrefix}${s.name} {`);
-        w(`  font-family: var(--font-${fam}), var(--font-fallback-${fam});`);
+        w(`  font-family: ${fontStack(fam)};`);
         w(`  font-size: ${s.fontSize};`);
         w(`  line-height: ${s.lineHeight};`);
         if (s.letterSpacing) w(`  letter-spacing: ${s.letterSpacing};`);

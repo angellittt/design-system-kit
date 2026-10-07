@@ -10,7 +10,7 @@ import jsxA11y from "eslint-plugin-jsx-a11y"
 
 const compat = new FlatCompat({ baseDirectory: dirname(fileURLToPath(import.meta.url)) })
 
-export default [
+const config = [
   ...compat.extends("next/core-web-vitals", "next/typescript"),
   {
     // Accessibility rules. eslint-config-next already registers the jsx-a11y
@@ -25,6 +25,20 @@ export default [
     },
   },
   {
+    // Vendored stock components are wrappers: the label's control, a link's
+    // content and the focusing click arrive through props or children, which
+    // these rules can't see. App code keeps them on.
+    files: ["**/components/ui/**"],
+    rules: {
+      "jsx-a11y/label-has-associated-control": "off",
+      "jsx-a11y/anchor-has-content": "off",
+      "jsx-a11y/click-events-have-key-events": "off",
+      "jsx-a11y/no-noninteractive-element-interactions": "off",
+    },
+  },
+  {
     ignores: [".next/**", ".next-build/**", "node_modules/**", "dist/**", "next-env.d.ts"],
   },
 ]
+
+export default config

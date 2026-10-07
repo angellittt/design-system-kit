@@ -18,7 +18,7 @@ Reference versions, taken from the Jelly demo repo. A client project records its
 | class-variance-authority | ^0.7.1 | Variants and kit extensions |
 | clsx · tailwind-merge | latest | Required by `cn()` in `lib/utils` |
 | tw-animate-css | ^1.4.0 | |
-| lucide-react | ^0.460.0 | Default icon library |
+| lucide-react | ^1.52.0 | Default icon library. shadcn 4.21 installs 1.x; Jelly is on 0.460 |
 | next-themes | ^0.4.6 | Light/dark switching |
 | sonner | ^2.0.8 | Toasts |
 | @tanstack/react-table | ^8.21.3 | Stay on v8; v9 drops `useReactTable` |
@@ -26,7 +26,7 @@ Reference versions, taken from the Jelly demo repo. A client project records its
 
 ## Config
 
-`components.json`: style `base-nova` (Base UI primitives, Nova's compact style for dashboards and portals), base colour `neutral`, CSS variables on, RSC on, TSX, icon library `lucide`, menu colour `default`, menu accent `subtle`. Aliases `@/components`, `@/components/ui`, `@/lib`, `@/lib/utils`, `@/hooks`. Global CSS `src/styles/globals.css`.
+`components.json`: style `base-nova` — written by `npx shadcn@4.21.1 init --preset nova --base base` (the CLI has no `base-nova` preset name; Nova on Base UI is stored as `base-nova`) (Base UI primitives, Nova's compact style for dashboards and portals), base colour `neutral`, CSS variables on, RSC on, TSX, icon library `lucide`, menu colour `default`, menu accent `subtle`. Aliases `@/components`, `@/components/ui`, `@/lib`, `@/lib/utils`, `@/hooks`. Global CSS `src/styles/globals.css` by default; `create-next-app` puts it at `src/app/globals.css`, which pre-flight records as adaptable.
 
 **Why these choices.** Base UI is shadcn's default and recommended primitive library for new projects, so it's the stock path (see "prefer stock"). Nova is the compact style suited to TTT's typical work — dashboards, admin portals, resource tools. One style per profile version: the kit vendors and tests one style's files. A different style or primitive library for a client is a profile change decided at kickoff.
 
@@ -56,7 +56,7 @@ Reference versions, taken from the Jelly demo repo. A client project records its
 What the dev's own app setup must include before the designer runs Setup:
 
 - Next.js with the App Router, TypeScript, Tailwind v4 — versions within this profile's tested range.
-- `shadcn init` run with the Config values above (style, base colour, CSS variables, icon library, aliases).
+- `shadcn init` run with the Config values above (style, base colour, CSS variables, icon library, aliases): `npx shadcn@4.21.1 init --preset nova --base base`.
 - No custom theme yet — shadcn's default theme variables are fine; Setup replaces them.
 - Little or no custom UI. Stock shadcn components already added are fine.
 - ESLint configured to run unattended (flat config, `eslint .`; `next lint` is deprecated). Setup adds the accessibility rules on top.
@@ -109,7 +109,8 @@ Setup's first step reads the repo and reports **ready**, **adaptable** (e.g. dif
 | `inverse` · `inverse-foreground` · `dimmer` | `inverse-background` · `inverse-label` · `material-dimmer` |
 | `rounded-xs` … `rounded-xl`, `rounded-inset` | radius tokens (exact values, not shadcn's derived ones) |
 | `shadow-xs` … `shadow-xl` | shadow tokens (per theme) |
-| `font-display` · `font-sans` · `font-mono` | loaded by the framework from the design system's fonts; fallbacks as `--font-fallback-*` from type families |
+| `font-display` · `font-sans` · `font-mono` | loaded by the framework from the design system's fonts; fallbacks as `--font-fallback-*` from type families, used whenever no face is loaded |
+| `font-heading` | the display family (stock shadcn headings use it) |
 | `type-<style>` (prefix adaptable) | text styles from the type groups |
 | `p-N`, `m-N`, `gap-N`, `w-N` … | `space-N`: Tailwind's spacing base is set from `space-1`, so `p-4` = `space-4`. If a client's scale isn't N × base, the generator emits named spacing overrides instead |
 | `ease-standard` · `ease-expressive` | easing tokens |
