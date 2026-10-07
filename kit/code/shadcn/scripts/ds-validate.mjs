@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// design-system-kit 0.2.1 · profile shadcn · kit file — fix it in the kit, not per client
+// design-system-kit 0.3.0 · profile shadcn · kit file — fix it in the kit, not per client
 /**
  * ds-validate.mjs — the contract's config validation.
  *
@@ -29,7 +29,7 @@ import { fileURLToPath } from "node:url"
 import { SHADCN_MAP, ALIAS_COLORS } from "./ds-tokens.mjs"
 
 /** The kit these scripts belong to. A repo may not claim a newer one. */
-export const KIT_VERSION = "0.2.1"
+export const KIT_VERSION = "0.3.0"
 const SCHEMA = "ttt-ds/1"
 const PROFILE = "shadcn"
 
@@ -228,6 +228,8 @@ export function validate(repo, { preflight = false, testedRange, system } = {}) 
   const configPath = join(repo, ".ttt/design-system.json")
   if (!existsSync(configPath)) {
     err(".ttt/design-system.json", "not found", "this repo isn't connected to a design system; Setup writes it")
+    // Setup's pre-flight runs before the config exists: the lockfile check still applies.
+    if (preflight) checkTestedRange(repo, testedRange, err, warn)
     return { errors, warnings, notes }
   }
   let config

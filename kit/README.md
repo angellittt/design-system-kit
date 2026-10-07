@@ -1,4 +1,4 @@
-# TTT design system kit · ttt-ds/1 · kit 0.2.1
+# TTT design system kit · ttt-ds/1 · kit 0.3.0
 
 The starting point for every client design system, bundled into TTT's four skills: **Setup** (design system + Figma + code branch, ending in a PR), **Sync** (pull → PR, publish-back), **Components** (check → propose → accept) and **Drift audit**. Extracted from Jelly, the worked example; the classification of what came over and why is in `docs/extraction/classification.md` at the repo root.
 
@@ -15,18 +15,27 @@ The repo is a Claude Code plugin marketplace:
 /plugin install design-system-kit@ttt-design
 ```
 
-Then, in a client repo that has `.ttt/design-system.json`:
+Then, in a new client repo (no `.ttt/design-system.json` yet):
+
+```
+/ds-setup           # brand inputs → tokens, code branch, Design System, review, Figma library, PR
+```
+
+and in a repo that has `.ttt/design-system.json`:
 
 ```
 /ds-sync pull       # design → code and Figma: tokens and assets into a PR, token changes to Figma's variables
 /ds-sync publish    # code → design system → Figma
 ```
 
-If another plugin also defines `/ds-sync`, use the namespaced form, `/design-system-kit:ds-sync`. The skills read kit files from the plugin's install folder, outside the repo, so the first run may ask to allow reading it.
+If another plugin also defines `/ds-sync` or `/ds-setup`, use the namespaced form, `/design-system-kit:ds-sync`. The skills read kit files from the plugin's install folder, outside the repo, so the first run may ask to allow reading it.
 
 | Path (plugin root) | What it is |
 |---|---|
 | `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json` | The plugin (`design-system-kit`) and the marketplace (`ttt-design`) |
+| `skills/setup/` | The Setup skill: `SKILL.md`, and the steps in `references/` (`preflight.md`, `inputs.md`, `generate.md`, `code.md`, `review.md`, `figma-library.md`, `report.md`) |
+| `commands/ds-setup.md` | `/ds-setup` |
+| `kit/tools/ds-setup.mjs` | Setup's tool, run from the kit (never copied into a repo): `tokens` generates the ramps from the brand inputs and fits contrast; `fill` fills the template's placeholders. Tests: `node --test kit/tools/ds-setup.test.mjs` |
 | `skills/sync/` | The Sync skill: `SKILL.md`, and the steps in `references/` (`pull.md`, `publish.md`, `figma.md`, `report.md`) |
 | `commands/ds-sync.md` | `/ds-sync pull \| publish` |
 | `kit/procedures/common.md` | The rules every skill follows — validate, versions, read-before-publish, owner only, clock, changelog, deviations, files, repos, report |
@@ -69,22 +78,22 @@ Generic: no client names, tokens, prefixes or values. Every file names the kit v
 
 ## How Setup uses it
 
-1. Copy `kit/template/` into the new system's `project/` folder.
-2. Write `project/01-system.md` from `kit/template/01-system.md` (versions, owner, links, client settings) — a one-screen summary; the rules stay in the kit. Write `project/02-using-in-code.md` from `kit/template/02-using-in-code.md`; once the client repo has its token file, `ds-styling-maps.mjs --using-in-code` generates it and every publish-back regenerates it.
-3. Replace placeholder values: brand colours into the role ramps (generating each ramp from the brand hex), neutrals, type families and font files, radius if the brand is sharper or softer.
-4. Fill every `{{…}}` in the brand book from the client's brand guidelines; keep "TTT default" passages unless the guidelines override them.
-5. Check every contrast requirement in Light and Dark with `ds-contrast.mjs --tokens <the new system's tokens.json>`. Adjust `on-*`, `*-text` and status steps until every pair passes (`label-disable` is intentional).
-6. Drop any kit extensions the client doesn't need (remove them from the component README and the profile's kit table copy).
-7. Stop for the designer's review in Claude. Only after approval: generate the Figma library.
-8. In the client repo, on a branch: run `ds-validate --preflight` against the dev's setup first; then copy `kit/code/<profile>/` into place as the table above says — stock components for the inventory, the kit file instead for each chosen extension, the scripts, wiring and harness — write `.ttt/tokens.json` from the approved tokens, run `node scripts/ds-tokens.mjs`, `ds:validate`, `ds:contrast`, typecheck, lint, test, build and the fixture, and open the PR.
+The Setup skill (`skills/setup/`) is the procedure; in short: prerequisites and pre-flight (`ds-validate --preflight` against the repo's lockfile), every input asked for, tokens generated from the template by `kit/tools/ds-setup.mjs tokens` with contrast fitted and checked, the code branch from `kit/code/<profile>/`, the design system created from the Design System artifact type and filled from this template (`ds-setup.mjs fill`, then the brand book's prose from the inputs), the designer's review, the Figma library, and the PR.
 
-Placeholders to fill: `{{CLIENT_NAME}}`, `{{NAMESPACE}}` (the bundle global, in the index, the config and every preview), `{{REACT_VERSION}}`, `{{ONE_SENTENCE_BRAND_SUMMARY}}`, `{{NOW_ISO}}`, `{{OWNER}}`, `{{PROFILE}}`, `{{PLATFORM}}`, `{{KIT_VERSION}}`, the brand book's section placeholders, and those in `kit/code/<profile>/wiring/`.
+Placeholders to fill: `{{CLIENT_NAME}}`, `{{NAMESPACE}}`, `{{N_IMPLEMENTED}}`, `{{N_VALIDATED}}` (the bundle global, in the index, the config and every preview), `{{REACT_VERSION}}`, `{{ONE_SENTENCE_BRAND_SUMMARY}}`, `{{NOW_ISO}}`, `{{OWNER}}`, `{{PROFILE}}`, `{{PLATFORM}}`, `{{KIT_VERSION}}`, the brand book's section placeholders, and those in `kit/code/<profile>/wiring/`.
 
 ## How Sync uses it
 
 Reads the system's contract (schema and profile first), generates the theme file and installs components as the profile describes, writes the repo guardrails, and moves each component from `validated` to `implemented` once it's in the codebase.
 
 ## Changes
+
+**0.3.0** (2026-10-07)
+- **Setup** skill (`skills/setup/`, `/ds-setup`), drafted: prerequisites, pre-flight (ready / adaptable / blocked, including the existing-UI stop), every input asked for and none guessed, tokens, the code branch, the design system created from the Design System artifact type, a review gate, the Figma library after approval, the PR. It reuses `common.md` and Sync's `figma.md`.
+- `kit/tools/ds-setup.mjs` (kit-side, with tests): `tokens` generates role-named ramps from each brand hex in OKLCH, the hex exactly on its documented step, and moves only `on-*`, `*-text`, status, inverse and chart steps until every contrast pair passes; it reports what it couldn't fix, raw-value semantic tokens and shared grounds. `fill` fills the template's placeholders and lists what's left.
+- `ds-validate --preflight` runs the lockfile check even before `.ttt/design-system.json` exists (Setup's pre-flight).
+- `common.md`: a pending mark flips only when the merged code or the Figma read-back matches what the entry says now. `figma.md`: token comparisons cover value or alias, scopes, code syntax and description, and new variables get `WEB` code syntax.
+- Template: the brand accent lands on `brand-accent-60` (its usage text said 50, while the brand book and `accent-normal` use 60); status ramps document where a given status colour lands; the System section's counts are `{{N_IMPLEMENTED}}` and `{{N_VALIDATED}}`.
 
 **0.2.1** (2026-10-07)
 - Pull owns design → Figma as well as design → code: after the snapshot it pushes every token change to the Figma variables (new, changed values and aliases, removed), reads them back, and reminds the designer to publish the library. Without a connector Figma stays pending and the code PR still opens. `figma.md` is split into a Tokens part (pull and publish) and a Components part (publish only).
