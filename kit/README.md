@@ -1,4 +1,4 @@
-# TTT design system kit · ttt-ds/1 · kit 0.2.0
+# TTT design system kit · ttt-ds/1 · kit 0.2.1
 
 The starting point for every client design system, bundled into TTT's four skills: **Setup** (design system + Figma + code branch, ending in a PR), **Sync** (pull → PR, publish-back), **Components** (check → propose → accept) and **Drift audit**. Extracted from Jelly, the worked example; the classification of what came over and why is in `docs/extraction/classification.md` at the repo root.
 
@@ -18,7 +18,7 @@ The repo is a Claude Code plugin marketplace:
 Then, in a client repo that has `.ttt/design-system.json`:
 
 ```
-/ds-sync pull       # design → code: tokens and assets into a PR
+/ds-sync pull       # design → code and Figma: tokens and assets into a PR, token changes to Figma's variables
 /ds-sync publish    # code → design system → Figma
 ```
 
@@ -85,6 +85,11 @@ Placeholders to fill: `{{CLIENT_NAME}}`, `{{NAMESPACE}}` (the bundle global, in 
 Reads the system's contract (schema and profile first), generates the theme file and installs components as the profile describes, writes the repo guardrails, and moves each component from `validated` to `implemented` once it's in the codebase.
 
 ## Changes
+
+**0.2.1** (2026-10-07)
+- Pull owns design → Figma as well as design → code: after the snapshot it pushes every token change to the Figma variables (new, changed values and aliases, removed), reads them back, and reminds the designer to publish the library. Without a connector Figma stays pending and the code PR still opens. `figma.md` is split into a Tokens part (pull and publish) and a Components part (publish only).
+- Contract: **client-added ramps** — primitive ramps beyond the standard roles, named by role, recorded in the System section's client-specific choices. `ds-validate` rejects a ramp named by hue and, with `--system <01-system.md>`, warns on one the System section doesn't list.
+- Pending changelog marks flip themselves: every Sync run first flips `Code pending` (merged PR whose result is still current) and `Figma pending` (confirmed read-back) — only what it verified — and reports each flip (`common.md` §6).
 
 **0.2.0** (2026-10-07)
 - The repo is a plugin marketplace (`ttt-design`) with the first skill: **Sync** (`skills/sync/`, `/ds-sync pull | publish`), steps in `references/`.

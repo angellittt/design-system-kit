@@ -1,4 +1,4 @@
-<!-- design-system-kit 0.2.0 · profile shadcn · wiring: CLAUDE.md design-system section.
+<!-- design-system-kit 0.2.1 · profile shadcn · wiring: CLAUDE.md design-system section.
      Setup appends this to the repo's CLAUDE.md and fills every {{…}}; Sync keeps it
      current. Agreed component rules from accepted proposals go under
      "Component rules". Delete this comment when filling. -->
@@ -190,7 +190,7 @@ the fix carries:
 | Script | Makes or checks |
 |---|---|
 | `scripts/ds-tokens.mjs` | `{{TOKENS_OUT}}` from the token snapshot |
-| `scripts/ds-validate.mjs` | the repo config, the snapshot and the theme block's `@source` (`--preflight` adds installed versions vs `scripts/tested-range.json`) |
+| `scripts/ds-validate.mjs` | the repo config, the snapshot and the theme block's `@source` (`--preflight` adds installed versions vs `scripts/tested-range.json`; `--system <01-system.md>` checks client-added ramps are listed in the System section) |
 | `scripts/ds-contrast.mjs` | every pair in `scripts/contrast-pairs.json`, in every theme |
 | `scripts/ds-pack-react.mjs` | React + ReactDOM as classic-script globals for the preview frame |
 | `scripts/ds-build-bundle.mjs` | `bundle.js` + `bundle.css` from `{{UI_ALIAS}}` |

@@ -13,6 +13,6 @@ How {{CLIENT_NAME}} is set up. The rules every TTT design system follows live in
 
 **Client settings** — locale `{{LOCALE}}` · week starts {{WEEK_START}} · date format `{{DATE_FORMAT}}`.
 
-**{{CLIENT_NAME}}-specific choices** — client extensions and decisions that differ from the profile, one line each. None yet.
+**{{CLIENT_NAME}}-specific choices** — client extensions, client-added ramps and decisions that differ from the profile, one line each. None yet.
 
 **Open deviations** — none.

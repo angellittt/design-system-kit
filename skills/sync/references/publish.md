@@ -1,6 +1,6 @@
 # Publish — code → design system
 
-design-system-kit 0.2.0
+design-system-kit 0.2.1
 
 Sends what the code is now — components, previews, generated documentation,
 statuses — to the design system, then hands off to `figma.md`.
@@ -11,7 +11,7 @@ whether this can run at all.
 
 - On `main`, up to date with the remote, **clean working tree**. Publishing
   from a branch publishes code nobody has merged.
-- `npm run ds:validate` passes.
+- `npm run ds:validate -- --system <scratch>/01-system.md` passes (common.md §1).
 - `npm run ds:contrast` passes, or every miss is listed under
   `contrast.intentional`.
 - This session is the design system's owner (common.md §4).
@@ -114,4 +114,7 @@ UI folder):
 3. Read back a sample of what you sent — the bundle, one README, the
    changelog — and compare with your files.
 
-Then go to `figma.md`.
+Then go to `figma.md`: the **Tokens** part first (it should find nothing —
+pull pushes token changes; anything it finds goes in Gaps), then the
+**Components** part. Without a connector, Figma marks stay `pending` and the
+report says so (`figma.md` §0).

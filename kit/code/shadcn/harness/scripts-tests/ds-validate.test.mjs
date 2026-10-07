@@ -1,10 +1,10 @@
 // @vitest-environment node
-// design-system-kit 0.2.0 · profile shadcn · harness: ds-validate tests
+// design-system-kit 0.2.1 · profile shadcn · harness: ds-validate tests
 import { describe, expect, it } from "vitest"
 import { spawnSync } from "node:child_process"
 import { join, dirname } from "node:path"
 import { fileURLToPath } from "node:url"
-import { validate, validateTemplate, isDateFormat, isLocale, compareVersions, KIT_VERSION } from "../ds-validate.mjs"
+import { validate, validateTemplate, isDateFormat, isLocale, compareVersions, KIT_VERSION, rampOf, hueIn, listedInSystem } from "../ds-validate.mjs"
 import { writeFileSync, mkdtempSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { repo, goodConfig, snapshot } from "./helpers.mjs"
@@ -95,6 +95,43 @@ describe("ds-validate: token snapshot", () => {
     const t = snapshot()
     t.radius.tokens.push({ name: "space-1", value: "4px", usage: "" })
     expect(validate(repo({ tokens: t })).errors.some((e) => /appears in both/.test(e.message))).toBe(true)
+  })
+})
+
+describe("ds-validate: client-added ramps", () => {
+  const ramp = (name) => Array.from({ length: 3 }, (_, i) => ({ name: `${name}-${(i + 1) * 10}`, value: "#7744aa", usage: `Primitive ${name} step ${(i + 1) * 10}.` }))
+  const withRamp = (name, opts = {}) => {
+    const t = snapshot()
+    t.color.tokens.push(...ramp(name))
+    const dir = repo({ tokens: t, files: opts.system ? { "system.md": opts.system } : {} })
+    return validate(dir, { system: opts.system ? join(dir, "system.md") : undefined })
+  }
+  const SYSTEM = "# System\n\n**Probe-specific choices**\n- A `data` ramp for chart colours the brand roles can't supply.\n\n**Open deviations** — none.\n"
+
+  it("accepts a role-named ramp and, without --system, only notes it", () => {
+    const r = withRamp("data")
+    expect(r.errors).toEqual([])
+    expect(r.warnings).toEqual([])
+    expect(r.notes.join()).toMatch(/client-added ramps data/)
+  })
+
+  it("warns when the System section doesn't list it, and not when it does", () => {
+    expect(withRamp("data", { system: SYSTEM }).warnings).toEqual([])
+    const r = withRamp("data", { system: SYSTEM.replace("`data`", "plum") })
+    expect(r.warnings.map((w) => w.field)).toEqual([".ttt/tokens.json › data-*"])
+  })
+
+  it("rejects a ramp named by hue", () => {
+    const r = withRamp("plum")
+    expect(r.errors.some((e) => e.field.endsWith("plum-*") && /named by hue \("plum"\)/.test(e.message))).toBe(true)
+    expect(r.warnings).toEqual([])
+  })
+
+  it("reads ramps, hues and the System section's list", () => {
+    expect([rampOf("data-50"), rampOf("neutral-0"), rampOf("brand-primary-95"), rampOf("ink")]).toEqual(["data", "neutral", "brand-primary", "ink"])
+    expect([hueIn("data"), hueIn("brand-teal"), hueIn("neutral")]).toEqual([null, "teal", null])
+    expect([...listedInSystem(SYSTEM)]).toEqual(["data"])
+    expect([...listedInSystem("# System\n\nno choices block")]).toEqual([])
   })
 })
 
