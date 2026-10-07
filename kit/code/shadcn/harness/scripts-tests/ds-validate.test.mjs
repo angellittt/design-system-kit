@@ -1,0 +1,139 @@
+// @vitest-environment node
+// design-system-kit 0.1.1 · profile shadcn · harness: ds-validate tests
+import { describe, expect, it } from "vitest"
+import { spawnSync } from "node:child_process"
+import { join, dirname } from "node:path"
+import { fileURLToPath } from "node:url"
+import { validate, isDateFormat, isLocale, compareVersions, KIT_VERSION } from "../ds-validate.mjs"
+import { repo, goodConfig, snapshot } from "./helpers.mjs"
+
+const SCRIPT = join(dirname(fileURLToPath(import.meta.url)), "../ds-validate.mjs")
+const fields = (r) => r.errors.map((e) => e.field)
+
+describe("ds-validate: config", () => {
+  it("passes a complete, valid repo", () => {
+    expect(validate(repo()).errors).toEqual([])
+  })
+
+  it("names every missing required key", () => {
+    const config = goodConfig()
+    delete config.designSystem
+    delete config.namespace
+    expect(fields(validate(repo({ config })))).toEqual(expect.arrayContaining(["designSystem", "namespace"]))
+  })
+
+  it("rejects unknown keys, with the known ones in the fix", () => {
+    const r = validate(repo({ config: { ...goodConfig(), tokenz: "x" } }))
+    expect(fields(r)).toContain("tokenz")
+    expect(r.errors.find((e) => e.field === "tokenz").fix).toMatch(/tokensIn/)
+  })
+
+  it("checks settings: BCP 47 locale, week start 0–6, date format", () => {
+    const config = goodConfig()
+    config.settings = { locale: "english", weekStartsOn: 7, dateFormat: "DD/DD/YYYY" }
+    expect(fields(validate(repo({ config })))).toEqual(
+      expect.arrayContaining(["settings.locale", "settings.weekStartsOn", "settings.dateFormat"])
+    )
+  })
+
+  it("rejects a typeClassPrefix without a trailing dash and a lowercase namespace", () => {
+    const config = { ...goodConfig(), typeClassPrefix: "type", namespace: "probe" }
+    expect(fields(validate(repo({ config })))).toEqual(expect.arrayContaining(["typeClassPrefix", "namespace"]))
+  })
+
+  it("flags a componentFiles entry that names no file", () => {
+    const config = { ...goodConfig(), componentFiles: { Button: ["buton.tsx"] } }
+    expect(fields(validate(repo({ config })))).toContain("componentFiles.Button")
+  })
+
+  it("refuses a kitVersion newer than the scripts, and only warns on an older one", () => {
+    expect(fields(validate(repo({ config: { ...goodConfig(), kitVersion: "9.0.0" } })))).toContain("kitVersion")
+    const older = validate(repo({ config: { ...goodConfig(), kitVersion: "0.0.1" } }))
+    expect(older.errors).toEqual([])
+    expect(older.warnings.map((w) => w.field)).toContain("kitVersion")
+  })
+})
+
+describe("ds-validate: token snapshot", () => {
+  const withColour = (extra, mutate = () => {}) => {
+    const t = snapshot()
+    t.color.tokens.push(...extra)
+    mutate(t)
+    return validate(repo({ tokens: t }))
+  }
+
+  it("rejects bad names, unknown aliases, named colours and self-aliases", () => {
+    const r = withColour([
+      { name: "bad name", value: "#000", usage: "" },
+      { name: "points-nowhere", value: { light: "{missing}", dark: "#000" }, usage: "" },
+      { name: "named", value: { light: "red", dark: "#000" }, usage: "" },
+      { name: "selfish", value: { light: "{selfish}", dark: "#000" }, usage: "" },
+    ])
+    const text = r.errors.map((e) => `${e.field} ${e.message}`).join("\n")
+    expect(text).toMatch(/bad name/)
+    expect(text).toMatch(/points-nowhere.*\{missing\}/)
+    expect(text).toMatch(/named.*"red"/)
+    expect(text).toMatch(/selfish.*itself/)
+  })
+
+  it("finds an alias cycle", () => {
+    const r = withColour([
+      { name: "a", value: { light: "{b}", dark: "#000" }, usage: "" },
+      { name: "b", value: { light: "{a}", dark: "#000" }, usage: "" },
+    ])
+    expect(r.errors.some((e) => /cycle: (a → b → a|b → a → b)/.test(e.message))).toBe(true)
+  })
+
+  it("names each semantic token the mapping needs but the snapshot lacks", () => {
+    const r = withColour([], (t) => { t.color.tokens = t.color.tokens.filter((x) => x.name !== "on-accent") })
+    expect(r.errors.some((e) => e.field.endsWith("on-accent") && /mapping needs it/.test(e.message))).toBe(true)
+  })
+
+  it("rejects a duplicate name across families", () => {
+    const t = snapshot()
+    t.radius.tokens.push({ name: "space-1", value: "4px", usage: "" })
+    expect(validate(repo({ tokens: t })).errors.some((e) => /appears in both/.test(e.message))).toBe(true)
+  })
+})
+
+describe("ds-validate: wiring", () => {
+  it("requires @source and checks it resolves to the source root", () => {
+    expect(fields(validate(repo({ css: '@import "tailwindcss";\n' })))).toContain("src/app/globals.css › @source")
+    const wrong = validate(repo({ css: '@import "tailwindcss";\n@source "../../";\n' }))
+    const e = wrong.errors.find((x) => x.field.endsWith("@source"))
+    expect(e.message).toMatch(/not the source root src/)
+    expect(e.fix).toMatch(/"\.\.\/"/)
+  })
+})
+
+describe("ds-validate: pre-flight", () => {
+  it("compares the lockfile against the tested range", () => {
+    const lock = { packages: { "node_modules/next": { version: "14.2.0" }, "node_modules/react": { version: "19.1.0" } } }
+    const range = { packages: { next: { min: "15.5.0", max: "15.5.27" }, react: { min: "19.1.0", max: "19.3.0" } } }
+    const dir = repo({ files: { "package-lock.json": JSON.stringify(lock), "range.json": JSON.stringify(range) } })
+    const r = validate(dir, { preflight: true, testedRange: join(dir, "range.json") })
+    expect(fields(r)).toEqual(["package next"])
+    expect(r.errors[0].message).toMatch(/14\.2\.0, outside the tested range 15\.5\.0 – 15\.5\.27/)
+  })
+})
+
+describe("ds-validate: helpers and CLI", () => {
+  it("knows date formats, locales and versions", () => {
+    expect(["", "DD/MM/YYYY", "MM/DD/YYYY", "YYYY-MM-DD", "D.M.YY"].every(isDateFormat)).toBe(true)
+    expect(["DD/MM", "DD/MM-YYYY", "dd/mm/yyyy", "DDD/MM/YYYY"].some(isDateFormat)).toBe(false)
+    expect(isLocale("en-US") && isLocale("fr-CA") && !isLocale("en_US") && !isLocale("english")).toBe(true)
+    expect(compareVersions("0.1.1", "0.1.10")).toBe(-1)
+    expect(KIT_VERSION).toMatch(/^\d+\.\d+\.\d+$/)
+  })
+
+  it("exits 1 and names the field when something is wrong", () => {
+    const dir = repo({ config: { ...goodConfig(), settings: { locale: "en-US", weekStartsOn: 9, dateFormat: "" } } })
+    const run = spawnSync(process.execPath, [SCRIPT, "--repo", dir], { encoding: "utf8" })
+    expect(run.status).toBe(1)
+    expect(run.stdout).toMatch(/error {4}settings\.weekStartsOn is 9 — a number 0–6/)
+  })
+
+  it("exits 0 on a valid repo", () => {
+    expect(spawnSync(process.execPath, [SCRIPT, "--repo", repo()], { encoding: "utf8" }).status).toBe(0)
+  })
+})

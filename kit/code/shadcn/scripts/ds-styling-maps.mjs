@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// design-system-kit 0.1.0 · profile shadcn · kit file — fix it in the kit, not per client
+// design-system-kit 0.1.1 · profile shadcn · kit file — fix it in the kit, not per client
 /**
  * ds-styling-maps.mjs — the styling map in every implemented component's
  * README, generated from that component's code.
@@ -10,6 +10,10 @@
  *
  *   node scripts/ds-styling-maps.mjs Button          # one component's table
  *   node scripts/ds-styling-maps.mjs --all           # every component
+ *   node scripts/ds-styling-maps.mjs --used-by <tokens.json> [<out>]
+ *                                    # rewrite each token's "Used by" list
+ *   node scripts/ds-styling-maps.mjs --using-in-code [<out.md>]
+ *                                    # the design system's "Using in code" section
  *
  * The contract fixes one format for every component:
  *
@@ -20,7 +24,7 @@
  * only its tokenised half.
  */
 
-import { readFileSync, existsSync } from "node:fs"
+import { readFileSync, existsSync, readdirSync, writeFileSync } from "node:fs"
 import { join, resolve, dirname } from "node:path"
 import { fileURLToPath } from "node:url"
 import { createRequire } from "node:module"
@@ -112,8 +116,11 @@ const cssVarAlias = new Map()
   const css = readFileSync(join(REPO, dsConfig.tokensOut), "utf8")
   // The light theme and @theme block are enough: an alias chain is the same in
   // both themes, only its leaf value differs.
-  for (const m of css.matchAll(/--([a-z0-9-]+):\s*var\(--([a-z0-9-]+)\)/gi)) {
-    if (!cssVarAlias.has(m[1])) cssVarAlias.set(m[1], m[2])
+  // Names may carry an escaped dot (`--space-0\.5`); store them unescaped.
+  const unescape = (n) => n.replace(/\\\./g, ".")
+  for (const m of css.matchAll(/--((?:[a-z0-9-]|\\\.)+):\s*var\(--((?:[a-z0-9-]|\\\.)+)\)/gi)) {
+    const [k, v] = [unescape(m[1]), unescape(m[2])]
+    if (!cssVarAlias.has(k)) cssVarAlias.set(k, v)
   }
 }
 
@@ -146,6 +153,26 @@ function tokenInArbitrary(value) {
   const m = /var\(--([a-z0-9-]+)\)/i.exec(value)
   if (!m) return null
   return resolveVar(m[1]) ?? m[1]
+}
+
+/**
+ * A spacing step (`4` in `p-4`, `h-8`, `gap-1.5`) → its token. The generated
+ * token file sets Tailwind's base from space-1 and emits `--spacing-N` only for
+ * steps that aren't N × base, so: an override names its token; an on-scale
+ * step with a token of its own is that token; any other step is a multiple of
+ * the base (`space-1` × 11). Null when no spacing base is generated.
+ */
+const SPACING_BASE = resolveVar("spacing")
+function spacingValue(step) {
+  if (!/^\d+(\.\d+)?$/.test(step)) return null
+  const override = cssVarAlias.get(`spacing-${step}`)
+  if (override) {
+    const t = resolveVar(override)
+    if (t) return { token: t }
+  }
+  if (!SPACING_BASE) return null
+  if (SEMANTIC.has(`space-${step}`)) return { token: `space-${step}` }
+  return { derived: `\`${SPACING_BASE}\` × ${step}` }
 }
 
 // ---------------------------------------------------------------------------
@@ -267,20 +294,19 @@ function classify(raw) {
     case "tracking":
       return { attribute: "type", fixed: raw }
     case "gap":
-    case "gap-x":
-    case "gap-y":
-      return { attribute: "gap", fixed: raw }
+      return { attribute: "gap", ...(spacingValue(tail.replace(/^[xy]-/, "")) ?? { fixed: raw }) }
   }
 
   // Multi-segment heads (`min-w-0`, `max-h-[…]`, `px-3`).
-  for (const p of SIZE_PREFIXES) {
+  // Longest prefix first, so `min-w-8` isn't read as `w-…`.
+  for (const p of [...SIZE_PREFIXES].sort((a, b) => b.length - a.length)) {
     if (cls === p || cls.startsWith(`${p}-`))
-      return { attribute: "size", fixed: raw }
+      return { attribute: "size", ...(spacingValue(cls.slice(p.length + 1)) ?? { fixed: raw }) }
   }
   for (const p of PADDING_PREFIXES) {
-    if (cls.startsWith(`${p}-`)) return { attribute: "padding", fixed: raw }
+    if (cls.startsWith(`${p}-`))
+      return { attribute: "padding", ...(spacingValue(cls.slice(p.length + 1)) ?? { fixed: raw }) }
   }
-  if (cls.startsWith("gap-")) return { attribute: "gap", fixed: raw }
 
   return null
 }
@@ -637,7 +663,7 @@ function rowsFor(component, files) {
 
       const value = result.token
         ? `\`${result.token}\``
-        : `${result.fixed} — fixed in code`
+        : result.derived ?? `${result.fixed} — fixed in code`
       const key = `${part}\u0000${stateText}\u0000${result.attribute}\u0000${value}`
       if (!rows.has(key))
         rows.set(key, { part, state: stateText, attribute: result.attribute, value })
@@ -684,23 +710,177 @@ function tableFor(component) {
 }
 
 // ---------------------------------------------------------------------------
+// Used by: which components each token styles
+// ---------------------------------------------------------------------------
+
+/**
+ * Every component in the UI directory: one per file, except files that a
+ * `componentFiles` entry groups under another name (label.tsx under Input).
+ */
+function allComponents() {
+  const grouped = new Set(Object.values(EXTRA_FILES).flat())
+  const single = readdirSync(UI)
+    .filter((f) => f.endsWith(".tsx") && !/\.(test|spec|stories)\.tsx$/.test(f) && !grouped.has(f))
+    .map((f) => f.replace(/\.tsx$/, "").split("-").map((w) => w[0].toUpperCase() + w.slice(1)).join(""))
+  return [...new Set([...single, ...Object.keys(EXTRA_FILES)])].sort()
+}
+
+/** token → sorted component names, from every component's styling map. */
+function usedBy() {
+  const map = new Map()
+  for (const c of allComponents()) {
+    for (const row of rowsFor(c, filesFor(c))) {
+      const m = /^`([^`]+)`$/.exec(row.value)
+      if (!m || !SEMANTIC.has(m[1])) continue
+      if (!map.has(m[1])) map.set(m[1], new Set())
+      map.get(m[1]).add(c)
+    }
+  }
+  return map
+}
+
+/**
+ * Rewrite each token's usage text so it ends with "Used by A, B." (or with no
+ * Used-by clause when nothing uses it). Keeps the file's own formatting.
+ */
+function writeUsedBy(inPath, outPath) {
+  const raw = readFileSync(inPath, "utf8")
+  const data = JSON.parse(raw)
+  const users = usedBy()
+  let changed = 0
+  for (const group of Object.values(data)) {
+    if (!group || !Array.isArray(group.tokens)) continue
+    for (const t of group.tokens) {
+      if (typeof t.usage !== "string") continue
+      const base = t.usage.replace(/\s*Used by [^.]*\.\s*$/, "").trimEnd()
+      const list = users.get(t.name)
+      const next = list ? `${base} Used by ${[...list].sort().join(", ")}.` : base
+      if (next !== t.usage) { t.usage = next; changed++ }
+    }
+  }
+  const indent = /^\{\n( +)"/.exec(raw)?.[1]?.length ?? 2
+  const text = JSON.stringify(data, null, indent) + (raw.endsWith("\n") ? "\n" : "")
+  if (outPath) writeFileSync(outPath, text)
+  else process.stdout.write(text)
+  console.error(`Used by: ${users.size} tokens styled by ${allComponents().length} components; ${changed} usage notes changed`)
+}
+
+// ---------------------------------------------------------------------------
+// Using in code: the design system's section, from the generated token file
+// ---------------------------------------------------------------------------
+
+function usingInCode() {
+  const css = readFileSync(join(REPO, dsConfig.tokensOut), "utf8")
+  const theme = /@theme inline \{([\s\S]*?)\n\}/.exec(css)?.[1] ?? ""
+  const prefix = dsConfig.typeClassPrefix ?? "type-"
+  const client = tokens.name ?? dsConfig.namespace ?? "this system"
+  const code = (x) => `\`${x}\``
+  const rows = []
+
+  // Colour utilities, in the token file's order.
+  const shadcn = [], aliases = []
+  for (const m of theme.matchAll(/--color-([a-z0-9-]+):\s*var\(--([a-z0-9-]+)\)/g)) {
+    const [, util, target] = m
+    if (util === target && SEMANTIC.has(util)) continue // same-name utilities: the bullet covers them
+    const token = resolveVar(target)
+    if (!token) continue
+    ;(cssVarAlias.has(target) && target === util ? shadcn : aliases).push([util, token])
+  }
+  // shadcn's own names: each with its -foreground partner.
+  const seen = new Set()
+  for (const [util, token] of shadcn) {
+    if (seen.has(util)) continue
+    // shadcn pairs `background` with plain `foreground`; every other name with `<name>-foreground`.
+    const fg = shadcn.find(([u]) => u === (util === "background" ? "foreground" : `${util}-foreground`))
+    seen.add(util)
+    if (fg) { seen.add(fg[0]); rows.push([`${code(util)} · ${code(fg[0])}`, `${code(token)} · ${code(fg[1])}`]) }
+    else rows.push([code(util), code(token)])
+  }
+  // Tailwind-only names: grouped under their stem (`brand-secondary` + `-soft` …).
+  const used = new Set()
+  for (const [util, token] of aliases) {
+    if (used.has(util)) continue
+    const family = aliases.filter(([u]) => u.startsWith(`${util}-`))
+    used.add(util)
+    family.forEach(([u]) => used.add(u))
+    if (family.length) {
+      rows.push([
+        `${code(util)} (+ ${family.map(([u]) => code(u.slice(util.length))).join(", ")})`,
+        [token, ...family.map(([, t]) => t)].map(code).join(" · "),
+      ])
+    } else rows.push([code(util), code(token)])
+  }
+
+  const fam = (name) => tokens[name]?.tokens ?? []
+  const radius = fam("radius")
+  if (radius.length)
+    rows.push([radius.map((t) => code(t.name.replace(/^radius-/, "rounded-"))).join(" · "), "radius tokens (exact values, not shadcn's derived ones)"])
+  const shadows = fam("shadow")
+  if (shadows.length) rows.push([shadows.map((t) => code(t.name)).join(" · "), "shadow tokens (per theme)"])
+  const families = Object.keys(tokens.type?.families ?? {})
+  if (families.length) {
+    rows.push([families.map((f) => code(`font-${f}`)).join(" · "), "loaded by the framework from the design system's fonts; the fallback stacks apply when no face loads"])
+    if (/--font-heading:/.test(theme) && !families.includes("heading"))
+      rows.push([code("font-heading"), families.includes("display") ? "the display family" : "the sans family"])
+  }
+  const styles = (tokens.type?.groups ?? []).flatMap((g) => g.styles.map((st) => st.name))
+  if (styles.length) rows.push([`${code(`${prefix}<style>`)} (e.g. ${code(prefix + styles.find((n) => /body/.test(n)) ?? prefix + styles[0])})`, `text styles from the type groups (${styles.length})`])
+  const base = fam("spacing").find((t) => t.name === "space-1")
+  if (SPACING_BASE && base) {
+    const overrides = [...theme.matchAll(/--spacing-((?:[a-z0-9-]|\\\.)+):\s*var\(--((?:[a-z0-9-]|\\\.)+)\)/g)].map((m) => m[1].replace(/\\\./g, "."))
+    rows.push([
+      "`p-N`, `m-N`, `gap-N`, `w-N` …",
+      `${code("space-N")} — Tailwind's spacing base is ${code("space-1")} (${base.value}), so ${code("p-4")} = ${code("space-4")}` +
+        (overrides.length ? `; named overrides for ${overrides.map((o) => code(`*-${o}`)).join(", ")}` : ""),
+    ])
+  }
+  const easing = fam("easing"), duration = fam("duration")
+  if (easing.length) rows.push([easing.map((t) => code(t.name)).join(" · "), "easing tokens"])
+  if (duration.length) rows.push([duration.map((t) => code(t.name)).join(" · "), "duration tokens"])
+
+  const examples = ["label-strong", "line-strong", "status-positive-soft"].filter((n) => SEMANTIC.has(n))
+  const out = [
+    "# Using in code",
+    "",
+    `The Tailwind names to use when building UI against ${client} — in the app, or when prototyping in Claude. Use only these: no hex values, no arbitrary colour values, no default shadcn palette classes.`,
+    "",
+    `- **Every semantic token is also a utility of the same name** — ${examples.map((n, i) => code(`${["text", "border", "bg"][i]}-${n}`)).join(", ")}. Primitives are never utilities.`,
+    "- **Watch the naming clash:** shadcn's `secondary` and `accent` are neutral greys. Brand colours are `brand-secondary` and `brand-accent`.",
+    `- **Text styles** are ${code(`${prefix}<style>`)} classes, one per style in the type scale.`,
+    "",
+    "| shadcn / Tailwind | Semantic token |",
+    "|---|---|",
+    ...rows.map(([a, b]) => `| ${a} | ${b} |`),
+    "",
+    ...(dsConfig.usingInCode?.notes ?? []).flatMap((n) => [n, ""]),
+    `Generated from the repo's token file (${code(dsConfig.tokensOut)}) by ${code("ds-styling-maps.mjs --using-in-code")}; every publish-back regenerates it.`,
+    "",
+  ]
+  return out.join("\n")
+}
+
+// ---------------------------------------------------------------------------
 
 const args = process.argv.slice(2)
-if (args[0] === "--all") {
-  const names = Object.keys(EXTRA_FILES).length
-    ? Object.keys(EXTRA_FILES)
-    : []
-  if (!names.length) {
-    console.error("--all needs `componentFiles` in .ttt/design-system.json")
+if (args[0] === "--used-by") {
+  if (!args[1]) {
+    console.error("usage: ds-styling-maps.mjs --used-by <tokens.json> [<out.json>]")
     process.exit(1)
   }
-  for (const c of names.sort()) {
+  writeUsedBy(resolve(args[1]), args[2] ? resolve(args[2]) : null)
+} else if (args[0] === "--using-in-code") {
+  const md = usingInCode()
+  if (args[1]) writeFileSync(resolve(args[1]), md)
+  else process.stdout.write(md)
+} else if (args[0] === "--all") {
+  const names = allComponents()
+  for (const c of names) {
     console.log(`\n<!-- ${c} -->`)
     console.log(tableFor(c))
   }
 } else if (args.length) {
   console.log(tableFor(args[0]))
 } else {
-  console.error("usage: ds-styling-maps.mjs <Component> | --all")
+  console.error("usage: ds-styling-maps.mjs <Component> | --all | --used-by <tokens.json> [<out>] | --using-in-code [<out.md>]")
   process.exit(1)
 }

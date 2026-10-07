@@ -1,4 +1,4 @@
-# TTT design system kit · ttt-ds/1 · kit 0.1.0
+# TTT design system kit · ttt-ds/1 · kit 0.1.1
 
 The starting point for every client design system, bundled into TTT's four skills: **Setup** (design system + Figma + code branch, ending in a PR), **Sync** (pull → PR, publish-back), **Components** (check → propose → accept) and **Drift audit**. Extracted from Jelly, the worked example; the classification of what came over and why is in `docs/extraction/classification.md` at the repo root.
 
@@ -26,7 +26,7 @@ Generic: no client names, tokens, prefixes or values. Every file names the kit v
 | `stock/ui/` | Stock `base-nova` components as installed by shadcn 4.21.1 on 2026-10-07, plus **baseline** changes only (each file's header lists them) | `components.json` → `aliases.ui` (default `src/components/ui/`) |
 | `stock/hooks/`, `stock/lib/` | Stock's `use-mobile` and `utils` | `aliases.hooks`, `aliases.lib` |
 | `kit/ui/` | **Kit extensions.** Each `<name>.tsx` is the complete component — the stock file, its baseline changes and the extensions — so opting in replaces the stock file. `date-picker.tsx` has no stock counterpart. Interaction tests sit beside them as `<name>.test.tsx` | `aliases.ui`, replacing the stock file; tests beside it |
-| `scripts/` | `ds-tokens`, `ds-pack-react`, `ds-build-bundle`, `ds-styling-maps`, `ds-types` (see the profile's Kit tooling) | `scripts/` |
+| `scripts/` | `ds-tokens`, `ds-validate`, `ds-contrast`, `ds-pack-react`, `ds-build-bundle`, `ds-styling-maps`, `ds-types` (see the profile's Kit tooling), with `contrast-pairs.json` and `tested-range.json` | `scripts/` |
 | `wiring/theme-block.css`, `wiring/focus.css` | The theme block that replaces shadcn's theme variables, and the single `:focus-visible` rule | merged into the global CSS (`components.json` → `tailwind.css`) |
 | `wiring/theme-provider.tsx` | next-themes on `data-theme` | `<aliases.components>/theme-provider.tsx`, wrapped around the root layout |
 | `wiring/ds-settings.ts` | The one reader of client settings; Setup adds the client's locale to `LOCALES` | `<aliases.lib>/ds-settings.ts` |
@@ -35,6 +35,7 @@ Generic: no client names, tokens, prefixes or values. Every file names the kit v
 | `wiring/CLAUDE.design-system.md` | The design-system section of `CLAUDE.md`, with the "Replaced by stock" table | appended to `CLAUDE.md` |
 | `wiring/package.fragment.json` | Scripts and dev dependencies the above need | merged into `package.json` (missing entries only) |
 | `harness/vitest.config.ts`, `harness/test/setup.ts` | Vitest + jsdom + Testing Library | `vitest.config.ts`, `src/test/setup.ts` |
+| `harness/scripts-tests/` | Tests for `ds-validate` and `ds-contrast` (node environment) | `scripts/__tests__/` |
 | `harness/fixture/` | The bundle-builder fixture: a deliberately different repo shape (namespace `Acme`, `~` alias, `lib/ui`) | `scripts/__fixtures__/` (its `run.mjs` finds the builder at `../ds-build-bundle.mjs`) |
 
 `build:safe` also needs `distDir: process.env.NEXT_DIST_DIR || ".next"` in `next.config`.
@@ -42,13 +43,13 @@ Generic: no client names, tokens, prefixes or values. Every file names the kit v
 ## How Setup uses it
 
 1. Copy `kit/template/` into the new system's `project/` folder.
-2. Write `project/01-system.md` from `kit/template/01-system.md` (versions, owner, links, client settings) — a one-screen summary; the rules stay in the kit. Write `project/02-using-in-code.md` from `kit/template/02-using-in-code.md` with the profile's token mapping as this client applies it.
+2. Write `project/01-system.md` from `kit/template/01-system.md` (versions, owner, links, client settings) — a one-screen summary; the rules stay in the kit. Write `project/02-using-in-code.md` from `kit/template/02-using-in-code.md`; once the client repo has its token file, `ds-styling-maps.mjs --using-in-code` generates it and every publish-back regenerates it.
 3. Replace placeholder values: brand colours into the role ramps (generating each ramp from the brand hex), neutrals, type families and font files, radius if the brand is sharper or softer.
 4. Fill every `{{…}}` in the brand book from the client's brand guidelines; keep "TTT default" passages unless the guidelines override them.
-5. Check every contrast requirement in the semantic tokens' usage text, in Light and Dark. Adjust `on-*`, `*-text` and status steps until all pass.
+5. Check every contrast requirement in Light and Dark with `ds-contrast.mjs --tokens <the new system's tokens.json>`. Adjust `on-*`, `*-text` and status steps until every pair passes (`label-disable` is intentional).
 6. Drop any kit extensions the client doesn't need (remove them from the component README and the profile's kit table copy).
 7. Stop for the designer's review in Claude. Only after approval: generate the Figma library.
-8. In the client repo, on a branch: copy `kit/code/<profile>/` into place as the table above says — stock components for the inventory, the kit file instead for each chosen extension, the scripts, wiring and harness — write `.ttt/tokens.json` from the approved tokens, run `node scripts/ds-tokens.mjs`, typecheck, lint, test, build and the fixture, and open the PR.
+8. In the client repo, on a branch: run `ds-validate --preflight` against the dev's setup first; then copy `kit/code/<profile>/` into place as the table above says — stock components for the inventory, the kit file instead for each chosen extension, the scripts, wiring and harness — write `.ttt/tokens.json` from the approved tokens, run `node scripts/ds-tokens.mjs`, `ds:validate`, `ds:contrast`, typecheck, lint, test, build and the fixture, and open the PR.
 
 Placeholders to fill: `{{CLIENT_NAME}}`, `{{CLIENT_NAMESPACE}}`, `{{ONE_SENTENCE_BRAND_SUMMARY}}`, `{{NOW_ISO}}`, `{{OWNER}}`, `{{PROFILE}}`, `{{PLATFORM}}`, `{{KIT_VERSION}}`, the brand book's section placeholders, and those in `kit/code/<profile>/wiring/`.
 
@@ -56,8 +57,19 @@ Placeholders to fill: `{{CLIENT_NAME}}`, `{{CLIENT_NAMESPACE}}`, `{{ONE_SENTENCE
 
 Reads the system's contract (schema and profile first), generates the theme file and installs components as the profile describes, writes the repo guardrails, and moves each component from `validated` to `implemented` once it's in the codebase.
 
+## Changes
+
+**0.1.1** (2026-10-07)
+- `ds-validate.mjs` — the contract's config validation: every config key, the token snapshot, the theme block's `@source`, `kitVersion` against the scripts; `--preflight` compares the lockfile with the tested range.
+- `ds-contrast.mjs` with a generic `contrast-pairs.json`; misses fail unless the config lists them under `contrast.intentional`.
+- `ds-styling-maps.mjs` resolves spacing utilities to space tokens; new `--used-by` (the tokens' "Used by" lists) and `--using-in-code` (the design system's "Using in code" section); `--all` covers every UI file.
+- The profile defines the **tested range** from acceptance runs (`scripts/tested-range.json`), and pre-flight checks the lockfile against it.
+- Config template: `contrast.intentional` (`label-disable`) and `usingInCode.notes`. Package fragment and CLAUDE.md section: `ds:validate`, `ds:contrast`. Harness: tests for both scripts.
+- Template tokens: four placeholder steps changed so the template passes its own contrast pairs (`label-alternative` and `label-assistive` dark, `accent-text` light, `primary-strong` dark).
+
+**0.1.0** (2026-10-07) — first release, extracted from Jelly.
+
 ## Not in the kit yet
 
 - **Skills and commands.** `skills/` and `commands/` hold README stubs only.
-- **Config validation.** The contract asks for a kit script that validates `.ttt/design-system.json` and the token snapshot against a schema; it isn't written.
 - **Other profiles.** Ant Design, MUI or a mobile library each need their own `profiles/<library>.md` and `code/<library>/`; nothing else changes.

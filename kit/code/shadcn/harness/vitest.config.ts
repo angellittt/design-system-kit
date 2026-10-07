@@ -1,4 +1,4 @@
-// design-system-kit 0.1.0 · profile shadcn · harness: vitest
+// design-system-kit 0.1.1 · profile shadcn · harness: vitest
 import { defineConfig } from "vitest/config"
 import { resolve } from "node:path"
 
@@ -20,6 +20,8 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: ["src/test/setup.ts"],
     globals: true,
-    include: ["src/**/*.test.{ts,tsx}"],
+    // Component tests beside the components; kit-script tests in scripts/__tests__
+    // (they set their own node environment).
+    include: ["src/**/*.test.{ts,tsx}", "scripts/**/*.test.mjs"],
   },
 })

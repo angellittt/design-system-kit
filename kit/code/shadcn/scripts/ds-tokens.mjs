@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// design-system-kit 0.1.0 · profile shadcn · kit file — fix it in the kit, not per client
+// design-system-kit 0.1.1 · profile shadcn · kit file — fix it in the kit, not per client
 /**
  * Design-system token generator — schema ttt-ds/1, profile shadcn.
  *
@@ -24,6 +24,7 @@
 
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const ROOT = resolve(import.meta.dirname, "..");
 const CONFIG_PATH = resolve(ROOT, ".ttt/design-system.json");
@@ -32,7 +33,7 @@ const CONFIG_PATH = resolve(ROOT, ".ttt/design-system.json");
 // Profile: shadcn. The contract's token mapping table, in full.
 // shadcn variable -> semantic token name.
 // ---------------------------------------------------------------------------
-const SHADCN_MAP = {
+export const SHADCN_MAP = {
   background: "background-normal",
   foreground: "label-normal",
   card: "background-elevated",
@@ -74,7 +75,7 @@ const SHADCN_MAP = {
  * inverse/scrim roles. A client whose brand fills share one foreground points
  * `on-secondary` / `on-accent` at it in the design system, not here.
  */
-const ALIAS_COLORS = {
+export const ALIAS_COLORS = {
   "brand-secondary": "secondary-normal",
   "brand-secondary-foreground": "on-secondary",
   "brand-secondary-soft": "secondary-soft",
@@ -353,4 +354,5 @@ function main() {
   );
 }
 
-main();
+// Run when invoked directly; ds-validate imports the mapping above.
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) main();

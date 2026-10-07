@@ -2,29 +2,43 @@
 
 **Profile** `shadcn` 1.2 · **Platform** web · **For schema** `ttt-ds/1`
 
-**1.2** (kit 0.1.0) — kit extension catalog: Tabs pill/underline and Card compact are stock now; Alert joins Semantic colour; Clickable rows added as a candidate. Mapping gains `font-heading`; the generator emits the spacing base, the status shorthands and font fallbacks. Kit code vendored under `kit/code/shadcn/`.
+**1.2** (kit 0.1.0, 0.1.1) — kit extension catalog: Tabs pill/underline and Card compact are stock now; Alert joins Semantic colour; Clickable rows added as a candidate. Mapping gains `font-heading`; the generator emits the spacing base, the status shorthands and font fallbacks. Kit code vendored under `kit/code/shadcn/`. Kit 0.1.1 adds config validation, contrast checking and the tested range (no change to the mapping or catalog).
 
 Everything in this part is specific to shadcn/ui. The universal rules in Part 1 apply unchanged.
 
 ## Stack
 
-Reference versions, taken from the Jelly demo repo. A client project records its own versions here from its **lockfile**, which wins over any range.
+**Tested range.** For each package, the lowest and highest version the kit's last acceptance runs passed on — a fresh app built from the dev setup checklist below, with the kit applied from the kit alone and every check green (token generation, `ds-validate`, `ds-contrast`, typecheck, `eslint .`, the kit's tests, `next build`, the bundle builder and its fixture, the styling maps, the types file, and three components in the browser in both themes). The range is nothing more than that: a version no acceptance run has passed on is untested, however close. It widens only when another acceptance run passes. Its machine-readable copy is `kit/code/shadcn/scripts/tested-range.json`, installed with the scripts, which also lists the runs.
 
-| Package | Reference version | Notes |
-|---|---|---|
-| next | ^15.5.0 | App Router |
-| react · react-dom | ^19 | shadcn's current components pass `ref` as a prop (React 19); Next.js 15 App Router runs React 19 |
-| tailwindcss · @tailwindcss/postcss | ^4.3.3 | CSS-first config, no `tailwind.config` |
-| shadcn (CLI) | ^4.21.1 | |
-| @base-ui/react | ^1.8.0 | Primitives (Base UI). shadcn's default since July 2026; Radix remains supported but isn't this profile's choice |
-| class-variance-authority | ^0.7.1 | Variants and kit extensions |
-| clsx · tailwind-merge | latest | Required by `cn()` in `lib/utils` |
-| tw-animate-css | ^1.4.0 | |
-| lucide-react | ^1.52.0 | Default icon library. shadcn 4.21 installs 1.x; Jelly is on 0.460 |
-| next-themes | ^0.4.6 | Light/dark switching |
-| sonner | ^2.0.8 | Toasts |
-| @tanstack/react-table | ^8.21.3 | Stay on v8; v9 drops `useReactTable` |
-| typescript | ^5.4.0 | |
+Kit 0.1.1's runs (2026-10-07): **floor** — `create-next-app@15.5` and `shadcn@4.21.1 init` exactly as installed; **ceiling** — the same app with React at 19.3.0, the newest 19.x. Every other package resolved to the newest version in its allowed major in both runs, so its range is a single version.
+
+| Package | Tested min | Tested max | Notes |
+|---|---|---|---|
+| next | 15.5.27 | 15.5.27 | App Router |
+| react | 19.1.0 | 19.3.0 | shadcn's current components pass `ref` as a prop (React 19); Next.js 15 App Router runs React 19 |
+| react-dom | 19.1.0 | 19.3.0 |  |
+| tailwindcss | 4.3.3 | 4.3.3 | CSS-first config, no `tailwind.config` |
+| @tailwindcss/postcss | 4.3.3 | 4.3.3 |  |
+| @tailwindcss/cli | 4.3.3 | 4.3.3 | Bundle builder only |
+| shadcn | 4.21.4 | 4.21.4 | The package `shadcn init` installs; the init itself is run as `shadcn@4.21.1` |
+| @base-ui/react | 1.8.0 | 1.8.0 | Primitives (Base UI). shadcn's default since July 2026; Radix remains supported but isn't this profile's choice |
+| class-variance-authority | 0.7.1 | 0.7.1 | Variants and kit extensions |
+| cn | 0.4.0 | 0.4.0 | `cn()` — stock components import it from the `cn` package; `lib/utils` re-exports it |
+| tw-animate-css | 1.4.0 | 1.4.0 |  |
+| lucide-react | 1.52.0 | 1.52.0 | Default icon library |
+| next-themes | 0.4.6 | 0.4.6 | Light/dark switching |
+| sonner | 2.0.8 | 2.0.8 | Toasts |
+| typescript | 5.9.3 | 5.9.3 |  |
+| react-day-picker | 10.0.2 | 10.0.2 | Calendar and DatePicker |
+| date-fns | 4.4.0 | 4.4.0 | Calendar, DatePicker, `ds-settings` locales |
+| esbuild | 0.28.2 | 0.28.2 | Bundle builder only |
+| vitest | 3.2.7 | 3.2.7 | Kit harness |
+| eslint | 9.39.5 | 9.39.5 | Flat config, `eslint .` |
+| eslint-plugin-jsx-a11y | 6.10.2 | 6.10.2 | Accessibility rules |
+
+`@tanstack/react-table` (^8, stay on v8 — v9 drops `useReactTable`) is a reference version only: no kit component uses it, so no acceptance run exercises it.
+
+A client project's own versions come from its **lockfile**, which wins over any range; pre-flight compares the two.
 
 ## Config
 
@@ -66,7 +80,9 @@ What the dev's own app setup must include before the designer runs Setup:
 
 ## Pre-flight
 
-Setup's first step reads the repo and reports **ready**, **adaptable** (e.g. different aliases or CSS path — Setup uses the repo's values and records them) or **blocked** (e.g. Tailwind v3, no shadcn init, versions outside the tested range, or substantial existing custom UI). Missing packages that selected components need are added at tested versions; existing packages are never upgraded or downgraded — out-of-range ones are flagged for the dev. Modified stock components are never overwritten; differences are listed in the PR.
+Setup's first step reads the repo and reports **ready**, **adaptable** (e.g. different aliases or CSS path — Setup uses the repo's values and records them) or **blocked** (e.g. Tailwind v3, no shadcn init, or substantial existing custom UI). Missing packages that selected components need are added at their tested max; existing packages are never upgraded or downgraded. Modified stock components are never overwritten; differences are listed in the PR.
+
+**Versions** — pre-flight runs `node scripts/ds-validate.mjs --preflight`, which reads each package's installed version from `package-lock.json` and compares it with `scripts/tested-range.json`. A package outside its tested range is an error naming the package, its version and the range: Setup reports the repo **blocked** for a different major, and otherwise flags the package for the dev and goes on — the dev either moves it into range or runs an acceptance run that widens the range. A required package that isn't installed is added at its tested max.
 
 ## How this profile provides each layer
 
@@ -122,8 +138,8 @@ Client extensions that add tokens add their Tailwind names here too.
 
 ## Kit tooling
 
-Five scripts generate everything the design system receives from code. They
-are **kit files**: the same file in every repo on this profile, parameterised
+Seven scripts generate everything the design system receives from code and
+check what it sends down. They are **kit files**: the same file in every repo on this profile, parameterised
 from that repo's own config, never edited per client. Their source is
 `kit/code/shadcn/scripts/` in the kit; Setup copies them to the client repo's
 `scripts/`, and each names the kit version in its header. The paths below are
@@ -141,9 +157,11 @@ Everything else Setup applies comes from the same folder:
 | Script | Produces | Reads its configuration from |
 |---|---|---|
 | `scripts/ds-tokens.mjs` | the token file, including the spacing base from `space-1` and the type classes (prefix default `type-`) | `.ttt/design-system.json` (`tokensIn`, `tokensOut`, `typeClassPrefix`) |
+| `scripts/ds-validate.mjs` | nothing — exits 1 on any error. Checks every key of `.ttt/design-system.json`, the token snapshot (name grammar, alias targets, alias cycles, colour formats, the semantic tokens this mapping needs), that the theme block's `@source` resolves to the source root, and that `kitVersion` is no newer than the scripts; `--preflight` adds the lockfile against `tested-range.json` | `.ttt/design-system.json`, the snapshot, `components.json` (`tailwind.css`), `tsconfig.json` (`paths`), `package-lock.json` |
+| `scripts/ds-contrast.mjs` | a table of every pair in every theme with its ratio; exits 1 on a miss the config doesn't list under `contrast.intentional` | `scripts/contrast-pairs.json` (generic, by semantic name), the snapshot, `.ttt/design-system.json` (`contrast`) |
 | `scripts/ds-pack-react.mjs` | `components/lib/react.js`, `react-dom.js` | the repo's lockfile |
 | `scripts/ds-build-bundle.mjs` | `components/bundle.js`, `bundle.css` | `.ttt/design-system.json` (`namespace`, `bundleExtras`, `tokensOut`), `components.json` (`aliases.ui`), `tsconfig.json` (`paths`) |
-| `scripts/ds-styling-maps.mjs` | each README's styling map | `.ttt/design-system.json` (`tokensIn`, `tokensOut`, `componentFiles`), `components.json` (`aliases.ui`, `iconLibrary`), `tsconfig.json` (`paths`) |
+| `scripts/ds-styling-maps.mjs` | each README's styling map; with `--used-by <tokens.json>`, every token's "Used by" list; with `--using-in-code`, the design system's "Using in code" section | `.ttt/design-system.json` (`tokensIn`, `tokensOut`, `componentFiles`, `typeClassPrefix`, `usingInCode.notes`), `components.json` (`aliases.ui`, `iconLibrary`), `tsconfig.json` (`paths`) |
 | `scripts/ds-types.mjs` | `components/index.d.ts` | `.ttt/design-system.json` (`namespace`, `bundleExtras`), `components.json` (`aliases.ui`), `tsconfig.json` (`paths`) |
 
 Two keys exist for the builder alone: `namespace` is the global the bundle
@@ -163,6 +181,12 @@ not to whichever `data-slot` happens to be declared above it. It resolves each
 utility to a semantic token by following the CSS variable chain in the
 generated token file, so the profile's mapping table above is not restated in
 the script and a remapping needs no change to it.
+
+Spacing utilities (`p-4`, `gap-2`, `h-8`) resolve to space tokens the same way: an off-scale override names its token, an on-scale step with a token of its own is that token (`space-4`), and any other step is reported as a multiple of the base (`space-1` × 11). Only arbitrary values (`h-[34px]`) are "fixed in code".
+
+**Used by and Using in code** are generated by the same script, so neither is hand-written: `--used-by` collects every token each component's styling map names and rewrites the "Used by" clause at the end of each token's usage text; `--using-in-code` reads the generated `@theme` block (the mapping as this client applies it), the type scale and the spacing base, and appends the config's `usingInCode.notes`.
+
+**Contrast pairs** are written once, against semantic names, from the template's usage text ("Must reach …", "Pair with …"), so every client is checked against the same list. A pair that misses on purpose — `label-disable`, by convention — is listed in the repo config under `contrast.intentional` with its reason; nothing else excuses a miss. Contrast failures in a client project are logged as deviations, not fixed in code: tokens are design-owned.
 
 Two things it deliberately leaves out: presentational keywords with no
 measurable value (`uppercase`, `italic`, `whitespace-nowrap`), and icon

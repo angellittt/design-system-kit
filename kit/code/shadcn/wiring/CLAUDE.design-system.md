@@ -1,4 +1,4 @@
-<!-- design-system-kit 0.1.0 · profile shadcn · wiring: CLAUDE.md design-system section.
+<!-- design-system-kit 0.1.1 · profile shadcn · wiring: CLAUDE.md design-system section.
      Setup appends this to the repo's CLAUDE.md and fills every {{…}}; Sync keeps it
      current. Agreed component rules from accepted proposals go under
      "Component rules". Delete this comment when filling. -->
@@ -48,11 +48,19 @@ Generated — never hand-edited:
 | `{{TOKENS_OUT}}` | **Generated** by `scripts/ds-tokens.mjs`: every token as a CSS variable, Light/Dark on `[data-theme]`, the shadcn variables, the Tailwind `@theme` mapping, the spacing base and the type classes. |
 | `{{GLOBAL_CSS}}` | Hand-written. Tailwind entry, the token import, the dark variant, the base layer and the focus rule. |
 
-Regenerate after a token change — it should touch no component file:
+Regenerate after a token change — it should touch no component file — then
+check the snapshot and contrast:
 
 ```bash
 node scripts/ds-tokens.mjs
+npm run ds:validate     # config, snapshot, wiring; exits 1 on any error
+npm run ds:contrast     # every contrast pair in every theme
 ```
+
+Contrast failures are design's to fix (tokens are design-owned): log a
+deviation, don't change a token here. Pairs below their minimum on purpose
+are listed under `contrast.intentional` in `.ttt/design-system.json`, each
+with its reason.
 
 **Watch the naming clash.** shadcn's `secondary` and `accent` are neutral
 greys, not brand colours. The brand ones are `brand-secondary` and
@@ -175,16 +183,18 @@ are agreed in review but not yet in code — don't import them.
 
 ## Publish-back tooling
 
-Five generated-artifact scripts, all **kit files** (design-system-kit
-{{KIT_VERSION}}) — generic across repos on profile `shadcn`. Fix them in the
-kit, not here, so the fix carries:
+Seven scripts, all **kit files** (design-system-kit {{KIT_VERSION}}) —
+generic across repos on profile `shadcn`. Fix them in the kit, not here, so
+the fix carries:
 
-| Script | Makes |
+| Script | Makes or checks |
 |---|---|
 | `scripts/ds-tokens.mjs` | `{{TOKENS_OUT}}` from the token snapshot |
+| `scripts/ds-validate.mjs` | the repo config, the snapshot and the theme block's `@source` (`--preflight` adds installed versions vs `scripts/tested-range.json`) |
+| `scripts/ds-contrast.mjs` | every pair in `scripts/contrast-pairs.json`, in every theme |
 | `scripts/ds-pack-react.mjs` | React + ReactDOM as classic-script globals for the preview frame |
 | `scripts/ds-build-bundle.mjs` | `bundle.js` + `bundle.css` from `{{UI_ALIAS}}` |
-| `scripts/ds-styling-maps.mjs` | the styling map in each component's README |
+| `scripts/ds-styling-maps.mjs` | each component README's styling map; `--used-by` the tokens' "Used by" lists; `--using-in-code` the design system's "Using in code" section |
 | `scripts/ds-types.mjs` | `components/index.d.ts` from the `{{UI_ALIAS}}` exports |
 
 **Generated means generated:** if the design system calls a document
