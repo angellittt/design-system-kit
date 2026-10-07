@@ -1,17 +1,21 @@
 #!/usr/bin/env node
-// design-system-kit 0.2.0 · profile shadcn · kit file — fix it in the kit, not per client
+// design-system-kit 0.2.1 · profile shadcn · kit file — fix it in the kit, not per client
 /**
  * ds-validate.mjs — the contract's config validation.
  *
  *   node scripts/ds-validate.mjs               # config, token snapshot, wiring
  *   node scripts/ds-validate.mjs --preflight   # …and installed versions vs the tested range
  *   node scripts/ds-validate.mjs --repo <dir>  # validate another checkout
+ *   node scripts/ds-validate.mjs --system <01-system.md>
+ *                                             # …and check client-added ramps are listed
+ *                                             # in the design system's System section
  *   node scripts/ds-validate.mjs --template <config.json> --tokens <tokens.json>
  *                                             # the kit's own templates ("{{…}}" allowed)
  *
  * Checks `.ttt/design-system.json` against the schema below (every key), the
  * token snapshot it points at (name grammar, aliases, cycles, colour formats,
- * the semantic tokens the profile's mapping needs), that the theme block's
+ * the semantic tokens the profile's mapping needs, primitive ramps named by
+ * role, never by hue), that the theme block's
  * `@source` resolves to the source root, and that the repo's `kitVersion` is
  * no newer than these scripts. Every error names the field and says how to
  * fix it. Exits 1 on any error; warnings don't fail.
@@ -25,7 +29,7 @@ import { fileURLToPath } from "node:url"
 import { SHADCN_MAP, ALIAS_COLORS } from "./ds-tokens.mjs"
 
 /** The kit these scripts belong to. A repo may not claim a newer one. */
-export const KIT_VERSION = "0.2.0"
+export const KIT_VERSION = "0.2.1"
 const SCHEMA = "ttt-ds/1"
 const PROFILE = "shadcn"
 
@@ -81,6 +85,29 @@ const COLOUR = [
 ]
 export const isColour = (v) => COLOUR.some((re) => re.test(String(v).trim()))
 const LENGTH = /^-?(\d+\.?\d*|\.\d+)(px|rem|em|%)?$/
+
+/** The contract's standard primitive ramps. A client may add more, named by role. */
+export const STANDARD_RAMPS = ["brand-primary", "brand-secondary", "brand-accent", "neutral", "positive", "cautionary", "negative"]
+/** Words that name a hue, not a role. A ramp name containing one is rejected. */
+const HUE_WORDS = new Set(("red orange amber yellow lime green emerald teal cyan sky blue indigo violet purple " +
+  "fuchsia pink rose magenta plum lavender lilac mauve maroon crimson scarlet tomato coral salmon peach " +
+  "gold golden mustard olive mint navy aqua turquoise brown tan beige cream ivory grey gray slate zinc " +
+  "stone charcoal black white silver ruby sapphire jade cobalt ochre sand").split(" "))
+/** "data-50" → "data"; "neutral-0" → "neutral"; a primitive with no step is its own ramp. */
+export const rampOf = (name) => name.replace(/-\d+(\.\d+)?$/, "")
+/** A primitive is a colour token whose usage text starts with "Primitive" (contract, Token tiers). */
+const isPrimitive = (t) => /^Primitive/.test(t?.usage ?? "")
+/** The hue word in a ramp name, if any. */
+export const hueIn = (ramp) => ramp.split(/[-_.]/).find((w) => HUE_WORDS.has(w.toLowerCase())) ?? null
+
+/**
+ * The ramps the System section's client-specific choices name: every `code`
+ * span in the "**…-specific choices**" block (up to the next bold heading).
+ */
+export function listedInSystem(markdown) {
+  const m = /\*\*[^*\n]*-specific choices\*\*([\s\S]*?)(?=\n\*\*[^*\n]+\*\*|$)/.exec(markdown)
+  return new Set([...(m?.[1] ?? "").matchAll(/`([^`]+)`/g)].map((x) => x[1]))
+}
 
 /** "DD/MM/YYYY", "M.D.YY" … one day, one month, one year, one separator. */
 export function isDateFormat(v) {
@@ -190,9 +217,10 @@ function checkConfig(config, err, { placeholders = false } = {}) {
   }
 }
 
-export function validate(repo, { preflight = false, testedRange } = {}) {
+export function validate(repo, { preflight = false, testedRange, system } = {}) {
   const errors = []
   const warnings = []
+  const notes = []
   const err = (field, message, fix) => errors.push({ field, message, fix })
   const warn = (field, message, fix) => warnings.push({ field, message, fix })
 
@@ -200,14 +228,14 @@ export function validate(repo, { preflight = false, testedRange } = {}) {
   const configPath = join(repo, ".ttt/design-system.json")
   if (!existsSync(configPath)) {
     err(".ttt/design-system.json", "not found", "this repo isn't connected to a design system; Setup writes it")
-    return { errors, warnings }
+    return { errors, warnings, notes }
   }
   let config
   try {
     config = JSON.parse(readFileSync(configPath, "utf8"))
   } catch (e) {
     err(".ttt/design-system.json", `isn't valid JSON (${e.message})`, "fix the syntax")
-    return { errors, warnings }
+    return { errors, warnings, notes }
   }
 
   checkConfig(config, err)
@@ -235,7 +263,10 @@ export function validate(repo, { preflight = false, testedRange } = {}) {
       let tokens
       try { tokens = JSON.parse(readFileSync(tokensPath, "utf8")) }
       catch (e) { err(config.tokensIn, `isn't valid JSON (${e.message})`, "re-pull it from the design system") }
-      if (tokens) validateTokens(tokens, config.tokensIn, err, warn)
+      if (tokens) {
+        validateTokens(tokens, config.tokensIn, err, warn)
+        checkClientRamps(tokens, config.tokensIn, system, warn, notes)
+      }
     }
   }
 
@@ -255,7 +286,7 @@ export function validate(repo, { preflight = false, testedRange } = {}) {
   // ---- pre-flight: installed versions vs the tested range --------------------------
   if (preflight) checkTestedRange(repo, testedRange, err, warn)
 
-  return { errors, warnings }
+  return { errors, warnings, notes }
 }
 
 function validateTokens(tokens, file, err, warn) {
@@ -322,6 +353,13 @@ function validateTokens(tokens, file, err, warn) {
     }
   }
 
+  // Primitive ramps: named by role, never by hue.
+  const ramps = new Set([...colours.values()].filter(isPrimitive).map((t) => rampOf(t.name)))
+  for (const ramp of ramps) {
+    const hue = hueIn(ramp)
+    if (hue) err(where(`${ramp}-*`), `is a ramp named by hue ("${hue}")`, `name it by the role it plays (e.g. "data" for chart colours), in the design system, then re-pull; standard ramps are ${STANDARD_RAMPS.join(", ")}`)
+  }
+
   // The semantic tokens the profile's mapping needs.
   const required = new Set([...Object.values(SHADCN_MAP), ...Object.values(ALIAS_COLORS)])
   for (const name of required) if (!colours.has(name))
@@ -339,6 +377,26 @@ function validateTokens(tokens, file, err, warn) {
     for (const s of g.styles ?? []) if (!LENGTH.test(String(s.fontSize ?? "")))
       err(`${file} › type.${s.name}`, `has fontSize ${JSON.stringify(s.fontSize)}`, "use a length such as 15px")
   }
+}
+
+/**
+ * Client-added ramps (any primitive ramp beyond the standard roles) must be
+ * recorded in the System section's client-specific choices. With `system`
+ * (a copy of the design system's 01-system.md) each one not named there is a
+ * warning; without it the check can't run and says so as a note.
+ */
+function checkClientRamps(tokens, file, system, warn, notes) {
+  const prims = (tokens.color?.tokens ?? []).filter((t) => TOKEN_NAME.test(t?.name ?? "") && isPrimitive(t))
+  const added = [...new Set(prims.map((t) => rampOf(t.name)))].filter((r) => !STANDARD_RAMPS.includes(r) && !hueIn(r))
+  if (!added.length) return
+  if (!system) {
+    notes.push(`client-added ramps ${added.join(", ")} — not checked against the System section (pass --system <01-system.md>)`)
+    return
+  }
+  if (!existsSync(system)) { warn("--system", `points at ${system}, which doesn't exist`, "save the design system's project/01-system.md and pass its path"); return }
+  const listed = listedInSystem(readFileSync(system, "utf8"))
+  for (const ramp of added) if (!listed.has(ramp))
+    warn(`${file} › ${ramp}-*`, "is a client-added ramp the System section doesn't list", `add it to the System section's client-specific choices, e.g. "A \`${ramp}\` ramp for …"`)
 }
 
 function uiDir(repo) {
@@ -448,9 +506,10 @@ function main() {
   const args = process.argv.slice(2)
   const flag = (n) => { const i = args.indexOf(n); return i === -1 ? null : args[i + 1] }
   const repo = resolve(flag("--repo") ?? join(HERE, ".."))
-  const { errors, warnings } = args.includes("--template")
+  const { errors, warnings, notes } = args.includes("--template")
     ? validateTemplate(resolve(flag("--template")), resolve(flag("--tokens")))
-    : validate(repo, { preflight: args.includes("--preflight"), testedRange: flag("--tested-range") })
+    : validate(repo, { preflight: args.includes("--preflight"), testedRange: flag("--tested-range"), system: flag("--system") && resolve(flag("--system")) })
+  for (const n of notes ?? []) console.log(`note     ${n}`)
   for (const w of warnings) console.log(`warning  ${w.field} ${w.message} — ${w.fix}`)
   for (const e of errors) console.log(`error    ${e.field} ${e.message} — ${e.fix}`)
   console.log(errors.length ? `\n${errors.length} error(s), ${warnings.length} warning(s)` : `valid (${warnings.length} warning(s)) — kit ${KIT_VERSION}`)

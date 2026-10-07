@@ -1,6 +1,6 @@
 # Report — how every Sync run ends
 
-design-system-kit 0.2.0
+design-system-kit 0.2.1
 
 The skill writes the report itself (common.md §10). It goes in the chat and,
 when there is a PR, as the PR body. A run that stopped still reports: say
@@ -20,9 +20,12 @@ that are empty — never drop a heading.
 ## What goes under each
 
 **What changed**
+- every run: each `pending` mark flipped, with its evidence — the PR number
+  and merge time, or the Figma read-back (common.md §6).
 - pull: the snapshot, the token file, assets, `lastSynced`; the branch and PR;
   the result of `ds:validate`, `ds:contrast` (pairs × themes, failing,
-  intentional), typecheck, tests, build.
+  intentional), typecheck, tests, build; the Figma variables created,
+  changed and removed, and their read-back — or that Figma wasn't reached.
 - publish: every design-system path sent (and what was regenerated but
   byte-identical, so not sent); statuses changed; previews written; the
   preview check (count × themes, errors); the design-system version
@@ -30,7 +33,8 @@ that are empty — never drop a heading.
 
 **Values changed (old → new)**
 - Every token value per theme, every status (`validated → implemented`),
-  every version (kit, profile, React), every setting, every Figma binding —
+  every version (kit, profile, React), every setting, every Figma binding
+  and variable value or alias —
   as `old → new`. Usage-text-only changes are listed as such, not as values.
 
 **Deviations logged**
@@ -43,6 +47,9 @@ that are empty — never drop a heading.
 
 **Gaps**
 - Every warning from `ds:validate`; every version mismatch from common.md §2;
+  every `pending` mark checked but not flipped, and why; Figma not updated
+  because the connector or an editor seat wasn't available;
   every decision the contract or profile didn't cover; every manual step left
   — always including "publish the Figma library" after a Figma change, and
-  "flip Code pending to ✓ when the PR merges" while the PR is open.
+  "Code pending flips to ✓ on the next Sync run after the PR merges" while
+  the PR is open.

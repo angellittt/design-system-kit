@@ -33,6 +33,7 @@ Figma is generated from the design system, so names map mechanically in both dir
 The design system type stores only `name`, `value` and `usage` per token, so tiers are a naming convention.
 
 - **Primitive** — `<ramp>-<step>`. Ramps are named by role, never by hue: `brand-primary`, `brand-secondary`, `brand-accent`, `neutral`, `positive`, `cautionary`, `negative`. Usage text starts with "Primitive". Never referenced by components.
+- **Client-added ramps** — a client may add a primitive ramp beyond the standard roles when none of them can supply a colour it needs (e.g. a `data` ramp for chart colours the brand hues can't provide). Named by the role it plays, never by its hue (`data`, not `plum`); semantic tokens alias it like any other ramp. Each one is recorded in the System section's client-specific choices. `ds:validate` accepts any role-named ramp, rejects one named by hue, and warns when one isn't listed in the System section.
 - **Semantic** — `<role>-<variant>` (`primary-normal`, `label-alternative`, `background-elevated`). Aliases a primitive with `{brand-primary-50}` wherever possible. Components use only these.
 - **Client** — a client's brand lives in its primitive values. Re-branding changes values only; ramp names, semantic names and the library mapping never change. The brand book records which brand colour each role holds.
 
@@ -75,16 +76,16 @@ A prototype is a pattern only if it uses nothing but core components and tokens.
 
 | Layer | Owner | How it changes |
 |---|---|---|
-| Tokens, brand, assets | Design | Edited in the design system; synced to code automatically |
+| Tokens, brand, assets | Design | Edited in the design system; pull carries them to code (a PR) and to Figma's variables |
 | Core components, library version | Dev | Changed in code; published back to the design system |
 | Patterns | Design (publish), dev (harden) | Published as `validated`; `implemented` after hardening |
 | The design system itself | Design-system owner | Only the owner's account can update it; the owner reviews every publish-back diff |
 
 - Anything that conflicts is logged as a deviation rather than overwritten.
 - A rename or merge is "add new, then remove old". Removing files needs a Claude Code or Cowork session; chat can only add and replace.
-- Figma is a read-only consumer, regenerated and republished from the design system.
+- Figma is a read-only consumer, regenerated and republished from the design system: token changes by pull, components by publish-back. Figma never blocks code — without a connector, its changelog mark stays pending.
 
-- **Changelog** — every change gets a short entry in the design system's Changelog section, newest first: date, one line on what changed, a short reason when the change isn't self-explanatory (a clause, not a paragraph), owner (design, code, dev), a link to the task or PR, and a second line with each sync target marked ✓, pending or —. Reasoning lives in the linked task or PR, not the entry. Keep the latest 10; move older entries to `archived/`.
+- **Changelog** — every change gets a short entry in the design system's Changelog section, newest first: date, one line on what changed, a short reason when the change isn't self-explanatory (a clause, not a paragraph), owner (design, code, dev), a link to the task or PR, and a second line with each sync target marked ✓, pending or —. Reasoning lives in the linked task or PR, not the entry. Keep the latest 10; move older entries to `archived/`. Pending marks flip themselves: every sync run first checks them and sets ✓ only where it has verified the target — a merged PR whose result is still current, or a Figma read-back.
 - **System section** — each design system has a one-screen System section: versions (schema, profile, kit), owner, links (repo, Figma, tracker), component counts, client settings, client-specific choices, open deviations. The rules themselves are never copied into a design system; skills read them from the installed kit, and the System section's versions say which.
 - **Using in code** — each design system has a "Using in code" section: the Tailwind names to build with (the profile's token mapping as this client applies it, the type-class prefix, client-specific notes). It mirrors the generated token file and is updated by every publish-back, so people prototyping in Claude without the kit still have it.
 - **Section order** — sections appear in file-path order, so their files are numbered: `01-system.md`, `02-using-in-code.md`, `03-changelog.md`, after the brand book (`README.md`).

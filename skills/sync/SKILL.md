@@ -1,16 +1,17 @@
 ---
 name: sync
-description: Sync a TTT design system with code or Figma. Use when the user wants to pull design-system tokens into a repo (design → code), publish components back from code to the design system (code → design), sync or update the Figma library from the design system, or runs /ds-sync pull or /ds-sync publish in a repo that has .ttt/design-system.json.
+description: Sync a TTT design system with code or Figma. Use when the user wants to pull design-system tokens into a repo and the Figma library's variables (design → code and Figma), publish components back from code to the design system (code → design), sync or update the Figma library from the design system, or runs /ds-sync pull or /ds-sync publish in a repo that has .ttt/design-system.json.
 ---
 
 # Sync — design system ⇄ code ⇄ Figma
 
-design-system-kit 0.2.0 · schema `ttt-ds/1`
+design-system-kit 0.2.1 · schema `ttt-ds/1`
 
 Two directions, one skill:
 
-- **pull** — design → code. The design system's tokens and assets come down
-  into the repo as a PR. Nothing code-owned changes.
+- **pull** — design → code and Figma. The design system's tokens and assets
+  come down into the repo as a PR, and token changes go to the Figma
+  library's variables. Nothing code-owned changes; Figma never blocks the PR.
 - **publish** — code → design system → Figma. The repo's components go up:
   bundle, previews, styling maps, types, "Used by" lists, "Using in code",
   statuses, then the Figma library.
@@ -27,13 +28,16 @@ Two directions, one skill:
    `kit/profiles/<profile>.md` (the profile named in `.ttt/design-system.json`).
 4. Work in the repo the user is in. It must have `.ttt/design-system.json`;
    if it doesn't, it hasn't been set up — say so and stop (that's Setup).
+5. Flip the changelog's `pending` marks this run can verify — merged PRs,
+   confirmed Figma read-backs — and only those (common.md §6, "Pending
+   entries flip themselves").
 
 ## Then
 
 | Mode | Steps |
 |---|---|
-| `pull` | `references/pull.md`, then `references/report.md` |
-| `publish` | `references/publish.md` → `references/figma.md`, then `references/report.md` |
+| `pull` | `references/pull.md` (its step 7 runs `references/figma.md`'s Tokens part), then `references/report.md` |
+| `publish` | `references/publish.md` → `references/figma.md` (Tokens, then Components), then `references/report.md` |
 
 No mode given: ask which, and say what each does in one line.
 

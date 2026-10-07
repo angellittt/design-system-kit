@@ -1,6 +1,6 @@
 # Common procedure — every design-system skill
 
-design-system-kit 0.2.0 · schema `ttt-ds/1`
+design-system-kit 0.2.1 · schema `ttt-ds/1`
 
 Setup, Sync, Components and Drift audit all follow these rules. Each one was
 learned from a run that went wrong without it; none is optional. The rules
@@ -21,11 +21,19 @@ from the repo config.
 
 ## 1. Validate first
 
-Run, in the repo:
+Read the live System section (`project/01-system.md`) into a scratch file
+first — §2 needs it too — and run, in the repo:
 
 ```bash
-npm run ds:validate          # node scripts/ds-validate.mjs
+npm run ds:validate -- --system <scratch>/01-system.md
 ```
+
+`--system` lets validation check that every client-added ramp is listed in
+the System section's client-specific choices (contract, Token tiers).
+Without it (CI, a quick local run) that check is skipped and printed as a
+`note`. If the design system can't be read at all, validate without
+`--system` anyway — a config error is still a stop — and report the
+unreadable link under Gaps.
 
 On any error, **stop**: report each error with the fix it names. Don't work
 around a failing config — a skill that runs on an invalid config writes
@@ -89,6 +97,26 @@ Code ✓ · Figma pending
 - The reason is a clause, not a paragraph; the reasoning lives in the linked PR or task.
 - Keep the latest 10. Before dropping the oldest, check that `archived/` already holds its full text (`project/archived/changelog-to-<date>.md`); if not, add it there in the same publish.
 - When a later run completes an earlier entry's pending target, flip that entry's mark rather than adding a new entry.
+
+### Pending entries flip themselves
+
+Every Sync run — pull or publish — starts, after §1–§5, by checking the
+changelog for `pending` marks it can **verify**, and flips only those:
+
+| Mark | Flip to ✓ only when |
+|---|---|
+| `Code pending` | The entry's linked PR is **merged** (`gh pr view <n> --json state,mergedAt`) **and** `main` holds what the entry describes now. For a design entry with no PR link, find the pull PR that carried it (its branch `ds-sync/pull-*`, merged after the entry) and check that `main`'s token snapshot matches the live `project/tokens.json` for every token the entry names. |
+| `Figma pending` | A read-back of the change in Figma (`figma.md` §5) — this run's, or an earlier run's recorded in its report — shows every variable or binding the entry names as the design system has it now. |
+
+- **Not verified, not flipped.** An open PR, a PR that merged an older value
+  (design changed the entry again after the pull), a read-back that doesn't
+  match, or no connector — leave it `pending` and say why in Gaps.
+- Flips are published like any changelog edit (§3 re-read, §4 owner,
+  §5 clock, index last), together with the run's other changes or alone
+  if the run publishes nothing else.
+- The report lists every flip under **What changed** — the entry, the mark,
+  and the evidence (PR number and merge time; the read-back) — and every
+  mark checked but left `pending` under **Gaps**.
 
 ## 7. Deviations
 

@@ -1,5 +1,5 @@
 ---
-description: Sync the design system with code or Figma — pull (design → code) or publish (code → design system → Figma)
+description: Sync the design system with code or Figma — pull (design → code and Figma) or publish (code → design system → Figma)
 argument-hint: pull | publish
 ---
 
@@ -9,7 +9,7 @@ If the mode is empty, or anything other than `pull` or `publish`, reply with
 exactly this and do nothing else — no tools, no reads:
 
 ```
-/ds-sync pull     design → code: snapshot the design system's tokens and assets into this repo as a PR
+/ds-sync pull     design → code and Figma: tokens and assets into this repo as a PR, token changes to the Figma variables
 /ds-sync publish  code → design system → Figma: bundle, previews, styling maps, types, statuses, then the Figma library
 ```
 
