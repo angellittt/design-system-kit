@@ -1,10 +1,37 @@
-# TTT design system kit · ttt-ds/1 · kit 0.1.2
+# TTT design system kit · ttt-ds/1 · kit 0.2.0
 
 The starting point for every client design system, bundled into TTT's four skills: **Setup** (design system + Figma + code branch, ending in a PR), **Sync** (pull → PR, publish-back), **Components** (check → propose → accept) and **Drift audit**. Extracted from Jelly, the worked example; the classification of what came over and why is in `docs/extraction/classification.md` at the repo root.
 
 **Scope:** greenfield projects — the app is set up by devs but has little or no custom UI. Setup's pre-flight stops on projects with substantial existing UI.
 
 **Version:** the kit's version is the plugin's (`.claude-plugin/plugin.json`). A client repo records the version it was set up or last synced with as `kitVersion` in `.ttt/design-system.json`, and every kit file it carries names that version in its header.
+
+## Install
+
+The repo is a Claude Code plugin marketplace:
+
+```
+/plugin marketplace add angellittt/design-system-kit
+/plugin install design-system-kit@ttt-design
+```
+
+Then, in a client repo that has `.ttt/design-system.json`:
+
+```
+/ds-sync pull       # design → code: tokens and assets into a PR
+/ds-sync publish    # code → design system → Figma
+```
+
+If another plugin also defines `/ds-sync`, use the namespaced form, `/design-system-kit:ds-sync`. The skills read kit files from the plugin's install folder, outside the repo, so the first run may ask to allow reading it.
+
+| Path (plugin root) | What it is |
+|---|---|
+| `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json` | The plugin (`design-system-kit`) and the marketplace (`ttt-design`) |
+| `skills/sync/` | The Sync skill: `SKILL.md`, and the steps in `references/` (`pull.md`, `publish.md`, `figma.md`, `report.md`) |
+| `commands/ds-sync.md` | `/ds-sync pull \| publish` |
+| `kit/procedures/common.md` | The rules every skill follows — validate, versions, read-before-publish, owner only, clock, changelog, deviations, files, repos, report |
+
+Skills read kit files from the plugin root by path; nothing is copied into a session.
 
 ## What's here
 
@@ -59,6 +86,11 @@ Reads the system's contract (schema and profile first), generates the theme file
 
 ## Changes
 
+**0.2.0** (2026-10-07)
+- The repo is a plugin marketplace (`ttt-design`) with the first skill: **Sync** (`skills/sync/`, `/ds-sync pull | publish`), steps in `references/`.
+- `kit/procedures/common.md`: the rules every skill follows, for Setup, Components and Drift audit to reuse.
+- Contract: a third preview banner, "Preview from the kit's code", for components whose code is a kit file.
+
 **0.1.2** (2026-10-07)
 - Template catch-up: `components/` now has all 34 baseline components (was 19), one per stock file, each with a neutral README and a `preview.html`. Nothing from before Base UI remains: snippets use `render` and `onClick`, maps are generated from the kit's stock code against the template's placeholder tokens, and previews were checked against a bundle built from the kit in both themes.
 - Agreed rules carried from the worked example, without its brand choices: Field's exceptions, `aria-describedby` by hand and focus on a failed submit; the loading-button composition; Alert's dismissal rule; AlertDialog as the component only; Separator for meaningful divisions; Combobox inside an Input Group; DatePicker's client settings and typed input.
@@ -78,5 +110,5 @@ Reads the system's contract (schema and profile first), generates the theme file
 
 ## Not in the kit yet
 
-- **Skills and commands.** `skills/` and `commands/` hold README stubs only.
+- **Setup, Components and Drift audit.** Only Sync is written; the others will reuse `kit/procedures/common.md`.
 - **Other profiles.** Ant Design, MUI or a mobile library each need their own `profiles/<library>.md` and `code/<library>/`; nothing else changes.
