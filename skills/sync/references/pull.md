@@ -1,6 +1,6 @@
 # Pull — design → code and Figma
 
-design-system-kit 0.2.1
+design-system-kit 0.3.0
 
 Brings the design system's design-owned values to their two consumers: the
 repo (the token snapshot, the generated token file and assets — one PR, or

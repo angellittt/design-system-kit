@@ -1,6 +1,6 @@
 # Figma — tokens (pull and publish), components (publish)
 
-design-system-kit 0.2.1
+design-system-kit 0.3.0
 
 Figma is a read-only consumer of the design system: it is regenerated from
 the design system, never edited to taste. The Figma file is the one in the
@@ -43,7 +43,14 @@ mode (`getLocalVariableCollectionsAsync`, `getLocalVariablesAsync`), and
 compare them with the design system's `project/tokens.json`:
 
 - every token with **no variable**;
-- every variable whose **value or alias differs** from its token, per mode;
+- every variable that differs from its token in any of these — all five,
+  every time:
+  - **value or alias**, per mode (an alias compares by the target
+    variable's name, not the colour it resolves to);
+  - **scopes** (§2's rule for its role);
+  - **code syntax** — `WEB` is `var(--<token name>)`, the CSS variable the
+    generated token file declares (`space-0.5` → `var(--space-0\.5)`);
+  - **description** — the token's usage text, verbatim;
 - every variable with **no token** any more (removed or renamed in design);
 - every variable in the **wrong collection** (a primitive in Semantic, or
   the reverse).
@@ -82,7 +89,11 @@ say so in Gaps.
   - primitives — the same scopes the file's existing primitives of that kind
     use (a new ramp copies an existing ramp's); in a file with none, `[]`,
     since primitives are never applied directly.
-- **Description**: the token's usage text, so designers see it in the picker.
+- **Description**: the token's usage text, verbatim, so designers see it in
+  the picker.
+- **Code syntax**: `WEB` = `var(--<token name>)`, matching the generated
+  token file, so Dev Mode shows the name code uses. Set it on every variable
+  you create or change; fix any that differ.
 
 # Components — publish only
 
@@ -133,9 +144,10 @@ Then build or change them:
 ## 5. Read back, then mark ✓
 
 - After each change, read it back with `use_figma`:
-  - tokens — every changed variable's collection, scopes, and value per mode
-    (an alias reads back as the primitive's variable name, not a colour);
-    then re-run §1 and require an empty list;
+  - tokens — every changed variable's collection, value per mode (an alias
+    reads back as the primitive's variable name, not a colour), scopes, code
+    syntax and description; then re-run §1 — all five properties, every
+    variable — and require an empty list;
   - components — the bound variable names per changed layer, the variant
     names, and a screenshot of each changed set; tally the result (e.g.
     every foreground per ground) against §3's list.

@@ -9,7 +9,7 @@ How {{CLIENT_NAME}} is set up. The rules every TTT design system follows live in
 | **Code** | `{{REPO}}` · config `.ttt/design-system.json` |
 | **Figma** | {{FIGMA_LIBRARY}} |
 | **Tracker** | {{TRACKER_URL}} |
-| **Components** | {{N}} implemented · {{N}} validated |
+| **Components** | {{N_IMPLEMENTED}} implemented · {{N_VALIDATED}} validated |
 
 **Client settings** — locale `{{LOCALE}}` · week starts {{WEEK_START}} · date format `{{DATE_FORMAT}}`.
 

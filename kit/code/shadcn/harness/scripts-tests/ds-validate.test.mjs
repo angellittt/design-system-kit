@@ -1,5 +1,5 @@
 // @vitest-environment node
-// design-system-kit 0.2.1 · profile shadcn · harness: ds-validate tests
+// design-system-kit 0.3.0 · profile shadcn · harness: ds-validate tests
 import { describe, expect, it } from "vitest"
 import { spawnSync } from "node:child_process"
 import { join, dirname } from "node:path"
@@ -153,6 +153,16 @@ describe("ds-validate: pre-flight", () => {
     const r = validate(dir, { preflight: true, testedRange: join(dir, "range.json") })
     expect(fields(r)).toEqual(["package next"])
     expect(r.errors[0].message).toMatch(/14\.2\.0, outside the tested range 15\.5\.0 – 15\.5\.27/)
+  })
+})
+
+describe("ds-validate: pre-flight before Setup", () => {
+  it("checks the lockfile even when there's no config yet", () => {
+    const dir = mkdtempSync(join(tmpdir(), "ds-preflight-"))
+    writeFileSync(join(dir, "package-lock.json"), JSON.stringify({ packages: { "node_modules/tailwindcss": { version: "3.4.1" } } }))
+    writeFileSync(join(dir, "range.json"), JSON.stringify({ packages: { tailwindcss: { min: "4.3.3", max: "4.3.3" } } }))
+    const r = validate(dir, { preflight: true, testedRange: join(dir, "range.json") })
+    expect(fields(r)).toEqual([".ttt/design-system.json", "package tailwindcss"])
   })
 })
 

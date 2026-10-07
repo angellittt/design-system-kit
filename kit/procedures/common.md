@@ -1,6 +1,6 @@
 # Common procedure — every design-system skill
 
-design-system-kit 0.2.1 · schema `ttt-ds/1`
+design-system-kit 0.3.0 · schema `ttt-ds/1`
 
 Setup, Sync, Components and Drift audit all follow these rules. Each one was
 learned from a run that went wrong without it; none is optional. The rules
@@ -101,16 +101,23 @@ Code ✓ · Figma pending
 ### Pending entries flip themselves
 
 Every Sync run — pull or publish — starts, after §1–§5, by checking the
-changelog for `pending` marks it can **verify**, and flips only those:
+changelog for `pending` marks it can **verify**, and flips only those.
+**A mark flips because the result matches the entry, never because
+something happened.** A merged PR is not enough; a read-back that ran is not
+enough. Compare what's in `main` or in Figma now with what the entry says
+now (design may have edited the entry, or the token, since):
 
 | Mark | Flip to ✓ only when |
 |---|---|
 | `Code pending` | The entry's linked PR is **merged** (`gh pr view <n> --json state,mergedAt`) **and** `main` holds what the entry describes now. For a design entry with no PR link, find the pull PR that carried it (its branch `ds-sync/pull-*`, merged after the entry) and check that `main`'s token snapshot matches the live `project/tokens.json` for every token the entry names. |
-| `Figma pending` | A read-back of the change in Figma (`figma.md` §5) — this run's, or an earlier run's recorded in its report — shows every variable or binding the entry names as the design system has it now. |
+| `Figma pending` | A read-back of the change in Figma (`figma.md` §5) — this run's, or an earlier run's recorded in its report — shows every variable or binding the entry names as the design system has it now: for a variable, its value or alias per mode, scopes, code syntax and description all match (`figma.md` §1). |
 
 - **Not verified, not flipped.** An open PR, a PR that merged an older value
   (design changed the entry again after the pull), a read-back that doesn't
   match, or no connector — leave it `pending` and say why in Gaps.
+  Example: a pull PR merged `chart-5` dark = `data-50`; design then changed
+  it to `data-60`. The PR is merged, but `main` doesn't hold what the entry
+  says, so Code stays `pending` until the next pull merges.
 - Flips are published like any changelog edit (§3 re-read, §4 owner,
   §5 clock, index last), together with the run's other changes or alone
   if the run publishes nothing else.
