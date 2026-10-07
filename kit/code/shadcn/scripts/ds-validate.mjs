@@ -1,11 +1,13 @@
 #!/usr/bin/env node
-// design-system-kit 0.1.1 · profile shadcn · kit file — fix it in the kit, not per client
+// design-system-kit 0.1.2 · profile shadcn · kit file — fix it in the kit, not per client
 /**
  * ds-validate.mjs — the contract's config validation.
  *
  *   node scripts/ds-validate.mjs               # config, token snapshot, wiring
  *   node scripts/ds-validate.mjs --preflight   # …and installed versions vs the tested range
  *   node scripts/ds-validate.mjs --repo <dir>  # validate another checkout
+ *   node scripts/ds-validate.mjs --template <config.json> --tokens <tokens.json>
+ *                                             # the kit's own templates ("{{…}}" allowed)
  *
  * Checks `.ttt/design-system.json` against the schema below (every key), the
  * token snapshot it points at (name grammar, aliases, cycles, colour formats,
@@ -23,7 +25,7 @@ import { fileURLToPath } from "node:url"
 import { SHADCN_MAP, ALIAS_COLORS } from "./ds-tokens.mjs"
 
 /** The kit these scripts belong to. A repo may not claim a newer one. */
-export const KIT_VERSION = "0.1.1"
+export const KIT_VERSION = "0.1.2"
 const SCHEMA = "ttt-ds/1"
 const PROFILE = "shadcn"
 
@@ -141,31 +143,17 @@ const SETTINGS_SCHEMA = {
 
 // ---------------------------------------------------------------------------
 
-export function validate(repo, { preflight = false, testedRange } = {}) {
-  const errors = []
-  const warnings = []
-  const err = (field, message, fix) => errors.push({ field, message, fix })
-  const warn = (field, message, fix) => warnings.push({ field, message, fix })
+/** A Setup placeholder such as "{{LOCALE}}" — legal only in the kit's config template. */
+const isPlaceholder = (v) => typeof v === "string" && /^\{\{[A-Z_]+\}\}$/.test(v)
 
-  // ---- config --------------------------------------------------------------
-  const configPath = join(repo, ".ttt/design-system.json")
-  if (!existsSync(configPath)) {
-    err(".ttt/design-system.json", "not found", "this repo isn't connected to a design system; Setup writes it")
-    return { errors, warnings }
-  }
-  let config
-  try {
-    config = JSON.parse(readFileSync(configPath, "utf8"))
-  } catch (e) {
-    err(".ttt/design-system.json", `isn't valid JSON (${e.message})`, "fix the syntax")
-    return { errors, warnings }
-  }
-
+/** Every key of the config against the schema. `placeholders` accepts "{{…}}" values. */
+function checkConfig(config, err, { placeholders = false } = {}) {
   for (const [key, rule] of Object.entries(CONFIG_SCHEMA)) {
     if (!(key in config)) {
       if (rule.required) err(key, "is missing", rule.check(undefined) ?? "add it")
       continue
     }
+    if (placeholders && isPlaceholder(config[key])) continue
     const problem = rule.check(config[key])
     if (problem) err(key, `is ${JSON.stringify(config[key])}`, problem)
   }
@@ -176,6 +164,7 @@ export function validate(repo, { preflight = false, testedRange } = {}) {
   if (isObject(config.settings)) {
     for (const [key, check] of Object.entries(SETTINGS_SCHEMA)) {
       if (!(key in config.settings)) { err(`settings.${key}`, "is missing", check(undefined)); continue }
+      if (placeholders && isPlaceholder(config.settings[key])) continue
       const problem = check(config.settings[key])
       if (problem) err(`settings.${key}`, `is ${JSON.stringify(config.settings[key])}`, problem)
     }
@@ -199,6 +188,29 @@ export function validate(repo, { preflight = false, testedRange } = {}) {
       err("usingInCode.notes", "isn't a list of strings", "one Markdown paragraph per entry")
     for (const key of Object.keys(config.usingInCode)) if (key !== "notes") err(`usingInCode.${key}`, "isn't a key this kit knows", 'the only key is "notes"')
   }
+}
+
+export function validate(repo, { preflight = false, testedRange } = {}) {
+  const errors = []
+  const warnings = []
+  const err = (field, message, fix) => errors.push({ field, message, fix })
+  const warn = (field, message, fix) => warnings.push({ field, message, fix })
+
+  // ---- config --------------------------------------------------------------
+  const configPath = join(repo, ".ttt/design-system.json")
+  if (!existsSync(configPath)) {
+    err(".ttt/design-system.json", "not found", "this repo isn't connected to a design system; Setup writes it")
+    return { errors, warnings }
+  }
+  let config
+  try {
+    config = JSON.parse(readFileSync(configPath, "utf8"))
+  } catch (e) {
+    err(".ttt/design-system.json", `isn't valid JSON (${e.message})`, "fix the syntax")
+    return { errors, warnings }
+  }
+
+  checkConfig(config, err)
 
   // ---- kit version -----------------------------------------------------------
   if (semver(config.kitVersion)) {
@@ -404,13 +416,41 @@ function checkTestedRange(repo, testedRange, err, warn) {
   }
 }
 
+/**
+ * The kit's own config template and token template (`--template`): every key
+ * is checked as in a repo, except that a "{{…}}" placeholder stands for a value
+ * Setup fills; `kitVersion` must equal these scripts' version; and there is no
+ * repo, so the wiring and pre-flight checks don't apply.
+ */
+export function validateTemplate(configPath, tokensPath) {
+  const errors = []
+  const warnings = []
+  const err = (field, message, fix) => errors.push({ field, message, fix })
+  const warn = (field, message, fix) => warnings.push({ field, message, fix })
+  let config
+  try { config = JSON.parse(readFileSync(configPath, "utf8")) }
+  catch (e) { err(configPath, `can't be read (${e.message})`, "fix the file"); return { errors, warnings } }
+  checkConfig(config, err, { placeholders: true })
+  if (config.kitVersion !== KIT_VERSION)
+    err("kitVersion", `is ${config.kitVersion} in the config template; these scripts are ${KIT_VERSION}`, "bump the template with the scripts")
+  const filled = [JSON.stringify(config).match(/\{\{[A-Z_]+\}\}/g) ?? []].flat()
+  if (filled.length) warnings.push({ field: "placeholders", message: `${filled.length} left for Setup to fill`, fix: [...new Set(filled)].join(" ") })
+  let tokens
+  try { tokens = JSON.parse(readFileSync(tokensPath, "utf8")) }
+  catch (e) { err(tokensPath, `can't be read (${e.message})`, "fix the file"); return { errors, warnings } }
+  validateTokens(tokens, tokensPath, err, warn)
+  return { errors, warnings }
+}
+
 // ---------------------------------------------------------------------------
 
 function main() {
   const args = process.argv.slice(2)
   const flag = (n) => { const i = args.indexOf(n); return i === -1 ? null : args[i + 1] }
   const repo = resolve(flag("--repo") ?? join(HERE, ".."))
-  const { errors, warnings } = validate(repo, { preflight: args.includes("--preflight"), testedRange: flag("--tested-range") })
+  const { errors, warnings } = args.includes("--template")
+    ? validateTemplate(resolve(flag("--template")), resolve(flag("--tokens")))
+    : validate(repo, { preflight: args.includes("--preflight"), testedRange: flag("--tested-range") })
   for (const w of warnings) console.log(`warning  ${w.field} ${w.message} — ${w.fix}`)
   for (const e of errors) console.log(`error    ${e.field} ${e.message} — ${e.fix}`)
   console.log(errors.length ? `\n${errors.length} error(s), ${warnings.length} warning(s)` : `valid (${warnings.length} warning(s)) — kit ${KIT_VERSION}`)
