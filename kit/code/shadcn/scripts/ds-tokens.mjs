@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// design-system-kit 0.1.0 · profile shadcn · kit file — fix it in the kit, not per client
 /**
  * Design-system token generator — schema ttt-ds/1, profile shadcn.
  *
@@ -69,19 +70,25 @@ const SHADCN_MAP = {
 
 /**
  * Tailwind-only colour names from the mapping table: brand colours, which
- * shadcn's own names would otherwise shadow, and the inverse/scrim roles.
- * The system has a single ink that clears 4.5:1 on all brand fills, so it
- * serves as the foreground for both.
+ * shadcn's own names would otherwise shadow, the status shorthands, and the
+ * inverse/scrim roles. A client whose brand fills share one foreground points
+ * `on-secondary` / `on-accent` at it in the design system, not here.
  */
 const ALIAS_COLORS = {
   "brand-secondary": "secondary-normal",
-  "brand-secondary-foreground": "on-primary",
+  "brand-secondary-foreground": "on-secondary",
   "brand-secondary-soft": "secondary-soft",
   "brand-secondary-text": "secondary-text",
   "brand-accent": "accent-normal",
-  "brand-accent-foreground": "on-primary",
+  "brand-accent-foreground": "on-accent",
   "brand-accent-soft": "accent-soft",
   "brand-accent-text": "accent-text",
+  positive: "status-positive",
+  "positive-soft": "status-positive-soft",
+  cautionary: "status-cautionary",
+  "cautionary-soft": "status-cautionary-soft",
+  negative: "status-negative",
+  "negative-soft": "status-negative-soft",
   inverse: "inverse-background",
   "inverse-foreground": "inverse-label",
   dimmer: "material-dimmer",
@@ -100,6 +107,13 @@ const ALIAS = /^\{([^}]+)\}$/;
 /** A custom-property name. '.' must be escaped — idents cannot contain it raw. */
 const cssName = (name) => "--" + String(name).replace(/\./g, "\\.");
 
+/** A length in px, or null if it isn't one ("4px" -> 4, "0.25rem" -> 4). */
+function px(value) {
+  const m = /^(-?[\d.]+)(px|rem)?$/.exec(String(value).trim());
+  if (!m) return null;
+  return m[2] === "rem" ? Number(m[1]) * 16 : Number(m[1]);
+}
+
 /** "{brand-primary-50}" -> "var(--brand-primary-50)"; literals pass through. */
 function deref(value) {
   const m = ALIAS.exec(String(value).trim());
@@ -113,7 +127,7 @@ function main() {
     process.argv[2] ?? config.tokensIn ?? ".ttt/tokens.json",
   );
   const outPath = resolve(ROOT, config.tokensOut);
-  const typePrefix = config.typeClassPrefix ?? "t-";
+  const typePrefix = config.typeClassPrefix ?? "type-";
 
   const data = JSON.parse(readFileSync(tokensPath, "utf8"));
   const themes = (data.color?.themes ?? []).map((t) => t.id);
@@ -246,6 +260,25 @@ function main() {
   w("  /* Every semantic token, as a utility of the same name */");
   for (const t of semantic) {
     w(`  --color-${t.name}: var(${cssName(t.name)});`);
+  }
+
+  // Spacing: Tailwind's base is space-1, so `p-4` = space-4. A step that is
+  // not N x base gets a named override instead (`p-4` then reads that token).
+  const spacing = scalars.spacing;
+  const base = spacing.find((t) => t.name === "space-1");
+  if (base) {
+    const basePx = px(base.value);
+    w("");
+    w("  /* Spacing — base from space-1; off-scale steps as named overrides */");
+    w(`  --spacing: var(--space-1);`);
+    for (const t of spacing) {
+      const step = Number(t.name.replace(/^space-/, ""));
+      if (!Number.isFinite(step) || basePx == null) continue;
+      const v = px(t.value);
+      if (v != null && Math.abs(v - step * basePx) > 0.001) {
+        w(`  ${cssName("spacing-" + t.name.replace(/^space-/, ""))}: var(${cssName(t.name)});`);
+      }
+    }
   }
 
   for (const family of THEME_FAMILIES) {

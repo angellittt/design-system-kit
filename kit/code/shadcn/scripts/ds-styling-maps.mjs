@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// design-system-kit 0.1.0 · profile shadcn · kit file — fix it in the kit, not per client
 /**
  * ds-styling-maps.mjs — the styling map in every implemented component's
  * README, generated from that component's code.
@@ -33,18 +34,35 @@ const ts = require_("typescript")
 // Repo configuration
 // ---------------------------------------------------------------------------
 
+/** tsconfig/components.json allow comments; strip them without eating strings. */
+function readJsonc(path) {
+  const src = readFileSync(path, "utf8")
+  let out = "", inStr = false, quote = "", i = 0
+  while (i < src.length) {
+    const c = src[i], next = src[i + 1]
+    if (inStr) {
+      out += c
+      if (c === "\\") { out += next ?? ""; i += 2; continue }
+      if (c === quote) inStr = false
+      i++
+      continue
+    }
+    if (c === '"' || c === "'") { inStr = true; quote = c; out += c; i++; continue }
+    if (c === "/" && next === "/") { while (i < src.length && src[i] !== "\n") i++; continue }
+    if (c === "/" && next === "*") { i += 2; while (i < src.length && !(src[i] === "*" && src[i + 1] === "/")) i++; i += 2; continue }
+    out += c
+    i++
+  }
+  return JSON.parse(out)
+}
+
 const dsConfig = JSON.parse(
   readFileSync(join(REPO, ".ttt/design-system.json"), "utf8")
 )
 const componentsJson = JSON.parse(
   readFileSync(join(REPO, "components.json"), "utf8")
 )
-const tsconfig = JSON.parse(
-  readFileSync(join(REPO, "tsconfig.json"), "utf8").replace(
-    /^\s*\/\/.*$/gm,
-    ""
-  )
-)
+const tsconfig = readJsonc(join(REPO, "tsconfig.json"))
 
 /** Resolve the `aliases.ui` path (e.g. "@/components/ui") through tsconfig paths. */
 function uiDir() {
@@ -119,7 +137,7 @@ function colorToken(name) {
 }
 
 /**
- * An arbitrary value like `[6px_6px_0_0_var(--line-pop)]` → its token.
+ * An arbitrary value like `[0_0_0_3px_var(--focus-ring)]` → its token.
  * A component-local custom property (Badge's `--t-solid`) is not a design
  * token, but it is the value the part actually uses, so it is reported under
  * its own name; the `sets --t-solid` rows say which token feeds it.

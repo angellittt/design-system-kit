@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// design-system-kit 0.1.0 · profile shadcn · kit file — fix it in the kit, not per client
 /**
  * Fixture test for ds-build-bundle.mjs.
  *
@@ -57,7 +58,7 @@ check("css generated utilities from the fixture's classes",
 check("css picked up the fixture's own tokens",
   css.includes("--brand") && /--brand:\s*#(3366ff|36f)/.test(css))
 check("css did not leak this repo's tokens",
-  !css.includes("--primary-normal") && !css.includes("jl-t-"))
+  !css.includes("--primary-normal"))
 
 // A test file beside the components is not a component.
 check("tests excluded from the component list",

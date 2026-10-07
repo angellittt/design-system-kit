@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// design-system-kit 0.1.0 · profile shadcn · kit file — fix it in the kit, not per client
 /**
  * ds-types.mjs — `components/index.d.ts` for the design system, generated from
  * the repo's own `components/ui` exports.
@@ -30,15 +31,35 @@ const ts = createRequire(join(TOOL_ROOT, "package.json"))("typescript")
 // Repo configuration
 // ---------------------------------------------------------------------------
 
+/** tsconfig/components.json allow comments; strip them without eating strings. */
+function readJsonc(path) {
+  const src = readFileSync(path, "utf8")
+  let out = "", inStr = false, quote = "", i = 0
+  while (i < src.length) {
+    const c = src[i], next = src[i + 1]
+    if (inStr) {
+      out += c
+      if (c === "\\") { out += next ?? ""; i += 2; continue }
+      if (c === quote) inStr = false
+      i++
+      continue
+    }
+    if (c === '"' || c === "'") { inStr = true; quote = c; out += c; i++; continue }
+    if (c === "/" && next === "/") { while (i < src.length && src[i] !== "\n") i++; continue }
+    if (c === "/" && next === "*") { i += 2; while (i < src.length && !(src[i] === "*" && src[i + 1] === "/")) i++; i += 2; continue }
+    out += c
+    i++
+  }
+  return JSON.parse(out)
+}
+
 const dsConfig = JSON.parse(
   readFileSync(join(REPO, ".ttt/design-system.json"), "utf8")
 )
 const componentsJson = JSON.parse(
   readFileSync(join(REPO, "components.json"), "utf8")
 )
-const tsconfig = JSON.parse(
-  readFileSync(join(REPO, "tsconfig.json"), "utf8").replace(/^\s*\/\/.*$/gm, "")
-)
+const tsconfig = readJsonc(join(REPO, "tsconfig.json"))
 
 function uiDir() {
   const alias = componentsJson.aliases?.ui ?? "@/components/ui"
@@ -355,7 +376,7 @@ function render(files) {
   }
 
   // Module-level APIs the component layer only partly re-exports, but which
-  // the bundle puts on the global (Jelly: sonner's `toast`). They are part of
+  // the bundle puts on the global (e.g. sonner's `toast`). They are part of
   // the published API even though no file under the UI directory declares them.
   const extras = Object.entries(dsConfig.bundleExtras ?? {})
   if (extras.length) {
