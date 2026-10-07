@@ -1,0 +1,133 @@
+# Common procedure — every design-system skill
+
+design-system-kit 0.2.0 · schema `ttt-ds/1`
+
+Setup, Sync, Components and Drift audit all follow these rules. Each one was
+learned from a run that went wrong without it; none is optional. The rules
+themselves live in the kit (`kit/contract.md`, `kit/profiles/<profile>.md`);
+this file is how a skill applies them.
+
+**Paths.** "Plugin root" is the folder holding `.claude-plugin/plugin.json`.
+A skill finds it from its own base directory (two levels up from
+`skills/<skill>/`). Kit files are read there, by path — never copied into the
+session or pasted from memory. The plugin root is outside the repo (in
+Claude Code's plugin cache), so reading it can ask for permission; if the
+session can't read it, stop and ask the user to allow reading the plugin
+folder — never run a step from memory instead. "The repo" is the client project the skill
+runs in; "the design system" is the claude.ai Design System artifact linked
+from the repo config.
+
+---
+
+## 1. Validate first
+
+Run, in the repo:
+
+```bash
+npm run ds:validate          # node scripts/ds-validate.mjs
+```
+
+On any error, **stop**: report each error with the fix it names. Don't work
+around a failing config — a skill that runs on an invalid config writes
+invalid output. Warnings don't stop the run, but each one goes in the report's
+Gaps.
+
+## 2. Check versions — never mix them silently
+
+Compare three things:
+
+| What | Where |
+|---|---|
+| The installed kit | `<plugin root>/.claude-plugin/plugin.json` → `version`, and `<plugin root>/kit/profiles/<profile>.md` → its `**Profile**` line |
+| The repo | `.ttt/design-system.json` → `kitVersion`, `schema`, `profile`; the version stamped in the first lines of each `scripts/ds-*.mjs` |
+| The design system | its System section (`project/01-system.md`) → the Versions row |
+
+- `schema` or `profile` name different from the kit's → **stop**. That needs a migration, not a sync.
+- Kit versions differ (repo older than the plugin, scripts stamped with different versions, or the System section behind) → **warn** in the first message and in the report, and say which files are behind. Don't quietly run newer rules over older files, and don't copy newer kit files in as a side effect — catching a repo up to a kit version is its own change, with its own PR.
+- The repo newer than the installed plugin → **stop**: install the matching plugin version first.
+
+## 3. Read the live design system — twice
+
+- **Before working**: read the design system's index (`project/design-system.json`) and every file you will change, from the live artifact. Note `lastChange` (`by`, `at`, `note`).
+- **Immediately before publishing**: read the index again. If `lastChange` moved since your first read, someone else published: re-read the files you're about to send, merge their change into yours, and only then publish. Never publish over a newer version, and never treat a local copy as proof that nothing changed.
+- A read returns the artifact's version id as well. A changed version id with an unchanged `lastChange` is your own earlier publish in this session — not someone else's.
+
+How a Design System artifact is written (the type's own instructions come back with every read; these are the parts that have bitten):
+
+- Content lives under `project/`. Publish with the Artifact tool: `url` = the system, `root` = a local folder holding `project/…` copies of only the files you changed, `file_path` = one of them, `files` = the rest, keyed by their `project/…` path.
+- The index (`project/design-system.json`) goes **last**, in the final call, re-read right before. Keep every key you didn't mean to change; set `lastChange` (`by` = the owner, `at` = system clock, `via` = "Claude Code", `note` = one line).
+- A file whose extension isn't a served type needs an explicit content type: `components/index.d.ts` goes as `{"from": "…", "contentType": "text/plain"}`.
+- Don't write the generated files the page owns (`tokens.css`, `api/…`, `manifest.json`).
+- After publishing, read back what you sent and compare (`cmp`, or the file text) — that, not the publish result, is proof it landed.
+
+## 4. Publish only as the owner
+
+The System section names the owner; the artifact read says whether this
+session can write ("owned by you" / "writer"). Publish only when the session
+is the owner's. If it isn't — read-only, or someone else's account — **stop**
+and say who the owner is, so they can run the skill or review the diff
+themselves. The contract's ownership table: only the owner's account updates
+the design system, and the owner reviews every publish-back diff.
+
+## 5. Timestamps come from the system clock
+
+`lastChange.at`, `lastSynced`, changelog dates and the report's times are
+taken with `date -u +%Y-%m-%dT%H:%M:%SZ` at the moment of writing. Never
+estimate, never reuse a time from earlier in the run.
+
+## 6. Changelog
+
+The design system's `project/03-changelog.md`, newest first. Each entry is
+exactly two lines:
+
+```
+**Oct 7** · <what changed>[ — <short reason, only when it isn't self-explanatory>] · <owner: design | code | dev | design + dev> · [PR](<link>) or [task](<link>)
+Code ✓ · Figma pending
+```
+
+- The second line marks every sync target `✓`, `pending` or `—`. **Code ✓ only once the PR is merged**; until then `pending`. **Figma ✓ only after reading back what changed in Figma** (see Sync's `figma.md`).
+- The reason is a clause, not a paragraph; the reasoning lives in the linked PR or task.
+- Keep the latest 10. Before dropping the oldest, check that `archived/` already holds its full text (`project/archived/changelog-to-<date>.md`); if not, add it there in the same publish.
+- When a later run completes an earlier entry's pending target, flip that entry's mark rather than adding a new entry.
+
+## 7. Deviations
+
+Anything that conflicts with an agreed intent — a contrast failure, a
+component that misses its agreed styling, a token code can't honour — is a
+**deviation**, logged as a task in the ClickUp list in the repo config
+(`tracker`), never fixed by quietly changing the other side.
+
+- Code never changes a design-owned value (a token, a brand asset) to make a check pass.
+- The design system mirrors only **open** deviations, as links, in the System section's "Open deviations" line (`project/01-system.md`).
+- Every deviation logged in a run is listed in the report.
+
+## 8. Files
+
+- Deleting or renaming a file — in the repo or in the design system — happens only in Claude Code (a Cowork or chat session can add and replace, not remove). A rename is "add new, then remove old", in that order, in one run.
+- In a shell, remove only by literal absolute path. Never `cd` and then remove a relative glob.
+
+## 9. Repos
+
+- Never write to a `tttstudios` repository — no branch, commit, push, PR or comment. Read only, and only if the user asked.
+- Work on a branch, never directly on `main`; end with a PR. Commit messages and PR bodies end with the attribution the session specifies.
+- Don't change a package under a running dev server you didn't start (its cache keeps the old files and every page starts failing). Build with `npm run build:safe` (`.next-build`) while a dev server runs.
+
+## 10. The report
+
+Every run ends with a report the skill writes itself, posted in the chat and as
+the PR body (or, with no PR, in the chat alone). It ends with exactly these
+headings, in this order, with "none" under any that are empty:
+
+```
+## What changed
+## Values changed (old → new)
+## Deviations logged
+## Visible preview differences
+## Gaps
+```
+
+- **What changed** — files and design-system paths touched, checks run and their results.
+- **Values changed (old → new)** — every token value, status, version and setting that changed, as `old → new`.
+- **Deviations logged** — each ClickUp task, with its link.
+- **Visible preview differences** — what a designer would see change in a preview, or "none".
+- **Gaps** — anything the contract or profile didn't say and the run had to decide, every warning from validation, and every manual step left (e.g. publishing the Figma library).

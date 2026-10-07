@@ -1,0 +1,15 @@
+{
+  "name": "ttt-design",
+  "owner": { "name": "TTT Studios" },
+  "metadata": {
+    "description": "TTT's design system kit and the skills that run it."
+  },
+  "plugins": [
+    {
+      "name": "design-system-kit",
+      "source": "./",
+      "description": "The ttt-ds/1 contract, library profiles, the design system template, vendored code, and the Sync skill (/ds-sync pull | publish).",
+      "version": "0.2.0"
+    }
+  ]
+}

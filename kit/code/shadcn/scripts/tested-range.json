@@ -1,5 +1,5 @@
 {
-  "//": "design-system-kit 0.1.2 \u00b7 profile shadcn \u00b7 kit file. The tested range: the lowest and highest version of each package that the kit's acceptance runs passed on (fresh app from the dev setup checklist, kit applied from the kit alone, every check green). Widen it only by passing another acceptance run. `ds-validate --preflight` compares the repo's lockfile against it.",
+  "//": "design-system-kit 0.2.0 \u00b7 profile shadcn \u00b7 kit file. The tested range: the lowest and highest version of each package that the kit's acceptance runs passed on (fresh app from the dev setup checklist, kit applied from the kit alone, every check green). Widen it only by passing another acceptance run. `ds-validate --preflight` compares the repo's lockfile against it.",
   "runs": [
     {
       "date": "2026-10-07",

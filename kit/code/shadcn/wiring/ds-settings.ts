@@ -1,4 +1,4 @@
-// design-system-kit 0.1.2 · profile shadcn · wiring: client settings
+// design-system-kit 0.2.0 · profile shadcn · wiring: client settings
 import { enUS } from "date-fns/locale"
 import type { Locale } from "date-fns"
 

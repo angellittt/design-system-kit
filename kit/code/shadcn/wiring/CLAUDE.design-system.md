@@ -1,4 +1,4 @@
-<!-- design-system-kit 0.1.2 · profile shadcn · wiring: CLAUDE.md design-system section.
+<!-- design-system-kit 0.2.0 · profile shadcn · wiring: CLAUDE.md design-system section.
      Setup appends this to the repo's CLAUDE.md and fills every {{…}}; Sync keeps it
      current. Agreed component rules from accepted proposals go under
      "Component rules". Delete this comment when filling. -->
