@@ -10,4 +10,4 @@ The Tailwind names to use when building UI against {{CLIENT_NAME}} — in the ap
 
 {{CLIENT_MAPPING_NOTES}}
 
-This table mirrors the generated token file in the repo (`{{TOKENS_OUT}}`) and is updated at every publish-back.
+Once the client repo has its token file, `ds-styling-maps.mjs --using-in-code` generates this whole section from it (`{{TOKENS_OUT}}`), and every publish-back regenerates it.

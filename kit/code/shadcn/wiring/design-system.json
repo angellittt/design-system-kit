@@ -3,7 +3,7 @@
   "tracker": "{{TRACKER_URL}}",
   "schema": "ttt-ds/1",
   "profile": "shadcn",
-  "kitVersion": "0.1.1",
+  "kitVersion": "0.1.2",
   "tokensIn": ".ttt/tokens.json",
   "tokensOut": "src/styles/ds-tokens.css",
   "lastSynced": "{{NOW_ISO}}",
@@ -13,7 +13,7 @@
     "weekStartsOn": "{{WEEK_STARTS_ON}}",
     "dateFormat": "{{DATE_FORMAT}}"
   },
-  "namespace": "{{CLIENT_NAMESPACE}}",
+  "namespace": "{{NAMESPACE}}",
   "bundleExtras": {
     "sonner": [
       "toast"

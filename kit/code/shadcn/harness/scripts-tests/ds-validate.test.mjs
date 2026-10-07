@@ -1,10 +1,12 @@
 // @vitest-environment node
-// design-system-kit 0.1.1 · profile shadcn · harness: ds-validate tests
+// design-system-kit 0.1.2 · profile shadcn · harness: ds-validate tests
 import { describe, expect, it } from "vitest"
 import { spawnSync } from "node:child_process"
 import { join, dirname } from "node:path"
 import { fileURLToPath } from "node:url"
-import { validate, isDateFormat, isLocale, compareVersions, KIT_VERSION } from "../ds-validate.mjs"
+import { validate, validateTemplate, isDateFormat, isLocale, compareVersions, KIT_VERSION } from "../ds-validate.mjs"
+import { writeFileSync, mkdtempSync } from "node:fs"
+import { tmpdir } from "node:os"
 import { repo, goodConfig, snapshot } from "./helpers.mjs"
 
 const SCRIPT = join(dirname(fileURLToPath(import.meta.url)), "../ds-validate.mjs")
@@ -137,3 +139,31 @@ describe("ds-validate: helpers and CLI", () => {
     expect(spawnSync(process.execPath, [SCRIPT, "--repo", repo()], { encoding: "utf8" }).status).toBe(0)
   })
 })
+
+describe("ds-validate: --template", () => {
+  const write = (config, tokens = snapshot()) => {
+    const dir = mkdtempSync(join(tmpdir(), "ds-template-test-"))
+    writeFileSync(join(dir, "config.json"), JSON.stringify(config))
+    writeFileSync(join(dir, "tokens.json"), JSON.stringify(tokens))
+    return [join(dir, "config.json"), join(dir, "tokens.json")]
+  }
+
+  it("accepts {{…}} placeholders where Setup fills a value, and lists them", () => {
+    const config = { ...goodConfig(), designSystem: "{{DESIGN_SYSTEM_URL}}", namespace: "{{CLIENT_NAMESPACE}}",
+      settings: { locale: "{{LOCALE}}", weekStartsOn: "{{WEEK_STARTS_ON}}", dateFormat: "{{DATE_FORMAT}}" } }
+    const r = validateTemplate(...write(config))
+    expect(r.errors).toEqual([])
+    expect(r.warnings[0].fix).toMatch(/\{\{LOCALE\}\}/)
+  })
+
+  it("still checks every non-placeholder value", () => {
+    const r = validateTemplate(...write({ ...goodConfig(), typeClassPrefix: "type", settings: { locale: "{{LOCALE}}", weekStartsOn: 9, dateFormat: "" } }))
+    expect(r.errors.map((e) => e.field)).toEqual(expect.arrayContaining(["typeClassPrefix", "settings.weekStartsOn"]))
+  })
+
+  it("requires the template's kitVersion to match the scripts", () => {
+    const r = validateTemplate(...write({ ...goodConfig(), kitVersion: "0.0.1" }))
+    expect(r.errors.map((e) => e.field)).toContain("kitVersion")
+  })
+})
+

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// design-system-kit 0.1.1 · profile shadcn · kit file — fix it in the kit, not per client
+// design-system-kit 0.1.2 · profile shadcn · kit file — fix it in the kit, not per client
 /**
  * ds-contrast.mjs — check every contrast requirement in every theme.
  *
@@ -7,6 +7,7 @@
  *   node scripts/ds-contrast.mjs --tokens <file> # another snapshot (e.g. a design system's tokens.json)
  *   node scripts/ds-contrast.mjs --pairs <file>  # another pairs file
  *   node scripts/ds-contrast.mjs --repo <dir>
+ *   node scripts/ds-contrast.mjs --config <file> # read contrast.intentional from another config (the kit's template)
  *
  * Pairs come from scripts/contrast-pairs.json, written against semantic token
  * names so the same file serves every client. Each colour is resolved through
@@ -231,7 +232,7 @@ function main() {
   const argv = process.argv.slice(2)
   const flag = (n) => { const i = argv.indexOf(n); return i === -1 ? null : argv[i + 1] }
   const repo = resolve(flag("--repo") ?? join(HERE, ".."))
-  const configPath = join(repo, ".ttt/design-system.json")
+  const configPath = flag("--config") ? resolve(flag("--config")) : join(repo, ".ttt/design-system.json")
   const config = existsSync(configPath) ? JSON.parse(readFileSync(configPath, "utf8")) : {}
   const tokensPath = flag("--tokens") ? resolve(flag("--tokens")) : join(repo, config.tokensIn ?? ".ttt/tokens.json")
   const pairsPath = resolve(flag("--pairs") ?? join(HERE, "contrast-pairs.json"))

@@ -1,8 +1,9 @@
-// design-system-kit 0.1.1 · profile shadcn · harness: script-test helpers
+// design-system-kit 0.1.2 · profile shadcn · harness: script-test helpers
 import { mkdtempSync, mkdirSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 import { tmpdir } from "node:os"
 import { SHADCN_MAP, ALIAS_COLORS } from "../ds-tokens.mjs"
+import { KIT_VERSION } from "../ds-validate.mjs"
 
 /** A token snapshot with every semantic token the mapping needs. */
 export function snapshot(overrides = {}) {
@@ -30,7 +31,7 @@ export const goodConfig = () => ({
   tracker: "https://app.clickup.com/1/v/l/li/2",
   schema: "ttt-ds/1",
   profile: "shadcn",
-  kitVersion: "0.1.1",
+  kitVersion: KIT_VERSION,
   tokensIn: ".ttt/tokens.json",
   tokensOut: "src/styles/ds-tokens.css",
   lastSynced: "2026-10-07T18:00:00Z",
