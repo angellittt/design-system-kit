@@ -3,7 +3,7 @@
   "tracker": "{{TRACKER_URL}}",
   "schema": "ttt-ds/1",
   "profile": "shadcn",
-  "kitVersion": "0.1.0",
+  "kitVersion": "0.1.1",
   "tokensIn": ".ttt/tokens.json",
   "tokensOut": "src/styles/ds-tokens.css",
   "lastSynced": "{{NOW_ISO}}",
@@ -15,10 +15,29 @@
   },
   "namespace": "{{CLIENT_NAMESPACE}}",
   "bundleExtras": {
-    "sonner": ["toast"]
+    "sonner": [
+      "toast"
+    ]
   },
   "componentFiles": {
-    "DatePicker": ["date-picker.tsx", "calendar.tsx"],
-    "Input": ["input.tsx", "label.tsx"]
+    "DatePicker": [
+      "date-picker.tsx",
+      "calendar.tsx"
+    ],
+    "Input": [
+      "input.tsx",
+      "label.tsx"
+    ]
+  },
+  "contrast": {
+    "intentional": [
+      {
+        "foreground": "label-disable",
+        "reason": "disabled text is intentionally below 4.5:1 and always paired with a disabled control"
+      }
+    ]
+  },
+  "usingInCode": {
+    "notes": []
   }
 }

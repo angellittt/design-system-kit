@@ -1,5 +1,5 @@
 {
-  "//": "design-system-kit 0.1.0 \u00b7 profile shadcn \u00b7 wiring: merged into the repo's package.json by Setup. Existing entries are never changed; missing ones are added at these versions. `dependencies` covers what the kit's components import beyond shadcn init's own (sonner for Sonner, react-day-picker and date-fns for Calendar and DatePicker, next-themes for theme switching).",
+  "//": "design-system-kit 0.1.1 \u00b7 profile shadcn \u00b7 wiring: merged into the repo's package.json by Setup. Existing entries are never changed; missing ones are added at these versions. `dependencies` covers what the kit's components import beyond shadcn init's own (sonner for Sonner, react-day-picker and date-fns for Calendar and DatePicker, next-themes for theme switching).",
   "scripts": {
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
@@ -7,6 +7,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "ds:tokens": "node scripts/ds-tokens.mjs",
+    "ds:validate": "node scripts/ds-validate.mjs",
+    "ds:contrast": "node scripts/ds-contrast.mjs",
     "ds:pack-react": "node scripts/ds-pack-react.mjs",
     "ds:build-bundle": "node scripts/ds-build-bundle.mjs",
     "ds:styling-maps": "node scripts/ds-styling-maps.mjs",

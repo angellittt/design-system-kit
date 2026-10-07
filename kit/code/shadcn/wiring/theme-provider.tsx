@@ -1,4 +1,4 @@
-// design-system-kit 0.1.0 · profile shadcn · wiring: theme switching
+// design-system-kit 0.1.1 · profile shadcn · wiring: theme switching
 "use client"
 
 import * as React from "react"
