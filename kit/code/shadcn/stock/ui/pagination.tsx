@@ -1,3 +1,8 @@
+// design-system-kit 0.1.0 · profile shadcn · stock component (base-nova + baseline only)
+/**
+ * Stock base-nova (shadcn 4.21.1, 2026-10-07) + TTT baseline:
+ * - Accessible name `aria-label="pagination"` -> `"Pagination"`.
+ */
 import * as React from "react"
 import { cn } from "cn"
 
@@ -8,7 +13,7 @@ function Pagination({ className, ...props }: React.ComponentProps<"nav">) {
   return (
     <nav
       role="navigation"
-      aria-label="pagination"
+      aria-label="Pagination"
       data-slot="pagination"
       className={cn("mx-auto flex w-full justify-center", className)}
       {...props}

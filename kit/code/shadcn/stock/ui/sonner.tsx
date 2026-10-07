@@ -1,4 +1,10 @@
+// design-system-kit 0.1.0 · profile shadcn · stock component (base-nova + baseline only)
 "use client"
+
+/**
+ * Stock base-nova (shadcn 4.21.1, 2026-10-07) + TTT baseline:
+ * - `--border-radius: var(--radius)` -> `var(--radius-lg)`: the generated token file defines radius tokens only, no bare `--radius` (toasts take the popover radius role).
+ */
 
 import { useTheme } from "next-themes"
 import { Toaster as Sonner, type ToasterProps } from "sonner"
@@ -33,7 +39,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
           "--normal-bg": "var(--popover)",
           "--normal-text": "var(--popover-foreground)",
           "--normal-border": "var(--border)",
-          "--border-radius": "var(--radius)",
+          "--border-radius": "var(--radius-lg)",
         } as React.CSSProperties
       }
       toastOptions={{

@@ -1,3 +1,8 @@
+// design-system-kit 0.1.0 · profile shadcn · stock component (base-nova + baseline only)
+/**
+ * Stock base-nova (shadcn 4.21.1, 2026-10-07) + TTT baseline:
+ * - AlertDescription: `group-has-[>svg]/alert:col-start-2` pins the description to the text column when an icon is present.
+ */
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "cn"
@@ -54,7 +59,7 @@ function AlertDescription({
     <div
       data-slot="alert-description"
       className={cn(
-        "text-sm text-balance text-muted-foreground md:text-pretty [&_a]:underline [&_a]:underline-offset-3 [&_a]:hover:text-foreground [&_p:not(:last-child)]:mb-4",
+        "text-sm text-balance text-muted-foreground group-has-[>svg]/alert:col-start-2 md:text-pretty [&_a]:underline [&_a]:underline-offset-3 [&_a]:hover:text-foreground [&_p:not(:last-child)]:mb-4",
         className
       )}
       {...props}

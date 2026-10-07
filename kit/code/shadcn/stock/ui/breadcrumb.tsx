@@ -1,3 +1,9 @@
+// design-system-kit 0.1.0 · profile shadcn · stock component (base-nova + baseline only)
+/**
+ * Stock base-nova (shadcn 4.21.1, 2026-10-07) + TTT baseline:
+ * - Accessible name `aria-label="breadcrumb"` -> `"Breadcrumb"`.
+ * - Link gets `rounded-xs` so the global focus outline has a rounded shape.
+ */
 import * as React from "react"
 import { mergeProps } from "@base-ui/react/merge-props"
 import { useRender } from "@base-ui/react/use-render"
@@ -7,7 +13,7 @@ import { ChevronRightIcon, MoreHorizontalIcon } from "lucide-react"
 function Breadcrumb({ className, ...props }: React.ComponentProps<"nav">) {
   return (
     <nav
-      aria-label="breadcrumb"
+      aria-label="Breadcrumb"
       data-slot="breadcrumb"
       className={cn(className)}
       {...props}
@@ -47,7 +53,7 @@ function BreadcrumbLink({
     defaultTagName: "a",
     props: mergeProps<"a">(
       {
-        className: cn("transition-colors hover:text-foreground", className),
+        className: cn("rounded-xs transition-colors hover:text-foreground", className),
       },
       props
     ),

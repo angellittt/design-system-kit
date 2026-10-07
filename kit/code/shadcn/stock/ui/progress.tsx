@@ -1,3 +1,8 @@
+// design-system-kit 0.1.0 · profile shadcn · stock component (base-nova + baseline only)
+/**
+ * Stock base-nova (shadcn 4.21.1, 2026-10-07) + TTT baseline:
+ * - Indicator `transition-all` -> `motion-safe:transition-all`.
+ */
 "use client"
 
 import { Progress as ProgressPrimitive } from "@base-ui/react/progress"
@@ -44,7 +49,7 @@ function ProgressIndicator({
   return (
     <ProgressPrimitive.Indicator
       data-slot="progress-indicator"
-      className={cn("h-full bg-primary transition-all", className)}
+      className={cn("h-full bg-primary motion-safe:transition-all", className)}
       {...props}
     />
   )
