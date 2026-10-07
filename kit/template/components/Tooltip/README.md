@@ -1,14 +1,40 @@
 # Tooltip
 
-Tooltip names or briefly explains a control on hover and focus.
+Tooltip names an icon or adds a one-line hint, on hover and focus.
+
+> Preview from stock — not yet in this codebase; final look may differ slightly once built.
 
 ```tsx
-<Tooltip><TooltipTrigger render={<Button size="icon" variant="ghost" aria-label="Copy" />}><Copy /></TooltipTrigger><TooltipContent>Copy link</TooltipContent></Tooltip>
+<Tooltip>
+  <TooltipTrigger render={<Button size="icon" variant="outline" aria-label="Copy link" />}>
+    <CopyIcon />
+  </TooltipTrigger>
+  <TooltipContent>Copy link</TooltipContent>
+</Tooltip>
 ```
 
-Styled as an inverse chip. Wrap the app once in `TooltipProvider`.
+One `TooltipProvider` sits at the app root. The chip uses the inverse tokens. An icon-only trigger still needs its own `aria-label`.
 
-**Don't** put essential information or interactive content in a tooltip.
+**Don't** put interactive or essential content in a tooltip — touch users may never see it.
+
+**Styling map** — generated from `src/components/ui/tooltip.tsx` on 2026-10-07. Values come from the code; a token change regenerates the token file, not this table.
+
+| Part | State or variant | Attribute | Token |
+|---|---|---|---|
+| arrow | — | background | `inverse-background` |
+| arrow | — | radius | rounded-[2px] — fixed in code |
+| arrow | — | size | `space-1` × 2.5 |
+| content | — | background | `inverse-background` |
+| content | — | text | `inverse-label` |
+| content | — | radius | `radius-md` |
+| content | — | size | max-w-xs — fixed in code |
+| content | — | size | w-fit — fixed in code |
+| content | — | padding | `space-1` × 1.5 |
+| content | — | padding | `space-3` |
+| content | — | gap | `space-1` × 1.5 |
+| content | — | type | text-xs — fixed in code |
+| content | ** · slot=kbd | radius | `radius-sm` |
+| content | has-data-[slot=kbd] | padding | `space-1` × 1.5 |
 
 **Contract**
 - Status: validated
