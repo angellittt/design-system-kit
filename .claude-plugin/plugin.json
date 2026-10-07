@@ -1,8 +1,15 @@
 {
   "name": "design-system-kit",
-  "version": "0.1.2",
-  "description": "TTT's design system kit: the ttt-ds/1 contract, library profiles, the starting design system template, and the vendored code (stock components, kit extensions, scripts, wiring, harness) that the Setup, Sync, Components and Drift audit skills apply to a client repo.",
-  "author": { "name": "TTT Studios" },
+  "version": "0.2.0",
+  "description": "TTT's design system kit: the ttt-ds/1 contract, library profiles, the starting design system template, the vendored code (stock components, kit extensions, scripts, wiring, harness), and the Sync skill (/ds-sync pull | publish).",
+  "author": {
+    "name": "TTT Studios"
+  },
   "repository": "https://github.com/angellittt/design-system-kit",
-  "keywords": ["design-system", "shadcn", "tailwind", "base-ui"]
+  "keywords": [
+    "design-system",
+    "shadcn",
+    "tailwind",
+    "base-ui"
+  ]
 }
