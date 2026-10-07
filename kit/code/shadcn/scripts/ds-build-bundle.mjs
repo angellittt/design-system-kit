@@ -13,7 +13,7 @@
  *   node scripts/ds-build-bundle.mjs <out-dir>     build bundle.js + bundle.css
  *   node scripts/ds-build-bundle.mjs --check       verify the toolchain pins
  *
- * KIT FILE — this runs against any repo on profile `shadcn` 1.1. Everything
+ * KIT FILE — this runs against any repo on profile `shadcn` 1.2. Everything
  * repo-specific is resolved, not hardcoded:
  *
  *   namespace, extra exports  .ttt/design-system.json  (namespace, bundleExtras)

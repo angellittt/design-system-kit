@@ -4,7 +4,7 @@
  * ds-styling-maps.mjs — the styling map in every implemented component's
  * README, generated from that component's code.
  *
- * KIT FILE. Generic across repos on profile `shadcn` 1.1: the token names, the
+ * KIT FILE. Generic across repos on profile `shadcn` 1.2: the token names, the
  * UI directory and the component-to-file mapping all come from the consuming
  * repo's own config, never from anything hardcoded here.
  *

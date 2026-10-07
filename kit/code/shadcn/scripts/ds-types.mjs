@@ -4,7 +4,7 @@
  * ds-types.mjs — `components/index.d.ts` for the design system, generated from
  * the repo's own `components/ui` exports.
  *
- * KIT FILE. Generic across repos on profile `shadcn` 1.1: the UI directory and
+ * KIT FILE. Generic across repos on profile `shadcn` 1.2: the UI directory and
  * the namespace come from the consuming repo's config.
  *
  *   node scripts/ds-types.mjs                 # print to stdout

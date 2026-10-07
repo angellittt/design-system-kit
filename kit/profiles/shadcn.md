@@ -1,6 +1,8 @@
 # Part 2 — Library profile: shadcn
 
-**Profile** `shadcn` 1.1 · **Platform** web · **For schema** `ttt-ds/1`
+**Profile** `shadcn` 1.2 · **Platform** web · **For schema** `ttt-ds/1`
+
+**1.2** (kit 0.1.0) — kit extension catalog: Tabs pill/underline and Card compact are stock now; Alert joins Semantic colour; Clickable rows added as a candidate. Mapping gains `font-heading`; the generator emits the spacing base, the status shorthands and font fallbacks. Kit code vendored under `kit/code/shadcn/`.
 
 Everything in this part is specific to shadcn/ui. The universal rules in Part 1 apply unchanged.
 
