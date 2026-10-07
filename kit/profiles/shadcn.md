@@ -250,9 +250,11 @@ reaches neither bundle.
 
 ## Baseline inventory
 
-Accordion, Avatar, Badge, Button, Card, Checkbox, Dialog, DropdownMenu, Input (with Label), Popover, RadioGroup, Select, Sidebar, Slider, Sonner, Switch, Table, Tabs, Tooltip.
+One design-system component per stock file in `kit/code/shadcn/stock/ui/`, named by code export — 34 in all, each with a README and preview in `kit/template/components/`:
 
-Installed as Sidebar dependencies, not documented by default: `sheet`, `separator`, `skeleton`. Add an entry before using one directly in screens.
+Accordion, Alert, AlertDialog, Avatar, Badge, Breadcrumb, Button, Card, Checkbox, Combobox, DatePicker (with Calendar), Dialog, DropdownMenu, Empty, Field, Input (with Label), InputGroup, Pagination, Popover, Progress, RadioGroup, Select, Separator, Sheet, Sidebar, Skeleton, Slider, Sonner, Spinner, Switch, Table, Tabs, Textarea, Tooltip.
+
+Two stock files are documented under another component, by the naming rule (a composition takes its main part's name; a TTT wrapper's name wins): `label.tsx` under Input, and `calendar.tsx` under DatePicker — whose shell is the kit file `kit/ui/date-picker.tsx`, so a project that doesn't take it has Calendar alone. `sheet`, `separator` and `skeleton` come with Sidebar and are documented for direct use.
 
 ## Figma
 
