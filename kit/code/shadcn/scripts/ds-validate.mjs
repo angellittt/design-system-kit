@@ -1,0 +1,420 @@
+#!/usr/bin/env node
+// design-system-kit 0.1.1 · profile shadcn · kit file — fix it in the kit, not per client
+/**
+ * ds-validate.mjs — the contract's config validation.
+ *
+ *   node scripts/ds-validate.mjs               # config, token snapshot, wiring
+ *   node scripts/ds-validate.mjs --preflight   # …and installed versions vs the tested range
+ *   node scripts/ds-validate.mjs --repo <dir>  # validate another checkout
+ *
+ * Checks `.ttt/design-system.json` against the schema below (every key), the
+ * token snapshot it points at (name grammar, aliases, cycles, colour formats,
+ * the semantic tokens the profile's mapping needs), that the theme block's
+ * `@source` resolves to the source root, and that the repo's `kitVersion` is
+ * no newer than these scripts. Every error names the field and says how to
+ * fix it. Exits 1 on any error; warnings don't fail.
+ *
+ * Runs in CI and at the start of every skill run.
+ */
+
+import { readFileSync, existsSync } from "node:fs"
+import { join, resolve, dirname, relative } from "node:path"
+import { fileURLToPath } from "node:url"
+import { SHADCN_MAP, ALIAS_COLORS } from "./ds-tokens.mjs"
+
+/** The kit these scripts belong to. A repo may not claim a newer one. */
+export const KIT_VERSION = "0.1.1"
+const SCHEMA = "ttt-ds/1"
+const PROFILE = "shadcn"
+
+const HERE = dirname(fileURLToPath(import.meta.url))
+
+// ---------------------------------------------------------------------------
+// Small helpers
+// ---------------------------------------------------------------------------
+
+/** tsconfig/components.json allow comments; strip them without eating strings. */
+function readJsonc(path) {
+  const src = readFileSync(path, "utf8")
+  let out = "", inStr = false, quote = "", i = 0
+  while (i < src.length) {
+    const c = src[i], next = src[i + 1]
+    if (inStr) {
+      out += c
+      if (c === "\\") { out += next ?? ""; i += 2; continue }
+      if (c === quote) inStr = false
+      i++
+      continue
+    }
+    if (c === '"' || c === "'") { inStr = true; quote = c; out += c; i++; continue }
+    if (c === "/" && next === "/") { while (i < src.length && src[i] !== "\n") i++; continue }
+    if (c === "/" && next === "*") { i += 2; while (i < src.length && !(src[i] === "*" && src[i + 1] === "/")) i++; i += 2; continue }
+    out += c
+    i++
+  }
+  return JSON.parse(out.replace(/,(\s*[}\]])/g, "$1"))
+}
+
+const semver = (v) => /^(\d+)\.(\d+)\.(\d+)/.exec(String(v))?.slice(1).map(Number)
+/** -1, 0 or 1; null if either side isn't a version. */
+export function compareVersions(a, b) {
+  const x = semver(a), y = semver(b)
+  if (!x || !y) return null
+  for (let i = 0; i < 3; i++) if (x[i] !== y[i]) return x[i] < y[i] ? -1 : 1
+  return 0
+}
+
+const isObject = (v) => v && typeof v === "object" && !Array.isArray(v)
+const isUrl = (v) => {
+  try { return ["https:", "http:"].includes(new URL(v).protocol) } catch { return false }
+}
+
+/** A token name the design system type accepts. */
+export const TOKEN_NAME = /^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$/
+const ALIAS = /^\{([^}]+)\}$/
+/** Colour forms the design system type reads (no nested functions, no named colours). */
+const COLOUR = [
+  /^#([0-9a-f]{3}|[0-9a-f]{4}|[0-9a-f]{6}|[0-9a-f]{8})$/i,
+  /^(rgb|rgba|hsl|hsla|hwb|lab|lch|oklab|oklch|color)\([^()]*\)$/i,
+]
+export const isColour = (v) => COLOUR.some((re) => re.test(String(v).trim()))
+const LENGTH = /^-?(\d+\.?\d*|\.\d+)(px|rem|em|%)?$/
+
+/** "DD/MM/YYYY", "M.D.YY" … one day, one month, one year, one separator. */
+export function isDateFormat(v) {
+  if (v === "") return true
+  const m = /^([DMY]+)([/.\- ])([DMY]+)\2([DMY]+)$/.exec(v)
+  if (!m) return false
+  const parts = [m[1], m[3], m[4]]
+  const ok = { D: ["D", "DD"], M: ["M", "MM"], Y: ["YY", "YYYY"] }
+  const seen = new Set()
+  for (const p of parts) {
+    const kind = p[0]
+    if (!ok[kind]?.includes(p) || seen.has(kind)) return false
+    seen.add(kind)
+  }
+  return seen.size === 3
+}
+
+/**
+ * A canonical BCP 47 tag of the form apps actually use: an ISO 639 language
+ * (2–3 letters), an optional script, an optional region ("en-US", "zh-Hant-TW",
+ * "es-419"). `Intl` alone would accept "english", a reserved 5–8 letter subtag.
+ */
+export function isLocale(v) {
+  if (typeof v !== "string" || !/^[a-z]{2,3}(-[A-Z][a-z]{3})?(-([A-Z]{2}|\d{3}))?$/.test(v)) return false
+  try {
+    return Intl.getCanonicalLocales(v)[0] === v
+  } catch {
+    return false
+  }
+}
+
+// ---------------------------------------------------------------------------
+// The config schema: every key, what it must be, how to fix it
+// ---------------------------------------------------------------------------
+
+const str = (fix) => (v) => typeof v === "string" && v.length > 0 ? null : fix
+const CONFIG_SCHEMA = {
+  designSystem: { required: true, check: (v) => isUrl(v) ? null : "set it to the design system's claude.ai link" },
+  tracker: { required: true, check: (v) => isUrl(v) ? null : "set it to the project's ClickUp list URL" },
+  schema: { required: true, check: (v) => v === SCHEMA ? null : `this kit reads schema "${SCHEMA}"; the design system and repo must agree` },
+  profile: { required: true, check: (v) => v === PROFILE ? null : `these scripts are profile "${PROFILE}"; install the kit's code for "${v}" instead` },
+  kitVersion: { required: true, check: (v) => semver(v) ? null : 'set it to the kit version the repo was set up or last synced with, e.g. "0.1.1"' },
+  tokensIn: { required: true, check: str('set it to the token snapshot path, normally ".ttt/tokens.json"') },
+  tokensOut: { required: true, check: (v) => typeof v === "string" && v.endsWith(".css") ? null : 'set it to the generated token file, e.g. "src/styles/ds-tokens.css"' },
+  lastSynced: { required: true, check: (v) => typeof v === "string" && /^\d{4}-\d\d-\d\dT\d\d:\d\d(:\d\d)?(\.\d+)?Z$/.test(v) && !isNaN(Date.parse(v)) ? null : 'use an RFC 3339 UTC time from the system clock, e.g. "2026-10-07T18:01:26Z"' },
+  typeClassPrefix: { required: true, check: (v) => typeof v === "string" && /^[a-z][a-z0-9-]*-$/.test(v) ? null : 'lowercase, ending in "-", e.g. "type-"' },
+  namespace: { required: true, check: (v) => typeof v === "string" && /^[A-Z][A-Za-z0-9_$]*$/.test(v) ? null : 'a PascalCase JavaScript identifier for the bundle global, e.g. "Acme"' },
+  bundleExtras: { required: false, check: (v) => isObject(v) && Object.values(v).every((a) => Array.isArray(a) && a.every((n) => typeof n === "string" && /^[A-Za-z_$][\w$]*$/.test(n))) ? null : 'map a module to the export names the bundle adds, e.g. {"sonner": ["toast"]}' },
+  componentFiles: { required: false, check: (v) => isObject(v) && Object.entries(v).every(([k, a]) => /^[A-Z][A-Za-z0-9]*$/.test(k) && Array.isArray(a) && a.length && a.every((f) => typeof f === "string" && /^[a-z0-9-]+\.tsx$/.test(f))) ? null : 'map each PascalCase component to its .tsx files, e.g. {"Input": ["input.tsx", "label.tsx"]}' },
+  settings: { required: true, check: (v) => isObject(v) ? null : "add settings: { locale, weekStartsOn, dateFormat }" },
+  contrast: { required: false, check: (v) => isObject(v) ? null : 'an object: { "intentional": [{ "foreground", "background"?, "reason" }] }' },
+  usingInCode: { required: false, check: (v) => isObject(v) ? null : 'an object: { "notes": ["…"] }' },
+}
+
+const SETTINGS_SCHEMA = {
+  locale: (v) => isLocale(v) ? null : 'a canonical BCP 47 tag, e.g. "en-US" or "fr-CA"',
+  weekStartsOn: (v) => Number.isInteger(v) && v >= 0 && v <= 6 ? null : "a number 0–6, 0 = Sunday; always stated, never derived from the locale",
+  dateFormat: (v) => typeof v === "string" && isDateFormat(v) ? null : '"" to use the locale\'s pattern, or one day, month and year with one separator, e.g. "DD/MM/YYYY"',
+}
+
+// ---------------------------------------------------------------------------
+
+export function validate(repo, { preflight = false, testedRange } = {}) {
+  const errors = []
+  const warnings = []
+  const err = (field, message, fix) => errors.push({ field, message, fix })
+  const warn = (field, message, fix) => warnings.push({ field, message, fix })
+
+  // ---- config --------------------------------------------------------------
+  const configPath = join(repo, ".ttt/design-system.json")
+  if (!existsSync(configPath)) {
+    err(".ttt/design-system.json", "not found", "this repo isn't connected to a design system; Setup writes it")
+    return { errors, warnings }
+  }
+  let config
+  try {
+    config = JSON.parse(readFileSync(configPath, "utf8"))
+  } catch (e) {
+    err(".ttt/design-system.json", `isn't valid JSON (${e.message})`, "fix the syntax")
+    return { errors, warnings }
+  }
+
+  for (const [key, rule] of Object.entries(CONFIG_SCHEMA)) {
+    if (!(key in config)) {
+      if (rule.required) err(key, "is missing", rule.check(undefined) ?? "add it")
+      continue
+    }
+    const problem = rule.check(config[key])
+    if (problem) err(key, `is ${JSON.stringify(config[key])}`, problem)
+  }
+  for (const key of Object.keys(config)) {
+    if (!(key in CONFIG_SCHEMA)) err(key, "isn't a key this kit knows", `remove it, or check its spelling against: ${Object.keys(CONFIG_SCHEMA).join(", ")}`)
+  }
+
+  if (isObject(config.settings)) {
+    for (const [key, check] of Object.entries(SETTINGS_SCHEMA)) {
+      if (!(key in config.settings)) { err(`settings.${key}`, "is missing", check(undefined)); continue }
+      const problem = check(config.settings[key])
+      if (problem) err(`settings.${key}`, `is ${JSON.stringify(config.settings[key])}`, problem)
+    }
+    for (const key of Object.keys(config.settings)) {
+      if (!(key in SETTINGS_SCHEMA)) err(`settings.${key}`, "isn't a setting this kit knows", `remove it; settings are ${Object.keys(SETTINGS_SCHEMA).join(", ")}`)
+    }
+  }
+
+  if (isObject(config.contrast)) {
+    const list = config.contrast.intentional ?? []
+    if (!Array.isArray(list)) err("contrast.intentional", "isn't a list", "a list of { foreground, background?, reason }")
+    else list.forEach((x, i) => {
+      if (!isObject(x) || typeof x.foreground !== "string" || typeof x.reason !== "string" || !x.reason.trim())
+        err(`contrast.intentional[${i}]`, `is ${JSON.stringify(x)}`, 'give a foreground token and a reason, e.g. { "foreground": "label-disable", "reason": "…" }')
+    })
+    for (const key of Object.keys(config.contrast)) if (key !== "intentional") err(`contrast.${key}`, "isn't a key this kit knows", 'the only key is "intentional"')
+  }
+  if (isObject(config.usingInCode)) {
+    const notes = config.usingInCode.notes ?? []
+    if (!Array.isArray(notes) || !notes.every((n) => typeof n === "string"))
+      err("usingInCode.notes", "isn't a list of strings", "one Markdown paragraph per entry")
+    for (const key of Object.keys(config.usingInCode)) if (key !== "notes") err(`usingInCode.${key}`, "isn't a key this kit knows", 'the only key is "notes"')
+  }
+
+  // ---- kit version -----------------------------------------------------------
+  if (semver(config.kitVersion)) {
+    const cmp = compareVersions(config.kitVersion, KIT_VERSION)
+    if (cmp > 0) err("kitVersion", `is ${config.kitVersion}, newer than these scripts (${KIT_VERSION})`, `copy the kit ${config.kitVersion} scripts into scripts/, or install that kit version`)
+    else if (cmp < 0) warn("kitVersion", `is ${config.kitVersion}; these scripts are ${KIT_VERSION}`, `set it to ${KIT_VERSION} once the rest of the kit's files are synced`)
+  }
+  // Every kit script in the repo should name the same kit version.
+  for (const name of ["ds-tokens", "ds-pack-react", "ds-build-bundle", "ds-styling-maps", "ds-types", "ds-validate", "ds-contrast"]) {
+    const p = join(repo, "scripts", `${name}.mjs`)
+    if (!existsSync(p)) continue
+    const v = /design-system-kit (\d+\.\d+\.\d+)/.exec(readFileSync(p, "utf8").slice(0, 400))?.[1]
+    if (!v) warn(`scripts/${name}.mjs`, "doesn't name a kit version", "copy it from the kit unchanged")
+    else if (v !== KIT_VERSION) warn(`scripts/${name}.mjs`, `is kit ${v}; ds-validate is ${KIT_VERSION}`, "copy all kit scripts from one kit version")
+  }
+
+  // ---- token snapshot ----------------------------------------------------------
+  if (typeof config.tokensIn === "string") {
+    const tokensPath = join(repo, config.tokensIn)
+    if (!existsSync(tokensPath)) err("tokensIn", `points at ${config.tokensIn}, which doesn't exist`, "run Sync's pull to write the snapshot")
+    else {
+      let tokens
+      try { tokens = JSON.parse(readFileSync(tokensPath, "utf8")) }
+      catch (e) { err(config.tokensIn, `isn't valid JSON (${e.message})`, "re-pull it from the design system") }
+      if (tokens) validateTokens(tokens, config.tokensIn, err, warn)
+    }
+  }
+
+  // ---- wiring: @source resolves to the source root -------------------------------
+  checkSource(repo, err, warn)
+
+  // ---- componentFiles name real files --------------------------------------------
+  const ui = uiDir(repo)
+  if (ui && isObject(config.componentFiles)) {
+    for (const [comp, files] of Object.entries(config.componentFiles)) {
+      if (!Array.isArray(files)) continue
+      for (const f of files) if (typeof f === "string" && !existsSync(join(ui, f)))
+        err(`componentFiles.${comp}`, `lists ${f}, which isn't in ${relative(repo, ui)}`, "fix the file name or remove the entry")
+    }
+  }
+
+  // ---- pre-flight: installed versions vs the tested range --------------------------
+  if (preflight) checkTestedRange(repo, testedRange, err, warn)
+
+  return { errors, warnings }
+}
+
+function validateTokens(tokens, file, err, warn) {
+  const where = (name) => `${file} › ${name}`
+  if (!isObject(tokens.color) || !Array.isArray(tokens.color.tokens)) {
+    err(`${file} › color`, "has no tokens list", 'families are { "tokens": [{ "name", "value", "usage" }] } lists, not name → value maps')
+    return
+  }
+  const themes = (tokens.color.themes ?? []).map((t) => t?.id)
+  if (!themes.length || themes.some((t) => typeof t !== "string")) err(`${file} › color.themes`, "declares no theme ids", 'list themes as [{ "id": "light", "name": "Light" }, …]')
+
+  // Names: grammar and uniqueness across every family but type.
+  const all = new Map()
+  for (const [family, group] of Object.entries(tokens)) {
+    if (family === "type" || !isObject(group) || !Array.isArray(group.tokens)) continue
+    for (const t of group.tokens) {
+      if (!TOKEN_NAME.test(t?.name ?? "")) { err(where(t?.name ?? "(unnamed)"), `in ${family} isn't a valid token name`, "start with a letter or digit; then letters, digits, _ . - (no spaces or /), at most 64 characters"); continue }
+      if (all.has(t.name)) err(where(t.name), `appears in both ${all.get(t.name)} and ${family}`, "rename one; a duplicate is dropped by the design system")
+      else all.set(t.name, family)
+    }
+  }
+
+  // Colours: per-theme values, alias targets, formats.
+  const colours = new Map(tokens.color.tokens.filter((t) => TOKEN_NAME.test(t?.name ?? "")).map((t) => [t.name, t]))
+  const valuesOf = (t) => (isObject(t.value) ? t.value : { [themes[0]]: t.value })
+  for (const t of colours.values()) {
+    if (t.value == null) { err(where(t.name), "has no value", "give it a colour or an {alias}"); continue }
+    if (isObject(t.value)) for (const k of Object.keys(t.value)) if (!themes.includes(k)) err(where(t.name), `has a value for theme "${k}", which color.themes doesn't declare`, `use one of: ${themes.join(", ")}`)
+    for (const [theme, v] of Object.entries(valuesOf(t))) {
+      const m = ALIAS.exec(String(v).trim())
+      if (m) {
+        if (!colours.has(m[1])) err(where(t.name), `(${theme}) aliases {${m[1]}}, which isn't a colour token`, "point it at an existing colour token or use a literal")
+        else if (m[1] === t.name) err(where(t.name), `(${theme}) aliases itself`, "point it at a primitive")
+      } else if (!isColour(v)) {
+        err(where(t.name), `(${theme}) is ${JSON.stringify(v)}, not a colour the design system reads`, "use hex, rgb(), hsl() or oklch() with no function inside; no named colours, var() or color-mix()")
+      }
+    }
+  }
+  // Cycles, per theme.
+  for (const theme of themes) {
+    const next = (name) => {
+      const t = colours.get(name)
+      if (!t) return null
+      const v = valuesOf(t)[theme] ?? valuesOf(t)[themes[0]]
+      return ALIAS.exec(String(v ?? "").trim())?.[1] ?? null
+    }
+    const reported = new Set()
+    for (const start of colours.keys()) {
+      const path = [start]
+      let cur = next(start)
+      while (cur && colours.has(cur)) {
+        if (path.includes(cur)) {
+          const cycle = path.slice(path.indexOf(cur)).concat(cur)
+          const key = [...cycle].sort().join()
+          if (!reported.has(key)) {
+            reported.add(key)
+            err(where(cur), `(${theme}) is in an alias cycle: ${cycle.join(" → ")}`, "break the cycle by pointing one of them at a primitive")
+          }
+          break
+        }
+        path.push(cur)
+        cur = next(cur)
+      }
+    }
+  }
+
+  // The semantic tokens the profile's mapping needs.
+  const required = new Set([...Object.values(SHADCN_MAP), ...Object.values(ALIAS_COLORS)])
+  for (const name of required) if (!colours.has(name))
+    err(where(name), "is missing; the profile's token mapping needs it", "add it in the design system (a semantic token aliasing a primitive), then re-pull")
+
+  // Scalars.
+  for (const family of ["spacing", "radius"]) {
+    for (const t of tokens[family]?.tokens ?? []) if (!LENGTH.test(String(t.value).trim()))
+      err(where(t.name), `is ${JSON.stringify(t.value)}, not a length`, "use px, rem, em, % or a plain number")
+  }
+  if (!(tokens.spacing?.tokens ?? []).some((t) => t.name === "space-1"))
+    warn(`${file} › space-1`, "is missing", "Tailwind's spacing base is set from space-1; without it utilities use Tailwind's default 0.25rem")
+  for (const g of tokens.type?.groups ?? []) {
+    if (!(g.family in (tokens.type.families ?? {}))) err(`${file} › type.groups.${g.name}`, `uses family "${g.family}", which type.families doesn't define`, "add the family or fix the name")
+    for (const s of g.styles ?? []) if (!LENGTH.test(String(s.fontSize ?? "")))
+      err(`${file} › type.${s.name}`, `has fontSize ${JSON.stringify(s.fontSize)}`, "use a length such as 15px")
+  }
+}
+
+function uiDir(repo) {
+  const cj = join(repo, "components.json"), tc = join(repo, "tsconfig.json")
+  if (!existsSync(cj) || !existsSync(tc)) return null
+  const alias = readJsonc(cj).aliases?.ui ?? "@/components/ui"
+  return resolveAlias(repo, alias)
+}
+
+function resolveAlias(repo, spec) {
+  const paths = readJsonc(join(repo, "tsconfig.json")).compilerOptions?.paths ?? {}
+  for (const [pattern, targets] of Object.entries(paths)) {
+    const prefix = pattern.replace(/\*$/, "")
+    if (!spec.startsWith(prefix)) continue
+    const target = String(targets[0]).replace(/\*$/, "")
+    return resolve(repo, target + spec.slice(prefix.length))
+  }
+  return null
+}
+
+/** The source root: where tsconfig's "@/*" (the first wildcard path) points. */
+export function sourceRoot(repo) {
+  const tc = join(repo, "tsconfig.json")
+  if (!existsSync(tc)) return null
+  const paths = readJsonc(tc).compilerOptions?.paths ?? {}
+  const first = Object.entries(paths).find(([p]) => p.endsWith("/*"))
+  if (!first) return null
+  return resolve(repo, String(first[1][0]).replace(/\/?\*$/, ""))
+}
+
+function checkSource(repo, err, warn) {
+  const cj = join(repo, "components.json")
+  if (!existsSync(cj)) { err("components.json", "not found", "run `shadcn init`"); return }
+  const cssRel = readJsonc(cj).tailwind?.css
+  if (!cssRel) { err("components.json › tailwind.css", "is missing", "set it to the global CSS path"); return }
+  const cssPath = join(repo, cssRel)
+  if (!existsSync(cssPath)) { err("components.json › tailwind.css", `points at ${cssRel}, which doesn't exist`, "fix the path"); return }
+  const root = sourceRoot(repo)
+  if (!root) { warn("tsconfig.json › paths", "has no wildcard alias", "add \"@/*\" so the source root can be checked"); return }
+  const css = readFileSync(cssPath, "utf8").replace(/\/\*[\s\S]*?\*\//g, "")
+  const sources = [...css.matchAll(/@source\s+(?!not\b)["']([^"']+)["']/g)].map((m) => m[1])
+  const want = relative(dirname(cssPath), root) || "."
+  if (!sources.length) {
+    err(`${cssRel} › @source`, "is missing", `add \`@source "${want.startsWith(".") ? want : "./" + want}";\` — the theme block declares the scan root explicitly`)
+    return
+  }
+  const hits = sources.filter((s) => resolve(dirname(cssPath), s) === root)
+  if (!hits.length) {
+    err(`${cssRel} › @source`, `resolves to ${sources.map((s) => relative(repo, resolve(dirname(cssPath), s)) || ".").join(", ")}, not the source root ${relative(repo, root) || "."}`, `set it to "${want.endsWith("/") ? want : want + "/"}" (relative to ${cssRel})`)
+  }
+}
+
+function installedVersion(repo, name) {
+  const lock = join(repo, "package-lock.json")
+  if (existsSync(lock)) {
+    const v = JSON.parse(readFileSync(lock, "utf8")).packages?.[`node_modules/${name}`]?.version
+    if (v) return v
+  }
+  const pkg = join(repo, "node_modules", name, "package.json")
+  return existsSync(pkg) ? JSON.parse(readFileSync(pkg, "utf8")).version : null
+}
+
+function checkTestedRange(repo, testedRange, err, warn) {
+  const rangePath = testedRange ?? join(HERE, "tested-range.json")
+  if (!existsSync(rangePath)) { err("tested-range.json", "not found next to the scripts", "copy it from the kit with the scripts"); return }
+  const { packages } = JSON.parse(readFileSync(rangePath, "utf8"))
+  for (const [name, { min, max, required }] of Object.entries(packages)) {
+    const v = installedVersion(repo, name)
+    if (!v) {
+      if (required) err(`package ${name}`, "isn't installed", `install ${name}@${max}`)
+      continue
+    }
+    if (compareVersions(v, min) < 0 || compareVersions(v, max) > 0)
+      err(`package ${name}`, `is ${v}, outside the tested range ${min} – ${max}`, "flag it for the dev; Setup never upgrades or downgrades an existing package")
+  }
+}
+
+// ---------------------------------------------------------------------------
+
+function main() {
+  const args = process.argv.slice(2)
+  const flag = (n) => { const i = args.indexOf(n); return i === -1 ? null : args[i + 1] }
+  const repo = resolve(flag("--repo") ?? join(HERE, ".."))
+  const { errors, warnings } = validate(repo, { preflight: args.includes("--preflight"), testedRange: flag("--tested-range") })
+  for (const w of warnings) console.log(`warning  ${w.field} ${w.message} — ${w.fix}`)
+  for (const e of errors) console.log(`error    ${e.field} ${e.message} — ${e.fix}`)
+  console.log(errors.length ? `\n${errors.length} error(s), ${warnings.length} warning(s)` : `valid (${warnings.length} warning(s)) — kit ${KIT_VERSION}`)
+  process.exit(errors.length ? 1 : 0)
+}
+
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) main()
