@@ -1,0 +1,24 @@
+{
+  "designSystem": "{{DESIGN_SYSTEM_URL}}",
+  "tracker": "{{TRACKER_URL}}",
+  "schema": "ttt-ds/1",
+  "profile": "shadcn",
+  "kitVersion": "0.1.0",
+  "tokensIn": ".ttt/tokens.json",
+  "tokensOut": "src/styles/ds-tokens.css",
+  "lastSynced": "{{NOW_ISO}}",
+  "typeClassPrefix": "type-",
+  "settings": {
+    "locale": "{{LOCALE}}",
+    "weekStartsOn": "{{WEEK_STARTS_ON}}",
+    "dateFormat": "{{DATE_FORMAT}}"
+  },
+  "namespace": "{{CLIENT_NAMESPACE}}",
+  "bundleExtras": {
+    "sonner": ["toast"]
+  },
+  "componentFiles": {
+    "DatePicker": ["date-picker.tsx", "calendar.tsx"],
+    "Input": ["input.tsx", "label.tsx"]
+  }
+}

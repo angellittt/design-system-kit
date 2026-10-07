@@ -1,0 +1,17 @@
+/* design-system-kit 0.1.0 · profile shadcn · wiring: focus rule
+ *
+ * One focus treatment for every focusable control: a 2px solid ring with a
+ * 2px offset. Components don't carry their own focus-visible outline or ring
+ * utilities; where a parent clips the outline they set only an inset offset
+ * (`focus-visible:-outline-offset-2`).
+ *
+ * Don't add `outline-none` to a focusable control: in Tailwind v4 it sets
+ * --tw-outline-style: none, and the ring then renders with style none.
+ * Text fields keep stock's border + ring treatment, which replaces it.
+ *
+ * Append inside the global CSS's `@layer base { … }`.
+ */
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}

@@ -1,0 +1,30 @@
+{
+  "//": "design-system-kit 0.1.0 · profile shadcn · wiring: merged into the repo's package.json by Setup. Existing entries are never changed; missing ones are added at these versions.",
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "build:safe": "NEXT_DIST_DIR=.next-build next build",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "ds:tokens": "node scripts/ds-tokens.mjs",
+    "ds:pack-react": "node scripts/ds-pack-react.mjs",
+    "ds:build-bundle": "node scripts/ds-build-bundle.mjs",
+    "ds:styling-maps": "node scripts/ds-styling-maps.mjs",
+    "ds:types": "node scripts/ds-types.mjs",
+    "ds:fixture": "node scripts/__fixtures__/run.mjs"
+  },
+  "dependencies": {
+    "next-themes": "^0.4.6",
+    "date-fns": "^4.4.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.3.3",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.7",
+    "esbuild": "^0.28.2",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "jsdom": "^29.1.1",
+    "vitest": "^3.2.7"
+  }
+}

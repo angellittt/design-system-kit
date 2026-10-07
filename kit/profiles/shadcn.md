@@ -76,7 +76,7 @@ Setup's first step reads the repo and reports **ready**, **adaptable** (e.g. dif
 - **Preview runtime** — the design system's preview frame loads React 18 unless told otherwise, and React 19 ships no browser-global build. Publish-back therefore builds React 19 and ReactDOM 19 as classic-script globals (`window.React`, `window.ReactDOM`) into `components/lib/`, and lists them in `libraries` with `name`, `version`, `global` and `file`. *To test on first use.*
 - **Theme block** — Setup replaces only shadcn's theme variable block in the global CSS with an import of the token file.
 - **Theme switching** — next-themes with `attribute="data-theme"`; Tailwind's `dark:` variant points at `[data-theme="dark"]`.
-- **Focus** — one base `:focus-visible` rule (2px solid `ring`, 2px offset) rather than per-component outline utilities.
+- **Focus** — one base `:focus-visible` rule (2px solid `ring`, 2px offset) rather than per-component outline utilities. Text fields keep stock's border and ring, which replaces it.
 - **Kit and client extensions** — `cva` variants and props on the copied component, or small companion parts exported from the same file.
 - **Repo guardrails** — Setup writes a design-system section in `CLAUDE.md` (usage rules, agreed component rules, styling guardrails); Sync keeps it current. Other repo docs point to it rather than repeating it.
 - **Styling guardrails** — custom UI uses only the Tailwind names in the mapping: no hex values, no arbitrary colour values, no default shadcn palette classes.
@@ -121,11 +121,23 @@ Client extensions that add tokens add their Tailwind names here too.
 
 Five scripts generate everything the design system receives from code. They
 are **kit files**: the same file in every repo on this profile, parameterised
-from that repo's own config, never edited per client.
+from that repo's own config, never edited per client. Their source is
+`kit/code/shadcn/scripts/` in the kit; Setup copies them to the client repo's
+`scripts/`, and each names the kit version in its header. The paths below are
+the client repo's.
+
+Everything else Setup applies comes from the same folder:
+
+| Kit path | What it is |
+|---|---|
+| `kit/code/shadcn/stock/` | Stock base-nova components (shadcn 4.21.1, 2026-10-07) with baseline changes only |
+| `kit/code/shadcn/kit/` | Kit extensions — each a complete component file that replaces the stock one when chosen — and their interaction tests |
+| `kit/code/shadcn/wiring/` | Theme block, focus rule, theme provider, `ds-settings`, ESLint flat config with jsx-a11y, `.ttt/design-system.json` template, `CLAUDE.md` design-system section, `package.json` fragment |
+| `kit/code/shadcn/harness/` | Vitest + jsdom setup, and the bundle fixture (installed at `scripts/__fixtures__/`) |
 
 | Script | Produces | Reads its configuration from |
 |---|---|---|
-| `scripts/ds-tokens.mjs` | the token file | `.ttt/design-system.json` (`tokensIn`, `tokensOut`, `typeClassPrefix`) |
+| `scripts/ds-tokens.mjs` | the token file, including the spacing base from `space-1` and the type classes (prefix default `type-`) | `.ttt/design-system.json` (`tokensIn`, `tokensOut`, `typeClassPrefix`) |
 | `scripts/ds-pack-react.mjs` | `components/lib/react.js`, `react-dom.js` | the repo's lockfile |
 | `scripts/ds-build-bundle.mjs` | `components/bundle.js`, `bundle.css` | `.ttt/design-system.json` (`namespace`, `bundleExtras`, `tokensOut`), `components.json` (`aliases.ui`), `tsconfig.json` (`paths`) |
 | `scripts/ds-styling-maps.mjs` | each README's styling map | `.ttt/design-system.json` (`tokensIn`, `tokensOut`, `componentFiles`), `components.json` (`aliases.ui`, `iconLibrary`), `tsconfig.json` (`paths`) |
@@ -176,7 +188,8 @@ toolchain, because it depends on behaviour rather than just API surface:
 | `esbuild` | major | plugin, banner and footer API |
 
 After any dependency bump, run `--check` (compares installed versions against
-the pins) and the fixture (`scripts/__fixtures__/`, which builds a repo with a
+the pins) and the fixture (`scripts/__fixtures__/` in the client repo, from
+`kit/code/shadcn/harness/fixture/`, which builds a repo with a
 different namespace, alias and source directory, so a change that quietly
 hardcodes one repo's layout fails there rather than in a client's project).
 The fixture also keeps a test file beside its components and asserts it
@@ -196,11 +209,12 @@ reaches neither bundle.
 |---|---|---|
 | Row density | Table | `density` prop (`comfortable` / `compact`) |
 | Sortable header | Table | `TableSortButton` companion part (empty state uses stock Empty in a full-width cell) |
-| Count pill, pill / underline styles | Tabs | `TabsCount`; `variant` prop |
-| Raised / flat, hover lift, compact | Card | `variant`, `interactive`, `size` props |
+| Clickable rows *(candidate)* | Table | `TableRow` `clickable` prop (pointer cursor; the row's own handler opens the target) |
+| Count pill | Tabs | `TabsCount` (pill and underline styles are stock: `TabsList variant="default" \| "line"`) |
+| Raised / flat, hover lift | Card | `variant`, `interactive` props (compact is stock: `size="sm"`) |
 | Width presets | Dialog | `size` prop |
 | Divider rows | Accordion | `variant="flush"` |
-| Semantic colour | Badge, Avatar | `tone` prop |
+| Semantic colour | Badge, Avatar, Alert | `tone` prop, alongside stock's `variant` |
 | Initials | Avatar | `initialsOf()` helper |
 | Typed date entry *(candidate)* | DatePicker | Input alongside the calendar, parsed in the locale's format |
 | Dismiss button *(candidate)* | Alert | close slot; component emits `onDismiss`, the app remembers dismissal |

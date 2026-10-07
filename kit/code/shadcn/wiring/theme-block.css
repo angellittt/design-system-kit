@@ -1,0 +1,33 @@
+/* design-system-kit 0.1.0 · profile shadcn · wiring: theme block
+ *
+ * Setup replaces ONLY shadcn's theme variable block in the global CSS
+ * (`:root { --background: … }`, `.dark { … }` and shadcn's `@theme inline`)
+ * with this. Keep the file's own `@import "tailwindcss"`, `tw-animate-css`
+ * and `shadcn/tailwind.css` lines above it.
+ *
+ * {{TOKENS_IMPORT}}  path from the global CSS to `tokensOut`, e.g. "../styles/ds-tokens.css"
+ * {{SOURCE_ROOT}}    the source directory relative to the global CSS, e.g. "../"
+ */
+
+/* Automatic source detection walks up from this file and can miss the
+ * source directory (or scan markdown). Declare the scan root explicitly. */
+@source "{{SOURCE_ROOT}}";
+
+/* Design-system tokens — GENERATED from .ttt/tokens.json by
+ * scripts/ds-tokens.mjs. Every token, the shadcn variables that alias them,
+ * the Tailwind @theme mapping and the type classes. Never edit by hand. */
+@import "{{TOKENS_IMPORT}}";
+
+/* Themes key on [data-theme] (next-themes, attribute="data-theme"), not a
+ * .dark class, because that is what the generated token file emits. */
+@custom-variant dark (&:is([data-theme="dark"] *));
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+  }
+}
