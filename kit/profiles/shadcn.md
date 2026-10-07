@@ -1,6 +1,8 @@
 # Part 2 — Library profile: shadcn
 
-**Profile** `shadcn` 1.1 · **Platform** web · **For schema** `ttt-ds/1`
+**Profile** `shadcn` 1.2 · **Platform** web · **For schema** `ttt-ds/1`
+
+**1.2** (kit 0.1.0) — kit extension catalog: Tabs pill/underline and Card compact are stock now; Alert joins Semantic colour; Clickable rows added as a candidate. Mapping gains `font-heading`; the generator emits the spacing base, the status shorthands and font fallbacks. Kit code vendored under `kit/code/shadcn/`.
 
 Everything in this part is specific to shadcn/ui. The universal rules in Part 1 apply unchanged.
 
@@ -18,7 +20,7 @@ Reference versions, taken from the Jelly demo repo. A client project records its
 | class-variance-authority | ^0.7.1 | Variants and kit extensions |
 | clsx · tailwind-merge | latest | Required by `cn()` in `lib/utils` |
 | tw-animate-css | ^1.4.0 | |
-| lucide-react | ^0.460.0 | Default icon library |
+| lucide-react | ^1.52.0 | Default icon library. shadcn 4.21 installs 1.x; Jelly is on 0.460 |
 | next-themes | ^0.4.6 | Light/dark switching |
 | sonner | ^2.0.8 | Toasts |
 | @tanstack/react-table | ^8.21.3 | Stay on v8; v9 drops `useReactTable` |
@@ -26,7 +28,7 @@ Reference versions, taken from the Jelly demo repo. A client project records its
 
 ## Config
 
-`components.json`: style `base-nova` (Base UI primitives, Nova's compact style for dashboards and portals), base colour `neutral`, CSS variables on, RSC on, TSX, icon library `lucide`, menu colour `default`, menu accent `subtle`. Aliases `@/components`, `@/components/ui`, `@/lib`, `@/lib/utils`, `@/hooks`. Global CSS `src/styles/globals.css`.
+`components.json`: style `base-nova` — written by `npx shadcn@4.21.1 init --preset nova --base base` (the CLI has no `base-nova` preset name; Nova on Base UI is stored as `base-nova`) (Base UI primitives, Nova's compact style for dashboards and portals), base colour `neutral`, CSS variables on, RSC on, TSX, icon library `lucide`, menu colour `default`, menu accent `subtle`. Aliases `@/components`, `@/components/ui`, `@/lib`, `@/lib/utils`, `@/hooks`. Global CSS `src/styles/globals.css` by default; `create-next-app` puts it at `src/app/globals.css`, which pre-flight records as adaptable.
 
 **Why these choices.** Base UI is shadcn's default and recommended primitive library for new projects, so it's the stock path (see "prefer stock"). Nova is the compact style suited to TTT's typical work — dashboards, admin portals, resource tools. One style per profile version: the kit vendors and tests one style's files. A different style or primitive library for a client is a profile change decided at kickoff.
 
@@ -56,7 +58,7 @@ Reference versions, taken from the Jelly demo repo. A client project records its
 What the dev's own app setup must include before the designer runs Setup:
 
 - Next.js with the App Router, TypeScript, Tailwind v4 — versions within this profile's tested range.
-- `shadcn init` run with the Config values above (style, base colour, CSS variables, icon library, aliases).
+- `shadcn init` run with the Config values above (style, base colour, CSS variables, icon library, aliases): `npx shadcn@4.21.1 init --preset nova --base base`.
 - No custom theme yet — shadcn's default theme variables are fine; Setup replaces them.
 - Little or no custom UI. Stock shadcn components already added are fine.
 - ESLint configured to run unattended (flat config, `eslint .`; `next lint` is deprecated). Setup adds the accessibility rules on top.
@@ -76,7 +78,7 @@ Setup's first step reads the repo and reports **ready**, **adaptable** (e.g. dif
 - **Preview runtime** — the design system's preview frame loads React 18 unless told otherwise, and React 19 ships no browser-global build. Publish-back therefore builds React 19 and ReactDOM 19 as classic-script globals (`window.React`, `window.ReactDOM`) into `components/lib/`, and lists them in `libraries` with `name`, `version`, `global` and `file`. *To test on first use.*
 - **Theme block** — Setup replaces only shadcn's theme variable block in the global CSS with an import of the token file.
 - **Theme switching** — next-themes with `attribute="data-theme"`; Tailwind's `dark:` variant points at `[data-theme="dark"]`.
-- **Focus** — one base `:focus-visible` rule (2px solid `ring`, 2px offset) rather than per-component outline utilities.
+- **Focus** — one base `:focus-visible` rule (2px solid `ring`, 2px offset) rather than per-component outline utilities. Text fields keep stock's border and ring, which replaces it.
 - **Kit and client extensions** — `cva` variants and props on the copied component, or small companion parts exported from the same file.
 - **Repo guardrails** — Setup writes a design-system section in `CLAUDE.md` (usage rules, agreed component rules, styling guardrails); Sync keeps it current. Other repo docs point to it rather than repeating it.
 - **Styling guardrails** — custom UI uses only the Tailwind names in the mapping: no hex values, no arbitrary colour values, no default shadcn palette classes.
@@ -109,7 +111,8 @@ Setup's first step reads the repo and reports **ready**, **adaptable** (e.g. dif
 | `inverse` · `inverse-foreground` · `dimmer` | `inverse-background` · `inverse-label` · `material-dimmer` |
 | `rounded-xs` … `rounded-xl`, `rounded-inset` | radius tokens (exact values, not shadcn's derived ones) |
 | `shadow-xs` … `shadow-xl` | shadow tokens (per theme) |
-| `font-display` · `font-sans` · `font-mono` | loaded by the framework from the design system's fonts; fallbacks as `--font-fallback-*` from type families |
+| `font-display` · `font-sans` · `font-mono` | loaded by the framework from the design system's fonts; fallbacks as `--font-fallback-*` from type families, used whenever no face is loaded |
+| `font-heading` | the display family (stock shadcn headings use it) |
 | `type-<style>` (prefix adaptable) | text styles from the type groups |
 | `p-N`, `m-N`, `gap-N`, `w-N` … | `space-N`: Tailwind's spacing base is set from `space-1`, so `p-4` = `space-4`. If a client's scale isn't N × base, the generator emits named spacing overrides instead |
 | `ease-standard` · `ease-expressive` | easing tokens |
@@ -121,11 +124,23 @@ Client extensions that add tokens add their Tailwind names here too.
 
 Five scripts generate everything the design system receives from code. They
 are **kit files**: the same file in every repo on this profile, parameterised
-from that repo's own config, never edited per client.
+from that repo's own config, never edited per client. Their source is
+`kit/code/shadcn/scripts/` in the kit; Setup copies them to the client repo's
+`scripts/`, and each names the kit version in its header. The paths below are
+the client repo's.
+
+Everything else Setup applies comes from the same folder:
+
+| Kit path | What it is |
+|---|---|
+| `kit/code/shadcn/stock/` | Stock base-nova components (shadcn 4.21.1, 2026-10-07) with baseline changes only |
+| `kit/code/shadcn/kit/` | Kit extensions — each a complete component file that replaces the stock one when chosen — and their interaction tests |
+| `kit/code/shadcn/wiring/` | Theme block, focus rule, theme provider, `ds-settings`, ESLint flat config with jsx-a11y, `.ttt/design-system.json` template, `CLAUDE.md` design-system section, `package.json` fragment |
+| `kit/code/shadcn/harness/` | Vitest + jsdom setup, and the bundle fixture (installed at `scripts/__fixtures__/`) |
 
 | Script | Produces | Reads its configuration from |
 |---|---|---|
-| `scripts/ds-tokens.mjs` | the token file | `.ttt/design-system.json` (`tokensIn`, `tokensOut`, `typeClassPrefix`) |
+| `scripts/ds-tokens.mjs` | the token file, including the spacing base from `space-1` and the type classes (prefix default `type-`) | `.ttt/design-system.json` (`tokensIn`, `tokensOut`, `typeClassPrefix`) |
 | `scripts/ds-pack-react.mjs` | `components/lib/react.js`, `react-dom.js` | the repo's lockfile |
 | `scripts/ds-build-bundle.mjs` | `components/bundle.js`, `bundle.css` | `.ttt/design-system.json` (`namespace`, `bundleExtras`, `tokensOut`), `components.json` (`aliases.ui`), `tsconfig.json` (`paths`) |
 | `scripts/ds-styling-maps.mjs` | each README's styling map | `.ttt/design-system.json` (`tokensIn`, `tokensOut`, `componentFiles`), `components.json` (`aliases.ui`, `iconLibrary`), `tsconfig.json` (`paths`) |
@@ -176,7 +191,8 @@ toolchain, because it depends on behaviour rather than just API surface:
 | `esbuild` | major | plugin, banner and footer API |
 
 After any dependency bump, run `--check` (compares installed versions against
-the pins) and the fixture (`scripts/__fixtures__/`, which builds a repo with a
+the pins) and the fixture (`scripts/__fixtures__/` in the client repo, from
+`kit/code/shadcn/harness/fixture/`, which builds a repo with a
 different namespace, alias and source directory, so a change that quietly
 hardcodes one repo's layout fails there rather than in a client's project).
 The fixture also keeps a test file beside its components and asserts it
@@ -196,11 +212,12 @@ reaches neither bundle.
 |---|---|---|
 | Row density | Table | `density` prop (`comfortable` / `compact`) |
 | Sortable header | Table | `TableSortButton` companion part (empty state uses stock Empty in a full-width cell) |
-| Count pill, pill / underline styles | Tabs | `TabsCount`; `variant` prop |
-| Raised / flat, hover lift, compact | Card | `variant`, `interactive`, `size` props |
+| Clickable rows *(candidate)* | Table | `TableRow` `clickable` prop (pointer cursor; the row's own handler opens the target) |
+| Count pill | Tabs | `TabsCount` (pill and underline styles are stock: `TabsList variant="default" \| "line"`) |
+| Raised / flat, hover lift | Card | `variant`, `interactive` props (compact is stock: `size="sm"`) |
 | Width presets | Dialog | `size` prop |
 | Divider rows | Accordion | `variant="flush"` |
-| Semantic colour | Badge, Avatar | `tone` prop |
+| Semantic colour | Badge, Avatar, Alert | `tone` prop, alongside stock's `variant` |
 | Initials | Avatar | `initialsOf()` helper |
 | Typed date entry *(candidate)* | DatePicker | Input alongside the calendar, parsed in the locale's format |
 | Dismiss button *(candidate)* | Alert | close slot; component emits `onDismiss`, the app remembers dismissal |
