@@ -58,7 +58,8 @@ Build every token as Sync's `figma.md` §2 describes, from the live
 - **Scopes** by role (contract, Figma naming); primitives `[]`.
 - **Code syntax** `WEB` = `var(--<token name>)` on every variable.
 - **Description** = the token's usage text, verbatim. Figma stores `'` as
-  `&#39;`; unescape before comparing.
+  `&#39;`; unescape before comparing, and before writing an edited
+  description back (Sync's `figma.md` §4).
 
 Create primitives first, then semantics. Read back with `figma.md` §1's
 comparison — value or alias per mode, scopes, code syntax, description, for

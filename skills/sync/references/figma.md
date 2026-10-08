@@ -150,6 +150,14 @@ Then build or change them:
   on composed examples: instances lose a main component's tinted fill.
 - **A TEXT property sets the same text on every variant** — only for text all
   variants share. **Instances can't take appended children.**
+- **Unescape a description before writing it back.** Figma HTML-escapes
+  component and variable descriptions — `'` reads back as `&#39;`, `"` as
+  `&quot;`, `&` as `&amp;` — so a read → edit → write (e.g. flipping the
+  status line) escapes it again: `&#39;` becomes `&amp;#39;`, and worse each
+  run. Unescape what you read (`&amp;` `&quot;` `&#39;` `&lt;` `&gt;`,
+  repeated until nothing changes), then assign; one level of escaping on
+  read-back is Figma's normal form. Compare after unescaping too (§1, §5),
+  or every usage text with an apostrophe reports a false difference.
 
 # Both
 
