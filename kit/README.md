@@ -1,4 +1,4 @@
-# TTT design system kit · ttt-ds/1 · kit 0.9.0
+# TTT design system kit · ttt-ds/1 · kit 0.10.0
 
 The starting point for every client design system, bundled into TTT's four skills: **Setup** (design system + Figma + code branch, ending in a PR), **Sync** (pull → PR, publish-back), **Components** (check → propose → accept) and **Drift audit**. Extracted from Jelly, the worked example; the classification of what came over and why is in `docs/extraction/classification.md` at the repo root.
 
@@ -35,6 +35,7 @@ and in a repo that has `.ttt/design-system.json`:
 ```
 /ds-sync pull       # design → code and Figma: tokens and assets into a PR, token changes to Figma's variables
 /ds-sync publish    # code → design system → Figma
+/ds-upgrade         # catch the repo up to the installed kit, keeping the client's changes
 ```
 
 If another plugin also defines `/ds-sync` or `/ds-setup`, use the namespaced form, `/design-system-kit:ds-sync`. The skills read kit files from the plugin's install folder, outside the repo, so the first run may ask to allow reading it.
@@ -45,6 +46,9 @@ If another plugin also defines `/ds-sync` or `/ds-setup`, use the namespaced for
 | `skills/setup/` | The Setup skill: `SKILL.md`, and the steps in `references/` (`preflight.md`, `inputs.md`, `generate.md`, `code.md`, `review.md`, `figma-library.md`, `report.md`) |
 | `commands/ds-setup.md` | `/ds-setup` |
 | `kit/tools/ds-setup.mjs` | Setup's tool, run from the kit (never copied into a repo): `tokens` generates the ramps from the brand inputs and fits contrast; `fill` fills the template's placeholders. Tests: `node --test kit/tools/ds-setup.test.mjs` |
+| `kit/tools/ds-upgrade.mjs` | Upgrade's tool, run from the kit: reconciles every kit file a repo carries with the installed version — against the kit file it started from (the release tag of its own stamp), through the repo's formatter — as stamp, replace, keep, merge or conflict. Tests: `node --test kit/tools/ds-upgrade.test.mjs` |
+| `skills/upgrade/` | The Upgrade skill: `SKILL.md`, and `references/upgrade.md` and `report.md` |
+| `commands/ds-upgrade.md` | `/ds-upgrade` |
 | `skills/sync/` | The Sync skill: `SKILL.md`, and the steps in `references/` (`pull.md`, `publish.md`, `figma.md`, `report.md`) |
 | `commands/ds-sync.md` | `/ds-sync pull \| publish` |
 | `kit/procedures/common.md` | The rules every skill follows — validate, versions, read-before-publish, owner only, clock, changelog, deviations, files, repos, report |
@@ -104,6 +108,14 @@ Reads the system's contract (schema and profile first), generates the theme file
 
 ## Changes
 
+**0.10.0** (2026-10-08) — the Upgrade skill
+- **`/ds-upgrade`** (`skills/upgrade/`): catches a repo up to the installed kit as its own PR. Versions first (nothing to do, or stop when the repo is newer or the schema/profile differ), then the changelog's steps from the repo's `kitVersion` on, split into file steps (the reconcile does them), other steps (tokens, config keys, call sites, packages — done in version order) and design-system steps (`/ds-sync publish` after the merge).
+- **`kit/tools/ds-upgrade.mjs`** reconciles every kit file the repo carries, so client changes survive an upgrade. Each file's base is the kit file at the release tag of **its own stamp** (an upgrade restamps only what it touches, so `kitVersion` isn't enough), picked by the stamp's kind — stock, kit extension, wiring, kit file — so a repo that kept stock Table reconciles against stock. Base and new kit file go through the repo's Prettier (honouring `.prettierignore`) first: a format-on-commit hook otherwise makes every file look customized. Outcomes: stamp, replace, keep (customized; the kit didn't change it), merge (three-way, clean), conflict (left with its old stamp, the conflict and the kit's file saved for a dev), plus unknown, removed, obsolete (kit tests) and app-owned (`locale.ts`, Vite's `fonts.css`). The plan shows every customization as a diff against its base, and the skill flags any the design system doesn't list under Client extensions as undocumented drift. Seven tests.
+- Proven on Districtly (0.8.0/0.8.1 → 0.9.0): all 43 kit files identical to their base after Prettier (40 stamp, `ds-validate.mjs` replace, two app-owned). With a client edit on Sidebar away from 0.8.1's change and one on DatePicker's trigger, which 0.8.1 rewrote: Sidebar merged with both changes, DatePicker conflicted and was left as it was, and the app typechecked.
+- `common.md` §2 points a repo that's behind at `/ds-upgrade`.
+
+**Upgrading a 0.9.0 repo**: nothing but the stamp — `/ds-upgrade` does it.
+
 **0.9.0** (2026-10-08) — profile `shadcn` 1.9; three stock components and a data table
 - **Toggle, ToggleGroup and ButtonGroup** join the baseline (37 components), each with a README, a preview and a Figma spec. Their stock files take the kit's baseline: the global focus outline instead of stock's ring (Toggle), the radius roles (D1: a toggle is a button, so `radius-md`, `sm` `radius-sm`; a joined group rounds its outer corners to match Button inside a group), and imports from `@/components/ui`. One stock gap fixed: ToggleGroup took `orientation` but never gave it to Base UI, so a vertical group moved with left/right; it now moves with up/down.
 - **DataTable** (kit extension, candidate): shadcn's data-table guide as one kit file on `@tanstack/react-table` v8. `useDataTable` (the guide's row models and state), `DataTable` (rows from any TanStack table; `aria-sort` on the sorted column, `data-state="selected"`, Empty when there are no rows), `DataTableColumnHeader` (Table's `TableSortButton`), `DataTablePagination` (selected count, rows per page, page N of M, first/previous/next/last in a ButtonGroup), `DataTableViewOptions` (the Columns menu) and `dataTableSelectColumn()`. Visible text through `strings`, as in DatePicker. It uses Table's kit file, so choosing it brings that file. Six interaction tests. Server-side tables call `useReactTable` themselves; every part takes any table.
@@ -150,7 +162,7 @@ Reads the system's contract (schema and profile first), generates the theme file
 - **Chroma is capped** at 1.25× the brand colour's own, so a colour anchored near a grey end step doesn't turn the middle of its ramp brighter than the brand. Existing ramps are unchanged; the Districtly inputs produce identical tokens.
 - No change to client repos: the token tool runs from the kit. A repo upgrading from 0.5.2 only restamps.
 
-**Upgrading a repo**, for every version: the upgrade is its own PR, never a side effect of Sync. Follow the version's steps below, then set `kitVersion`, stamp every kit file with the new version, and update the design system's System section Versions row (profile and kit) — read before you publish (common.md §3) — so all three agree (common.md §2).
+**Upgrading a repo**, for every version: the upgrade is its own PR, never a side effect of Sync. From 0.10.0, `/ds-upgrade` does it: it reconciles the repo's kit files (keeping the client's changes), follows the version's steps below, sets `kitVersion` and opens the PR; `/ds-sync publish` then updates the design system's System section Versions row (profile and kit) — read before you publish (common.md §3) — so all three agree (common.md §2). By hand: follow the version's steps, then set `kitVersion`, stamp every kit file with the new version, and update the Versions row.
 
 **0.5.2** (2026-10-08) — profile `shadcn` 1.5, lessons from the Districtly Setup run
 - **`wiring/vite/eslint.design-system.d.mts`**: types for the kit's ESLint blocks, copied beside them when the app's flat config is TypeScript (TTT's starter has `eslint.config.ts`). Without it the import fails the typecheck.
@@ -225,5 +237,5 @@ Reads the system's contract (schema and profile first), generates the theme file
 
 ## Not in the kit yet
 
-- **Setup, Components and Drift audit.** Only Sync is written; the others will reuse `kit/procedures/common.md`.
+- **Components and Drift audit.** Setup, Sync and Upgrade are written; the others will reuse `kit/procedures/common.md`.
 - **Other profiles.** Ant Design, MUI or a mobile library each need their own `profiles/<library>.md` and `code/<library>/`; nothing else changes.

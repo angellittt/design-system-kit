@@ -1,5 +1,5 @@
 {
-  "//": "design-system-kit 0.9.0 · profile shadcn · wiring: merged into the app's package.json by Setup, together with wiring/<framework>/package.fragment.json. Existing entries are never changed; missing ones are added at these versions. Since kit 0.8.0 the kit's tools run from the plugin, so the repo carries one script (ds:validate, its CI check). `dependencies` covers what the kit's components import beyond shadcn init's own (`@tanstack/react-table` only when DataTable is chosen); `esbuild` and `@tailwindcss/cli` stay because the plugin's bundle builder loads them from the app.",
+  "//": "design-system-kit 0.10.0 · profile shadcn · wiring: merged into the app's package.json by Setup, together with wiring/<framework>/package.fragment.json. Existing entries are never changed; missing ones are added at these versions. Since kit 0.8.0 the kit's tools run from the plugin, so the repo carries one script (ds:validate, its CI check). `dependencies` covers what the kit's components import beyond shadcn init's own (`@tanstack/react-table` only when DataTable is chosen); `esbuild` and `@tailwindcss/cli` stay because the plugin's bundle builder loads them from the app.",
   "scripts": {
     "ds:validate": "node scripts/ds-validate.mjs"
   },

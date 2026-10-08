@@ -1,5 +1,5 @@
 {
-  "//": "design-system-kit 0.9.0 · the kit's own CI. Not a client file: it installs the toolchain the kit's tests run on (the Vite tested range's versions), and assemble.mjs lays the kit out as an app would have it.",
+  "//": "design-system-kit 0.10.0 · the kit's own CI. Not a client file: it installs the toolchain the kit's tests run on (the Vite tested range's versions), and assemble.mjs lays the kit out as an app would have it.",
   "name": "design-system-kit-ci",
   "private": true,
   "type": "module",
@@ -7,7 +7,7 @@
     "assemble": "node assemble.mjs",
     "typecheck": "tsc -p tsconfig.json",
     "test:app": "vitest run",
-    "test:tool": "node --test ../tools/ds-setup.test.mjs",
+    "test:tool": "node --test ../tools/ds-setup.test.mjs ../tools/ds-upgrade.test.mjs",
     "test:fixture": "node app/scripts/__fixtures__/run.mjs",
     "test": "npm run assemble && npm run typecheck && npm run test:app && npm run test:tool && npm run test:fixture"
   },
