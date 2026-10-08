@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// design-system-kit 0.7.0 · profile shadcn · kit file — fix it in the kit, not per client
+// design-system-kit 0.8.0 · profile shadcn · kit file — fix it in the kit, not per client
 /**
  * ds-contrast.mjs — check every contrast requirement in every theme.
  *
@@ -231,7 +231,7 @@ export function table({ themes, rows }) {
 function main() {
   const argv = process.argv.slice(2)
   const flag = (n) => { const i = argv.indexOf(n); return i === -1 ? null : argv[i + 1] }
-  const repo = resolve(flag("--repo") ?? join(HERE, ".."))
+  const repo = resolve(flag("--repo") ?? process.cwd())
   const configPath = flag("--config") ? resolve(flag("--config")) : join(repo, ".ttt/design-system.json")
   const config = existsSync(configPath) ? JSON.parse(readFileSync(configPath, "utf8")) : {}
   const tokensPath = flag("--tokens") ? resolve(flag("--tokens")) : join(repo, config.tokensIn ?? ".ttt/tokens.json")

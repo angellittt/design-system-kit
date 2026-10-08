@@ -1,4 +1,4 @@
-// design-system-kit 0.7.0 · profile shadcn · wiring: React Doctor overrides
+// design-system-kit 0.8.0 · profile shadcn · wiring: React Doctor overrides
 //
 // For repos that run React Doctor (TTT's starter does, on every PR). Setup
 // adds these objects to the app's doctor.config.json "ignore.overrides" list

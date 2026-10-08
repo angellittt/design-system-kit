@@ -1,5 +1,5 @@
 // @vitest-environment node
-// design-system-kit 0.7.0 · profile shadcn · harness: ds-validate tests
+// design-system-kit 0.8.0 · profile shadcn · harness: ds-validate tests
 import { describe, expect, it } from "vitest"
 import { spawnSync } from "node:child_process"
 import { join, dirname } from "node:path"

@@ -1,6 +1,6 @@
 # Report — how every Sync run ends
 
-design-system-kit 0.7.0
+design-system-kit 0.8.0
 
 The skill writes the report itself (common.md §10). It goes in the chat and,
 when there is a PR, as the PR body. A run that stopped still reports: say

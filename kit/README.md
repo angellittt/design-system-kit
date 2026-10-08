@@ -1,4 +1,4 @@
-# TTT design system kit · ttt-ds/1 · kit 0.7.0
+# TTT design system kit · ttt-ds/1 · kit 0.8.0
 
 The starting point for every client design system, bundled into TTT's four skills: **Setup** (design system + Figma + code branch, ending in a PR), **Sync** (pull → PR, publish-back), **Components** (check → propose → accept) and **Drift audit**. Extracted from Jelly, the worked example; the classification of what came over and why is in `docs/extraction/classification.md` at the repo root.
 
@@ -72,22 +72,20 @@ In a monorepo, "the client repo" below means the app's folder (e.g. `apps/web`):
 |---|---|---|
 | `stock/ui/` | Stock `base-nova` components as installed by shadcn 4.21.1 on 2026-10-07, plus **baseline** changes only (each file's header lists them) | `components.json` → `aliases.ui` (default `src/components/ui/`) |
 | `stock/hooks/`, `stock/lib/` | Stock's `use-mobile` and `utils` | `aliases.hooks`, `aliases.lib` |
-| `kit/ui/` | **Kit extensions.** Each `<name>.tsx` is the complete component — the stock file, its baseline changes and the extensions — so opting in replaces the stock file. `date-picker.tsx` has no stock counterpart. Interaction tests sit beside them as `<name>.test.tsx` | `aliases.ui`, replacing the stock file; tests beside it |
-| `scripts/` | `ds-tokens`, `ds-validate`, `ds-contrast`, `ds-pack-react`, `ds-build-bundle`, `ds-styling-maps`, `ds-types` (see the profile's Kit tooling), with `contrast-pairs.json` and `tested-range.json` | `scripts/` |
+| `kit/ui/` | **Kit extensions.** Each `<name>.tsx` is the complete component — the stock file, its baseline changes and the extensions — so opting in replaces the stock file. `date-picker.tsx` has no stock counterpart. Their interaction tests (`<name>.test.tsx`) run in the kit's CI | `aliases.ui`, replacing the stock file (tests not copied) |
+| `scripts/` | `ds-tokens`, `ds-validate`, `ds-contrast`, `ds-pack-react`, `ds-build-bundle`, `ds-styling-maps`, `ds-types` (see the profile's Kit tooling), with `contrast-pairs.json` and `tested-range.json`. **Run from the plugin**, in the app's folder (`$KIT`, common.md) | only `ds-validate.mjs` → `scripts/`, for the repo's CI |
 | `wiring/theme-block.css`, `wiring/focus.css` | The theme block that replaces shadcn's theme variables, and the single `:focus-visible` rule | merged into the global CSS (`components.json` → `tailwind.css`) |
 | `wiring/theme-provider.tsx` | next-themes on `data-theme` (works on Vite too) | `<aliases.components>/theme-provider.tsx`, wrapped around the root layout (Next.js) or the root render in `main.tsx` (Vite) |
 | `wiring/locale.ts` | Seed for the app's locale defaults (locale, week start, date format). App-owned once copied: Setup fills it from the inputs; devs edit it | `<aliases.lib>/locale.ts` |
 | `wiring/next/eslint.config.mjs` | Next.js: flat config with the jsx-a11y rules | `eslint.config.mjs` (or its a11y block added to the repo's) |
-| `wiring/vite/eslint.design-system.mjs`, `wiring/vite/oxlint.design-system.jsonc` | Vite: blocks scoped to the component folder and `scripts/`, spread into the repo's ESLint config and added to `.oxlintrc.json` overrides | the app's own lint configs |
-| `wiring/vite/eslint.design-system.d.mts` | Vite: types for the ESLint blocks, for an app whose flat config is TypeScript | beside `eslint.design-system.mjs` |
+| `wiring/vite/eslint.design-system.ts`, `.mjs`; `wiring/vite/oxlint.design-system.jsonc` | Vite: `withDesignSystem()` — the repo's style rules off for vendored files, the kit's blocks — for a TypeScript or JavaScript flat config; the oxlint override | **pasted into** the app's own lint configs (no file) |
 | `wiring/doctor.design-system.jsonc` | React Doctor overrides for the same paths as the lint blocks: stock markup, cva and DatePicker helper exports, kit tests and scripts | the app's `doctor.config.json` → `ignore.overrides`, when the repo runs React Doctor |
-| `wiring/vite/fonts.css` | Vite: `@font-face` and the `--font-*` variables (no `next/font`) | beside the token file, imported after it |
+| `wiring/vite/fonts.css` | Vite: font package imports (or `@font-face` for a face with no package) and the `--font-*` variables | beside the token file, imported after it |
 | `wiring/design-system.json` | The repo config template, `kitVersion` included | `.ttt/design-system.json` |
 | `wiring/CLAUDE.design-system.md` | The design-system section of `CLAUDE.md`, with the "Replaced by stock" table | appended to `CLAUDE.md` |
 | `wiring/package.fragment.json`, `wiring/<framework>/package.fragment.json` | Scripts and dependencies the above need — shared, then the framework's | merged into the app's `package.json` (missing entries only) |
-| `harness/vitest.config.ts`, `harness/test/setup.ts` | Vitest + jsdom + Testing Library | `vitest.config.ts`, `src/test/setup.ts` |
-| `harness/scripts-tests/` | Tests for `ds-validate` and `ds-contrast` (node environment), and `ds-drift.test.mjs`, which validates the repo itself against its System section snapshot so CI fails on drift | `scripts/__tests__/` |
-| `harness/fixture/` | The bundle-builder fixture: a deliberately different repo shape (namespace `Acme`, `~` alias, `lib/ui`) | `scripts/__fixtures__/` (its `run.mjs` finds the builder at `../ds-build-bundle.mjs`) |
+| `wiring/ds-drift.test.mjs` | Validates the repo against its System section snapshot, so the repo's test run (and CI) fails on drift | `scripts/ds-drift.test.mjs`, beside `ds-validate.mjs` |
+| `harness/` | The kit's own tests: Vitest setup, script tests, the bundle-builder fixture (a deliberately different repo shape — namespace `Acme`, `~` alias, `lib/ui`). Run by `kit/ci` (`npm test`) and the kit's GitHub workflow | not copied |
 | `figma/specs.md` | How each baseline component is constructed in Figma: measurements, tokens, parts, variants and states, properties, the "In use" example | read by Setup's and Sync's Figma steps; not copied |
 | `figma/lib.js` | The Figma builder library, prepended to every `use_figma` script that builds library pages | not copied |
 | `figma/icons.mjs` | Prints the icon geometry from the app's installed icon package for the Utilities page | run from the kit against the app; not copied |
@@ -105,6 +103,16 @@ Placeholders to fill: `{{CLIENT_NAME}}`, `{{NAMESPACE}}`, `{{N_IMPLEMENTED}}`, `
 Reads the system's contract (schema and profile first), generates the theme file and installs components as the profile describes, writes the repo guardrails, and moves each component from `validated` to `implemented` once it's in the codebase.
 
 ## Changes
+
+**0.8.0** (2026-10-08) — profile `shadcn` 1.7; a client repo carries the app, not the kit
+- **Tools run from the plugin.** The skills run `ds-tokens`, `ds-contrast`, `ds-build-bundle`, `ds-pack-react`, `ds-styling-maps` and `ds-types` from the installed plugin (`$KIT`), in the app's folder; each takes the current directory (or `--repo`) as the app and loads the app's own esbuild, TypeScript and React. A repo carries **one** kit script, `scripts/ds-validate.mjs` — now self-contained (it holds the token mapping) — with `scripts/ds-drift.test.mjs`, so its CI still fails on config errors and drift. `package.json` gets one script, `ds:validate`.
+- **The kit tests itself.** Script tests, the bundle fixture and the extensions' interaction tests no longer ship into repos: `kit/ci` assembles the kit as an app has it and runs a strict typecheck, the component and script tests, the Setup tool's tests and the fixture (`npm test`), and `.github/workflows/kit.yml` runs it on every PR. Its first run caught five kit tests with an unused `React` import, fixed.
+- **ESLint helper pasted, not copied:** `wiring/vite/eslint.design-system.ts` (or `.mjs`) goes into the app's own config; no `.mjs` or `.d.mts` in the repo.
+- **Fonts from packages** where they exist (`@fontsource-variable/*` on Vite, `next/font/google` on Next.js); files only for a face with no package.
+- **`CLAUDE.md` section** 224 → 92 lines: the Tokens table defers to the design system's generated "Using in code", and the tooling section is three lines.
+- Districtly, upgraded from 0.5.0: its Setup and upgrade branches carried 23 kit-tooling files and 8 font files; after the upgrade, 2 kit files and no font files.
+
+**Upgrading a 0.7.0 (or 0.5.x–0.6.x) repo**: delete every `scripts/ds-*.mjs` except `ds-validate.mjs` (replace it with 0.8.0's), `scripts/contrast-pairs.json`, `scripts/tested-range.json`, `scripts/__tests__/` and `scripts/__fixtures__/`; add `wiring/ds-drift.test.mjs` as `scripts/ds-drift.test.mjs`; delete the kit's interaction tests from the component folder (`*.test.tsx` that came from `kit/ui/`); remove every `ds:*` script but `ds:validate` from `package.json`; on Vite, paste `eslint.design-system.ts`/`.mjs` into the ESLint config and delete the copied `.mjs`/`.d.mts`; narrow `.prettierignore`'s `scripts/` to the two kit files; replace the `CLAUDE.md` section with 0.8.0's. Optionally swap vendored font files for packages. Then the usual stamp and System row.
 
 **0.7.0** (2026-10-08) — profile `shadcn` 1.6; four gaps from the Districtly Setup PR
 - **Cover**: `kit/template/components/Cover/preview.html` — the Design System type's cover, generated by Setup from the template: name, tagline and a motif (`grid`, `dots`, `lines` or `none`, chosen from the brand book, reason recorded), every colour, radius and space a token from the bundle. New input row 15. Districtly's had been hand-written.

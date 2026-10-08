@@ -1,6 +1,6 @@
 # Publish — code → design system
 
-design-system-kit 0.7.0
+design-system-kit 0.8.0
 
 Sends what the code is now — components, previews, generated documentation,
 statuses — to the design system, then hands off to `figma.md`.
@@ -11,8 +11,8 @@ whether this can run at all.
 
 - On `main`, up to date with the remote, **clean working tree**. Publishing
   from a branch publishes code nobody has merged.
-- `npm run ds:validate -- --system <scratch>/01-system.md` passes (common.md §1).
-- `npm run ds:contrast` passes, or every miss is listed under
+- `node $KIT/ds-validate.mjs --system <scratch>/01-system.md` passes (common.md §1).
+- `node $KIT/ds-contrast.mjs` passes, or every miss is listed under
   `contrast.intentional`.
 - This session is the design system's owner (common.md §4).
 - You've read the live index and noted `lastChange` (common.md §3).
@@ -24,23 +24,23 @@ Everything the design system calls generated comes from these commands —
 never hand-edit their output.
 
 ```bash
-node scripts/ds-build-bundle.mjs --check          # toolchain pins; stop if they don't match
-node scripts/ds-build-bundle.mjs <out>/components # bundle.js + bundle.css
-node scripts/ds-styling-maps.mjs --all > <out>/maps.md
-node scripts/ds-styling-maps.mjs --using-in-code <out>/02-using-in-code.md
-node scripts/ds-types.mjs <out>/components/index.d.ts
+node $KIT/ds-build-bundle.mjs --check          # toolchain pins; stop if they don't match
+node $KIT/ds-build-bundle.mjs <out>/components # bundle.js + bundle.css
+node $KIT/ds-styling-maps.mjs --all > <out>/maps.md
+node $KIT/ds-styling-maps.mjs --using-in-code <out>/02-using-in-code.md
+node $KIT/ds-types.mjs <out>/components/index.d.ts
 ```
 
-- **React libraries**: run `node scripts/ds-pack-react.mjs <out>/components/lib`
+- **React libraries**: run `node $KIT/ds-pack-react.mjs <out>/components/lib`
   only when the installed `react` version differs from the index's
   `libraries[].version`. When it runs, update those `version` fields.
-- **Types**: also run `node scripts/ds-types.mjs --check <live index.d.ts>`
+- **Types**: also run `node $KIT/ds-types.mjs --check <live index.d.ts>`
   against the design system's current `components/index.d.ts`. Unchanged →
   don't send it.
 - **"Used by" lists**: on the live `project/tokens.json` you read:
 
   ```bash
-  node scripts/ds-styling-maps.mjs --used-by <live tokens.json> <out>/tokens.json
+  node $KIT/ds-styling-maps.mjs --used-by <live tokens.json> <out>/tokens.json
   ```
 
   Then confirm that **only usage text** changed (strip every `usage` and

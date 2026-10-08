@@ -1,6 +1,6 @@
 # Code — the branch, then the PR
 
-design-system-kit 0.7.0
+design-system-kit 0.8.0
 
 Setup step 5 builds the code branch; step 9 opens its PR. Paths are the
 app's folder; commands use the repo's package manager (common.md, "The app
@@ -94,15 +94,18 @@ them, and record that in the report.
 
 From `kit/code/<profile>/`, into the places the README table gives:
 
-- **Scripts** — `scripts/*` → the repo's `scripts/`, unchanged (they are kit
-  files; every one names the kit version).
+- **The CI check** — the only kit files the repo carries: `$KIT/ds-validate.mjs`
+  → `scripts/ds-validate.mjs` and `wiring/ds-drift.test.mjs` →
+  `scripts/ds-drift.test.mjs`, unchanged. Every other kit tool runs from the
+  plugin (common.md, "The kit's tools run from the plugin"); nothing else goes
+  in `scripts/`.
 - **Repo config** — `wiring/design-system.json` → `.ttt/design-system.json`,
   filled (with `systemIn`: `.ttt/system.md`): `tracker`, `lastSynced` (system clock), `namespace`,
   `tokensOut` and any adaptable path, `kitVersion` = the plugin's version.
   `designSystem` gets the link once the design system exists
   (`generate.md` §5) — until then `ds:validate` isn't run.
 - **Token snapshot** — `<out>/tokens.json` → `.ttt/tokens.json`, byte for
-  byte. Then `node scripts/ds-tokens.mjs` writes the token file
+  byte. Then `node $KIT/ds-tokens.mjs` writes the token file
   (`tokensOut`).
 - **Theme block** — in the global CSS (`components.json` → `tailwind.css`),
   replace **only** shadcn's theme variable block with `wiring/theme-block.css`
@@ -114,13 +117,19 @@ From `kit/code/<profile>/`, into the places the README table gives:
   root render in `main.tsx` (`<ThemeProvider><App /></ThemeProvider>`).
 - **Fonts** (profile, "Fonts") — a family left `default` loads nothing; the
   fallback stack applies.
-  - Next.js: font files into the repo (e.g. `src/app/fonts/`), loaded with
-    `next/font/local` in the root layout as `--font-display`, `--font-sans`,
+  - **Prefer a package to font files in the repo.** A family Google Fonts or
+    Fontsource publishes needs no files: Next.js loads it with
+    `next/font/google`; Vite imports `@fontsource-variable/<family>` (or
+    `@fontsource/<family>`), added at the version you checked. Only a licensed
+    or custom face gets its files copied into the repo.
+  - Next.js: `next/font/google` (or `next/font/local` for files in
+    `src/app/fonts/`) in the root layout, as `--font-display`, `--font-sans`,
     `--font-mono`.
-  - Vite: font files into `src/assets/fonts/`; `wiring/vite/fonts.css` →
-    beside the token file, one `@font-face` per file and the variables for
-    the families that load, **unlayered**, imported in the global CSS right
-    after the token file. A font package `shadcn init` added (e.g.
+  - Vite: `wiring/vite/fonts.css` → beside the token file: the package imports
+    (or one `@font-face` per file in `src/assets/fonts/`) and the variables
+    for the families that load — set to the family name the package registers
+    (e.g. "Public Sans Variable") — **unlayered**, imported in the global CSS
+    right after the token file. A font package `shadcn init` added (e.g.
     `@fontsource-variable/geist`) stays; list it in the report.
 - **Locale defaults** — `wiring/locale.ts` → `<aliases.lib>/locale.ts`, filled
   from the inputs: `localeTag`, `locale` (the matching date-fns locale, imported
@@ -130,16 +139,16 @@ From `kit/code/<profile>/`, into the places the README table gives:
 - **Lint** — never change the repo's own rules; add the kit's scoped blocks.
   - Next.js: `wiring/next/eslint.config.mjs`, or its jsx-a11y block added to
     the repo's flat config.
-  - Vite: wrap the repo's flat config entries with `withDesignSystem(…)` from
-    `wiring/vite/eslint.design-system.mjs` — `export default
-    defineConfig(withDesignSystem([...the repo's entries]))`. It appends the
+  - Vite: **paste** `wiring/vite/eslint.design-system.ts` (TypeScript config)
+    or `.mjs` (JavaScript config) into the repo's config file below its
+    imports — no separate file — and wrap the repo's entries:
+    `export default defineConfig(withDesignSystem([...the repo's entries]))`.
+    It appends the
     kit's blocks and switches the repo's **style** rules (ESLint's own
     `layout` and `suggestion` types — `prefer-arrow-functions`,
     `import-x/order`) off for the vendored files only, so stock files stay as
     shadcn ships them instead of collecting hundreds of warnings; correctness,
-    security, hooks and accessibility rules stay on. When that config is TypeScript
-    (`eslint.config.ts`), copy `wiring/vite/eslint.design-system.d.mts` beside
-    the `.mjs` too, or the import fails the typecheck; if the repo runs oxlint, add
+    security, hooks and accessibility rules stay on. If the repo runs oxlint, add
     `wiring/vite/oxlint.design-system.jsonc`'s object to `.oxlintrc.json`
     `overrides`. If nothing runs jsx-a11y rules yet (no oxlint jsx-a11y
     plugin, no `eslint-plugin-jsx-a11y`), also add the jsx-a11y block from
@@ -154,8 +163,9 @@ From `kit/code/<profile>/`, into the places the README table gives:
   script that calls it), add the kit-owned and generated paths to the
   `.prettierignore` Prettier reads (the one where it runs: the repo root in a
   monorepo, so prefix the app's folder, e.g. `apps/web/`), creating it if
-  there's none: `.ttt/` (the token snapshot stays byte for byte), `scripts/`
-  (kit files), and the token file (`tokensOut`, regenerated). Add a comment
+  there's none: `.ttt/` (the token snapshot stays byte for byte),
+  `scripts/ds-validate.mjs` and `scripts/ds-drift.test.mjs` (kit files), and
+  the token file (`tokensOut`, regenerated). Add a comment
   line naming the kit. Components are left to the formatter: the unmodified
   stock check compares after it (§3). Never change the repo's Prettier config
   itself. The same goes for any other formatter that rewrites on commit: keep
@@ -163,15 +173,11 @@ From `kit/code/<profile>/`, into the places the README table gives:
 - **CLAUDE.md** — append `wiring/CLAUDE.design-system.md`, every `{{…}}`
   filled and its `npm` commands written for the repo's package manager; `{{CLIENT_USAGE_RULES}}` and `{{AGREED_COMPONENT_RULES}}` start as
   "None yet." Remove its template comment.
-- **Harness** — `harness/scripts-tests/` → `scripts/__tests__/`,
-  `harness/fixture/` → `scripts/__fixtures__/`. The test config:
-  - no Vitest config yet → `harness/vitest.config.ts` and
-    `harness/test/setup.ts`;
-  - the repo has one (usual on Vite) → keep it, and make sure it runs in
-    `jsdom`, its setup file imports `@testing-library/jest-dom/vitest`, its
-    `include` reaches `src/**/*.test.tsx` and `scripts/**/*.test.mjs`, and its
-    `exclude` has `scripts/__fixtures__/**` (the fixture keeps a test file on
-    purpose, to prove the bundle drops it).
+- **Tests** — the kit's own tests (component interaction tests, script
+  tests, the bundle fixture) run in the kit's CI, not here. The repo's test
+  run only needs to reach `scripts/ds-drift.test.mjs` (node environment, no
+  setup file): with no Vitest config, Vitest's defaults find it; with one,
+  make sure its `include` reaches `scripts/*.test.mjs`.
 - **`next.config`** (Next.js only) — `distDir: process.env.NEXT_DIST_DIR ||
   ".next"`.
 
@@ -181,7 +187,7 @@ Merge `wiring/package.fragment.json`, then `wiring/<framework>/package.fragment.
 into the app's `package.json`: add every script, dependency and dev
 dependency that's **missing**; never change one that's
 there, whatever its version. Install each added package at its **tested
-max** for the framework (`scripts/tested-range.json`), e.g. `pnpm add
+max** for the framework (`$KIT/tested-range.json`), e.g. `pnpm add
 sonner@2.0.8` in the app's folder —
 pre-flight already flagged any existing one outside the range.
 
@@ -196,12 +202,12 @@ Under the repo's pinned Node (common.md §9): a non-login shell can pick up
 another version, and tools that load TypeScript plugins (oxlint) fail on it.
 
 ```bash
-npm run ds:contrast
+node $KIT/ds-contrast.mjs
 npm run typecheck
 npm run lint              # the repo's own lint script (ESLint, and oxlint if it has it)
 npm test
 npm run build:safe        # Next.js: beside a dev server; Vite: plain vite build
-npm run ds:fixture
+npm run ds:validate       # the repo's own copy, as its CI runs it
 ```
 
 Every one must pass. A failure is a stop: report the command and its output.

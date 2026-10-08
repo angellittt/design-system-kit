@@ -1,0 +1,28 @@
+# The kit's own tests. They used to ship into every client repo (scripts/__tests__,
+# the bundle fixture, the extensions' interaction tests); since kit 0.8.0 they run here.
+name: kit
+on:
+  pull_request:
+  push:
+    branches: [main]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: kit/ci
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.14.0
+          cache: npm
+          cache-dependency-path: kit/ci/package-lock.json
+      - run: npm ci
+      # assemble the kit as an app has it, strict typecheck, component and script
+      # tests, the Setup tool's tests, the bundle fixture
+      - run: npm test
+      - name: template validates and passes contrast
+        run: |
+          node app/scripts/ds-validate.mjs --template ../code/shadcn/wiring/design-system.json --tokens ../template/tokens.json
+          node app/scripts/ds-contrast.mjs --tokens ../template/tokens.json --config ../code/shadcn/wiring/design-system.json

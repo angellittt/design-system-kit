@@ -1,6 +1,6 @@
 # Pre-flight — can Setup run here?
 
-design-system-kit 0.7.0
+design-system-kit 0.8.0
 
 Two checks before Setup asks for a single input. Both are cheap, and both stop
 the run if they fail: everything after them writes things (a branch, a design
@@ -67,7 +67,7 @@ On the profile's tested range: run the kit's validator against the app's
 installed packages without copying anything in yet, from the app's folder —
 
 ```bash
-node <plugin root>/kit/code/<profile>/scripts/ds-validate.mjs --repo . --preflight
+node $KIT/ds-validate.mjs --repo . --preflight
 ```
 
 It picks the framework's range from the app's `package.json`, and reads

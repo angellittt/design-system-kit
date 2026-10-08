@@ -1,6 +1,6 @@
 # Common procedure — every design-system skill
 
-design-system-kit 0.7.0 · schema `ttt-ds/1`
+design-system-kit 0.8.0 · schema `ttt-ds/1`
 
 Setup, Sync, Components and Drift audit all follow these rules. Each one was
 learned from a run that went wrong without it; none is optional. The rules
@@ -21,11 +21,19 @@ from the repo config.
 file means the **app's folder** — the workspace package that holds
 `components.json` and `.ttt/` (e.g. `apps/web`): kit commands run there, and
 git commands (branch, commit, PR) run at the git root. Commands are written
-for npm (`npm run ds:validate`, `npm install x@1.2.3`); run them with the
+for npm (`npm run typecheck`, `npm install x@1.2.3`); run them with the
 repo's own package manager instead — the one whose lockfile is at the
-workspace root: `pnpm run ds:validate` / `pnpm add x@1.2.3`, `yarn
-ds:validate` / `yarn add x@1.2.3`. The profile's `framework` (repo config;
+workspace root: `pnpm run typecheck` / `pnpm add x@1.2.3`, `yarn
+typecheck` / `yarn add x@1.2.3`. The profile's `framework` (repo config;
 absent means `next`) decides the few framework-specific steps.
+
+**The kit's tools run from the plugin.** `$KIT` in every kit file is
+`<plugin root>/kit/code/<profile>/scripts` — the installed plugin's copy, not
+the repo's. Run them **in the app's folder**: each takes the current
+directory as the app (`--repo <dir>` points elsewhere) and loads the app's own
+packages (esbuild, typescript, React). A repo carries one kit script,
+`scripts/ds-validate.mjs`, for its CI (with `scripts/ds-drift.test.mjs`);
+skills use the plugin's `$KIT/ds-validate.mjs` like the rest.
 
 ---
 
@@ -35,7 +43,7 @@ Read the live System section (`project/01-system.md`) into a scratch file
 first — §2 needs it too — and run, in the repo:
 
 ```bash
-npm run ds:validate -- --system <scratch>/01-system.md
+node $KIT/ds-validate.mjs --system <scratch>/01-system.md
 ```
 
 `--system` lets validation check that every client-added ramp is listed in
@@ -57,7 +65,7 @@ Compare three things:
 | What | Where |
 |---|---|
 | The installed kit | `<plugin root>/.claude-plugin/plugin.json` → `version`, and `<plugin root>/kit/profiles/<profile>.md` → its `**Profile**` line |
-| The repo | `.ttt/design-system.json` → `kitVersion`, `schema`, `profile`; the version stamped in the first lines of each `scripts/ds-*.mjs` |
+| The repo | `.ttt/design-system.json` → `kitVersion`, `schema`, `profile`; the version stamped in `scripts/ds-validate.mjs` (and, in repos set up before kit 0.8.0, every `scripts/ds-*.mjs` — upgrading removes them) |
 | The design system | its System section (`project/01-system.md`) → the Versions row |
 
 - `schema` or `profile` name different from the kit's → **stop**. That needs a migration, not a sync.

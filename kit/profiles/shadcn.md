@@ -1,6 +1,8 @@
 # Part 2 — Library profile: shadcn
 
-**Profile** `shadcn` 1.6 · **Platform** web · **Frameworks** Next.js, Vite · **For schema** `ttt-ds/1`
+**Profile** `shadcn` 1.7 · **Platform** web · **Frameworks** Next.js, Vite · **For schema** `ttt-ds/1`
+
+**1.7** (kit 0.8.0) — A client repo carries the app, not the kit: the tools run from the plugin; the repo keeps `scripts/ds-validate.mjs` and `scripts/ds-drift.test.mjs` for CI, the ESLint helper is pasted into its config, fonts come from packages where they exist, and the `CLAUDE.md` section is a third of its old length.
 
 **1.6** (kit 0.7.0) — Styling maps keep a colour's opacity modifier beside its token (`` `status-negative` · 10% ``), and Figma binds that variable at that paint opacity. On Vite, `withDesignSystem()` switches the repo's style rules (ESLint `layout`/`suggestion` types) off for vendored files only.
 
@@ -110,7 +112,7 @@ What the dev's own app setup must include before the designer runs Setup. Three 
 
 - **Next.js** with the App Router, **or Vite** with `@vitejs/plugin-react` — TypeScript and Tailwind v4 either way (`@tailwindcss/postcss` on Next.js, `@tailwindcss/vite` on Vite), versions within this profile's tested range for that framework.
 - `shadcn init` run with the Config values above (style, base colour, CSS variables, icon library, aliases): `npx shadcn@4.21.1 init --preset nova --base base` — on Vite, after the "Vite specifics" above.
-- **In a monorepo**, all of this lives in one app's folder (e.g. `apps/web`): that folder is where `components.json`, `.ttt/` and `scripts/` go, and the one Setup is pointed at. Workspace-root tooling (ESLint, Vitest, oxlint) is fine; its versions count for the app.
+- **In a monorepo**, all of this lives in one app's folder (e.g. `apps/web`): that folder is where `components.json`, `.ttt/` and `scripts/ds-validate.mjs` go, and the one Setup is pointed at. Workspace-root tooling (ESLint, Vitest, oxlint) is fine; its versions count for the app.
 - No custom theme yet — shadcn's default theme variables are fine; Setup replaces them.
 - Little or no custom UI. Stock shadcn components already added are fine.
 - Linting that runs unattended: an ESLint flat config (`eslint .`; `next lint` is deprecated), optionally oxlint as well. Setup adds the kit's scoped blocks and, where nothing runs jsx-a11y rules yet, the accessibility rules.
@@ -122,7 +124,7 @@ Setup's first step reads the repo and reports **ready**, **adaptable** (e.g. dif
 
 **Framework, app and package manager** — pre-flight reads the framework from the app's `package.json` (`next` or `vite` as a dependency; both or neither is **blocked**), the app's folder (the repo root, or the workspace package the person names — e.g. `apps/web`), and the package manager from the lockfile beside the workspace root (`package-lock.json` npm, `pnpm-lock.yaml` pnpm, `yarn.lock` Yarn; Yarn Plug'n'Play is **blocked** — the scripts read `node_modules`). Every command Setup and Sync run uses that package manager, in the app's folder (`pnpm add …` there, not `npm install`).
 
-**Versions** — pre-flight runs `node scripts/ds-validate.mjs --preflight`, which reads each package's installed version (see Stack) and compares it with `scripts/tested-range.json` — the shared rows plus the app's framework. A package outside its tested range is an error naming the package, its version and the range: Setup reports the repo **blocked** for a different major, and otherwise flags the package for the dev and goes on — the dev either moves it into range or runs an acceptance run that widens the range. A required package that isn't installed is added at its tested max.
+**Versions** — pre-flight runs `node $KIT/ds-validate.mjs --preflight`, which reads each package's installed version (see Stack) and compares it with `$KIT/tested-range.json` — the shared rows plus the app's framework. A package outside its tested range is an error naming the package, its version and the range: Setup reports the repo **blocked** for a different major, and otherwise flags the package for the dev and goes on — the dev either moves it into range or runs an acceptance run that widens the range. A required package that isn't installed is added at its tested max.
 
 ## How this profile provides each layer
 
@@ -181,9 +183,12 @@ Client extensions that add tokens add their Tailwind names here too.
 Seven scripts generate everything the design system receives from code and
 check what it sends down. They are **kit files**: the same file in every repo on this profile, parameterised
 from that repo's own config, never edited per client. Their source is
-`kit/code/shadcn/scripts/` in the kit; Setup copies them to the client repo's
-`scripts/`, and each names the kit version in its header. The paths below are
-the client repo's.
+`kit/code/shadcn/scripts/` in the kit, and the skills **run them from the
+installed plugin**, in the app's folder (`$KIT`, common.md): each takes the
+current directory as the app and loads the app's own packages. A repo carries
+one of them, `scripts/ds-validate.mjs` (with `scripts/ds-drift.test.mjs`), so
+its CI can check the config and drift without the plugin. The paths below
+are the kit's.
 
 Everything else Setup applies comes from the same folder:
 
@@ -192,7 +197,7 @@ Everything else Setup applies comes from the same folder:
 | `kit/code/shadcn/stock/` | Stock base-nova components (shadcn 4.21.1, 2026-10-07) with baseline changes only |
 | `kit/code/shadcn/kit/` | Kit extensions — each a complete component file that replaces the stock one when chosen — and their interaction tests |
 | `kit/code/shadcn/wiring/` | Shared: theme block, focus rule, theme provider, the locale module seed (`locale.ts`), `.ttt/design-system.json` template, `CLAUDE.md` design-system section, `package.json` fragment, React Doctor overrides (`doctor.design-system.jsonc`). `wiring/next/`: ESLint flat config with jsx-a11y, the Next.js package fragment (`build:safe` into `.next-build`). `wiring/vite/`: ESLint and oxlint blocks scoped to the component folder and scripts (with the ESLint block's types for a TypeScript flat config), `fonts.css`, the Vite package fragment |
-| `kit/code/shadcn/harness/` | Vitest + jsdom setup, and the bundle fixture (installed at `scripts/__fixtures__/`) |
+| `kit/code/shadcn/harness/` | The kit's own tests — Vitest setup, script tests, the bundle fixture — run by `kit/ci` and the kit's CI workflow; never copied into an app |
 | `kit/code/shadcn/figma/` | The Figma build: `specs.md` (per-component construction), `lib.js` (the builder), `icons.mjs` (icon geometry from the app's package). Used by the Figma steps, never copied into the app |
 
 | Script | Produces | Reads its configuration from |
@@ -256,8 +261,8 @@ toolchain, because it depends on behaviour rather than just API surface:
 | `esbuild` | major | plugin, banner and footer API |
 
 After any dependency bump, run `--check` (compares installed versions against
-the pins) and the fixture (`scripts/__fixtures__/` in the client repo, from
-`kit/code/shadcn/harness/fixture/`, which builds a repo with a
+the pins); the kit's CI runs the fixture (`kit/code/shadcn/harness/fixture/`,
+which builds a repo with a
 different namespace, alias and source directory, so a change that quietly
 hardcodes one repo's layout fails there rather than in a client's project).
 The fixture also keeps a test file beside its components and asserts it

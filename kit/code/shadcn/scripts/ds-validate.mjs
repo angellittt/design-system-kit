@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// design-system-kit 0.7.0 · profile shadcn · kit file — fix it in the kit, not per client
+// design-system-kit 0.8.0 · profile shadcn · kit file — fix it in the kit, not per client
 /**
  * ds-validate.mjs — the contract's config validation.
  *
@@ -34,14 +34,79 @@
 import { readFileSync, existsSync } from "node:fs"
 import { join, resolve, dirname, relative } from "node:path"
 import { fileURLToPath } from "node:url"
-import { SHADCN_MAP, ALIAS_COLORS } from "./ds-tokens.mjs"
 
 /** The kit these scripts belong to. A repo may not claim a newer one. */
-export const KIT_VERSION = "0.7.0"
+export const KIT_VERSION = "0.8.0"
 const SCHEMA = "ttt-ds/1"
 const PROFILE = "shadcn"
 
 const HERE = dirname(fileURLToPath(import.meta.url))
+
+// ---------------------------------------------------------------------------
+// Profile: shadcn. The contract's token mapping table, in full.
+// shadcn variable -> semantic token name.
+// ---------------------------------------------------------------------------
+export const SHADCN_MAP = {
+  background: "background-normal",
+  foreground: "label-normal",
+  card: "background-elevated",
+  "card-foreground": "label-normal",
+  popover: "background-elevated",
+  "popover-foreground": "label-normal",
+  primary: "primary-normal",
+  "primary-foreground": "on-primary",
+  // shadcn's "secondary" and "accent" are NEUTRAL greys, not brand colours.
+  // The brand ones are exposed under brand-* below.
+  secondary: "fill-normal",
+  "secondary-foreground": "label-normal",
+  muted: "fill-alternative",
+  "muted-foreground": "label-alternative",
+  accent: "fill-alternative",
+  "accent-foreground": "label-normal",
+  destructive: "status-negative",
+  border: "line-normal",
+  input: "line-strong",
+  ring: "focus-ring",
+  sidebar: "background-alternative",
+  "sidebar-foreground": "label-normal",
+  "sidebar-primary": "primary-normal",
+  "sidebar-primary-foreground": "on-primary",
+  "sidebar-accent": "background-elevated",
+  "sidebar-accent-foreground": "label-normal",
+  "sidebar-border": "line-normal",
+  "sidebar-ring": "focus-ring",
+  "chart-1": "chart-1",
+  "chart-2": "chart-2",
+  "chart-3": "chart-3",
+  "chart-4": "chart-4",
+  "chart-5": "chart-5",
+};
+
+/**
+ * Tailwind-only colour names from the mapping table: brand colours, which
+ * shadcn's own names would otherwise shadow, the status shorthands, and the
+ * inverse/scrim roles. A client whose brand fills share one foreground points
+ * `on-secondary` / `on-accent` at it in the design system, not here.
+ */
+export const ALIAS_COLORS = {
+  "brand-secondary": "secondary-normal",
+  "brand-secondary-foreground": "on-secondary",
+  "brand-secondary-soft": "secondary-soft",
+  "brand-secondary-text": "secondary-text",
+  "brand-accent": "accent-normal",
+  "brand-accent-foreground": "on-accent",
+  "brand-accent-soft": "accent-soft",
+  "brand-accent-text": "accent-text",
+  positive: "status-positive",
+  "positive-soft": "status-positive-soft",
+  cautionary: "status-cautionary",
+  "cautionary-soft": "status-cautionary-soft",
+  negative: "status-negative",
+  "negative-soft": "status-negative-soft",
+  inverse: "inverse-background",
+  "inverse-foreground": "inverse-label",
+  dimmer: "material-dimmer",
+};
 
 // ---------------------------------------------------------------------------
 // Small helpers
@@ -636,7 +701,7 @@ export function validateTemplate(configPath, tokensPath) {
 function main() {
   const args = process.argv.slice(2)
   const flag = (n) => { const i = args.indexOf(n); return i === -1 ? null : args[i + 1] }
-  const repo = resolve(flag("--repo") ?? join(HERE, ".."))
+  const repo = resolve(flag("--repo") ?? process.cwd())
   const { errors, warnings, notes } = args.includes("--template")
     ? validateTemplate(resolve(flag("--template")), resolve(flag("--tokens")))
     : validate(repo, { preflight: args.includes("--preflight"), testedRange: flag("--tested-range"), system: flag("--system") && resolve(flag("--system")) })
