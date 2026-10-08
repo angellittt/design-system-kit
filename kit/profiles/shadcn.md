@@ -1,6 +1,8 @@
 # Part 2 — Library profile: shadcn
 
-**Profile** `shadcn` 1.3 · **Platform** web · **Frameworks** Next.js, Vite · **For schema** `ttt-ds/1`
+**Profile** `shadcn` 1.4 · **Platform** web · **Frameworks** Next.js, Vite · **For schema** `ttt-ds/1`
+
+**1.4** (kit 0.5.0) — Locale defaults move from the repo config to the app: `wiring/locale.ts` seeds `<aliases.lib>/locale.ts`, which Calendar and DatePicker default to; `ds-settings` is gone. The Figma library is built to `kit/code/shadcn/figma/specs.md` with the kit's builder (`figma/lib.js`) and the app's own icons (`figma/icons.mjs`).
 
 **1.3** (kit 0.4.0) — Vite joins Next.js as a supported framework: same components, scripts and mapping; per-framework stack, tested range, dev checklist, pre-flight and wiring (fonts, linting, build). Apps inside a monorepo, and pnpm, are supported.
 
@@ -37,7 +39,7 @@ Every other package resolved to one version per run, so most ranges are a single
 | sonner | 2.0.8 | 2.0.8 | Toasts |
 | typescript | 5.9.3 | 5.9.3 |  |
 | react-day-picker | 10.0.2 | 10.0.2 | Calendar and DatePicker |
-| date-fns | 4.4.0 | 4.4.0 | Calendar, DatePicker, `ds-settings` locales |
+| date-fns | 4.4.0 | 4.4.0 | Calendar, DatePicker, the app's `locale.ts` |
 | esbuild | 0.28.2 | 0.28.2 | Bundle builder only |
 
 **Next.js:**
@@ -185,8 +187,9 @@ Everything else Setup applies comes from the same folder:
 |---|---|
 | `kit/code/shadcn/stock/` | Stock base-nova components (shadcn 4.21.1, 2026-10-07) with baseline changes only |
 | `kit/code/shadcn/kit/` | Kit extensions — each a complete component file that replaces the stock one when chosen — and their interaction tests |
-| `kit/code/shadcn/wiring/` | Shared: theme block, focus rule, theme provider, `ds-settings`, `.ttt/design-system.json` template, `CLAUDE.md` design-system section, `package.json` fragment. `wiring/next/`: ESLint flat config with jsx-a11y, the Next.js package fragment (`build:safe` into `.next-build`). `wiring/vite/`: ESLint and oxlint blocks scoped to the component folder and scripts, `fonts.css`, the Vite package fragment |
+| `kit/code/shadcn/wiring/` | Shared: theme block, focus rule, theme provider, the locale module seed (`locale.ts`), `.ttt/design-system.json` template, `CLAUDE.md` design-system section, `package.json` fragment. `wiring/next/`: ESLint flat config with jsx-a11y, the Next.js package fragment (`build:safe` into `.next-build`). `wiring/vite/`: ESLint and oxlint blocks scoped to the component folder and scripts, `fonts.css`, the Vite package fragment |
 | `kit/code/shadcn/harness/` | Vitest + jsdom setup, and the bundle fixture (installed at `scripts/__fixtures__/`) |
+| `kit/code/shadcn/figma/` | The Figma build: `specs.md` (per-component construction), `lib.js` (the builder), `icons.mjs` (icon geometry from the app's package). Used by the Figma steps, never copied into the app |
 
 | Script | Produces | Reads its configuration from |
 |---|---|---|

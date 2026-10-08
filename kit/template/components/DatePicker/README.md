@@ -15,7 +15,7 @@ Date Picker enters a single date or a date range, by picking from a calendar or 
 ```
 
 - **Modes** single and range. A range uses two inputs; the end can't precede the start.
-- **Client settings.** Locale, week start and date format come from `.ttt/design-system.json` through `@/lib/ds-settings` — never from a locale imported in the component. A set `dateFormat` overrides the locale's own pattern; otherwise the pattern comes from the locale. Pass `locale` or `dateFormat` to override one instance.
+- **Client settings.** Locale, week start and date format default to the app's `@/lib/locale` (app-owned; the System section records the same decision) — never from a locale imported in the component. A set `dateFormat` overrides the locale's own pattern; otherwise the pattern comes from the locale. Pass `locale` or `dateFormat` to override one instance.
 - **Typed input.** The pattern is spelled for people by `hintFor()` — show it as the Field description. Invalid dates set `aria-invalid` and report a message through `onValidationChange`, worded as a fix ("Use MM/DD/YYYY — for example 00/00/0000"); show it as the `FieldError`. Typing updates the calendar; picking updates the input. Overflowing dates (13/40/2026) are rejected rather than rolled forward.
 - The calendar opens on the selected month, is keyboard-navigable (arrows, Page Up/Down for months) and is the stock `Calendar`. The date input is Field exception 3 — the picker as a whole goes in a Field.
 

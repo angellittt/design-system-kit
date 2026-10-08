@@ -1,6 +1,6 @@
 # Code — the branch, then the PR
 
-design-system-kit 0.4.1
+design-system-kit 0.5.0
 
 Setup step 5 builds the code branch; step 9 opens its PR. Paths are the
 app's folder; commands use the repo's package manager (common.md, "The app
@@ -97,8 +97,7 @@ From `kit/code/<profile>/`, into the places the README table gives:
 - **Scripts** — `scripts/*` → the repo's `scripts/`, unchanged (they are kit
   files; every one names the kit version).
 - **Repo config** — `wiring/design-system.json` → `.ttt/design-system.json`,
-  filled: `tracker`, `lastSynced` (system clock), `settings` from the inputs
-  (`weekStartsOn` as a **number**, not the quoted placeholder), `namespace`,
+  filled: `tracker`, `lastSynced` (system clock), `namespace`,
   `tokensOut` and any adaptable path, `kitVersion` = the plugin's version.
   `designSystem` gets the link once the design system exists
   (`generate.md` §5) — until then `ds:validate` isn't run.
@@ -123,10 +122,11 @@ From `kit/code/<profile>/`, into the places the README table gives:
     the families that load, **unlayered**, imported in the global CSS right
     after the token file. A font package `shadcn init` added (e.g.
     `@fontsource-variable/geist`) stays; list it in the report.
-- **Client settings** — `wiring/ds-settings.ts` →
-  `<aliases.lib>/ds-settings.ts`: fix the config import path if `lib/` isn't
-  at `src/lib`, and add the client's locale to `LOCALES` (its date-fns
-  import, by name).
+- **Locale defaults** — `wiring/locale.ts` → `<aliases.lib>/locale.ts`, filled
+  from the inputs: `localeTag`, `locale` (the matching date-fns locale, imported
+  by name), `weekStartsOn` (a number, 0 = Sunday) and `dateFormat` (`""` for the
+  locale's own pattern). App-owned from here on: it carries no kit version and
+  later kit upgrades never overwrite it. Keep every export a plain literal.
 - **Lint** — never change the repo's own rules; add the kit's scoped blocks.
   - Next.js: `wiring/next/eslint.config.mjs`, or its jsx-a11y block added to
     the repo's flat config.

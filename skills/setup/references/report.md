@@ -1,6 +1,6 @@
 # Report — how every Setup run ends
 
-design-system-kit 0.4.1
+design-system-kit 0.5.0
 
 The skill writes the report itself (common.md §10). It goes in the chat and,
 once there is a PR, as the PR body (with `code.md` §7's lists before
