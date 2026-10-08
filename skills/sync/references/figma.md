@@ -1,6 +1,6 @@
 # Figma — tokens (pull and publish), components (publish)
 
-design-system-kit 0.10.2
+design-system-kit 0.11.0
 
 Figma is a read-only consumer of the design system: it is regenerated from
 the design system, never edited to taste. The Figma file is the one in the

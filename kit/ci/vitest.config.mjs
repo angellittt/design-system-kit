@@ -1,4 +1,4 @@
-// design-system-kit 0.10.2 · the kit's own CI: the harness config, pointed at app/
+// design-system-kit 0.11.0 · the kit's own CI: the harness config, pointed at app/
 import { defineConfig } from "vitest/config"
 import { resolve } from "node:path"
 

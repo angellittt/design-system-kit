@@ -1,5 +1,5 @@
 {
-  "//": "design-system-kit 0.10.2 · the kit's own CI: as strict as the strictest client so far (the Vite starter), over the assembled app/",
+  "//": "design-system-kit 0.11.0 · the kit's own CI: as strict as the strictest client so far (the Vite starter), over the assembled app/",
   "compilerOptions": {
     "target": "ES2022",
     "lib": ["ES2022", "DOM", "DOM.Iterable"],

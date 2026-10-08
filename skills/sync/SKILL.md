@@ -1,13 +1,13 @@
 ---
 name: sync
-description: Sync a TTT design system with code or Figma. Use when the user wants to pull design-system tokens into a repo and the Figma library's variables (design → code and Figma), publish components back from code to the design system (code → design), sync or update the Figma library from the design system, or runs /ds-sync pull or /ds-sync publish in a repo that has .ttt/design-system.json.
+description: Sync a TTT design system with code or Figma. Use when the user wants to pull design-system tokens into a repo and the Figma library's variables (design → code and Figma), publish components back from code to the design system (code → design), sync or update the Figma library from the design system, restyle a design system with new brand inputs (replace provisional colours, fonts, radius, motion, voice once the style is chosen, or revise a decided one), or runs /ds-sync pull, /ds-sync publish or /ds-sync restyle in a repo that has .ttt/design-system.json.
 ---
 
 # Sync — design system ⇄ code ⇄ Figma
 
-design-system-kit 0.10.2 · schema `ttt-ds/1`
+design-system-kit 0.11.0 · schema `ttt-ds/1`
 
-Two directions, one skill:
+Two directions, one skill — and restyle, which starts on the design side:
 
 - **pull** — design → code and Figma. The design system's tokens and assets
   come down into the repo as a PR, the design system's preview bundle is
@@ -16,6 +16,10 @@ Two directions, one skill:
 - **publish** — code → design system → Figma. The repo's components go up:
   bundle, previews, styling maps, types, "Used by" lists, "Using in code",
   statuses, then the Figma library.
+- **restyle** — new values for Setup's brand inputs (usually the ones the
+  System section lists as provisional): regenerated as Setup generates them,
+  approved by the designer, published to the design system, then pulled.
+  Values only — never structure.
 
 ## Before anything
 
@@ -39,6 +43,7 @@ Two directions, one skill:
 |---|---|
 | `pull` | `references/pull.md` (its step 7 runs `references/figma.md`'s Tokens part), then `references/report.md` |
 | `publish` | `references/publish.md` → `references/figma.md` (Tokens, then Components), then `references/report.md` |
+| `restyle` | `references/restyle.md` (its step 5 runs `references/pull.md`), then `references/report.md` |
 
 No mode given: ask which, and say what each does in one line.
 

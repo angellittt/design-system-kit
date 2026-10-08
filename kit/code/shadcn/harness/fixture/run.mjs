@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// design-system-kit 0.10.2 · profile shadcn · kit file — fix it in the kit, not per client
+// design-system-kit 0.11.0 · profile shadcn · kit file — fix it in the kit, not per client
 /**
  * Fixture test for ds-build-bundle.mjs.
  *

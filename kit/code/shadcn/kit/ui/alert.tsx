@@ -1,4 +1,4 @@
-// design-system-kit 0.10.2 · profile shadcn · kit extension (replaces the stock file when chosen)
+// design-system-kit 0.11.0 · profile shadcn · kit extension (replaces the stock file when chosen)
 /**
  * Stock base-nova (shadcn 4.21.1, 2026-10-07) + TTT baseline:
  * - AlertDescription: `group-has-[>svg]/alert:col-start-2` pins the description to the text column when an icon is present.
