@@ -1,4 +1,4 @@
-// design-system-kit 0.5.0 · profile shadcn · kit extension test
+// design-system-kit 0.5.1 · profile shadcn · kit extension test
 import { describe, expect, it, vi } from "vitest"
 import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
@@ -185,6 +185,49 @@ describe("single date picker", () => {
     expect(screen.getByRole("textbox")).toHaveValue("03/14/2026")
   })
 
+  it("a new value replaces typed text and its error in the same render", async () => {
+    const user = userEvent.setup()
+    const { rerender } = render(
+      <DatePicker value={undefined} onChange={() => {}} locale={enUS} />
+    )
+    const input = screen.getByRole("textbox")
+    await user.type(input, "99/99")
+    expect(input).toHaveAttribute("aria-invalid", "true")
+    rerender(
+      <DatePicker value={new Date(2026, 2, 14)} onChange={() => {}} locale={enUS} />
+    )
+    expect(input).toHaveValue("03/14/2026")
+    expect(input).not.toHaveAttribute("aria-invalid", "true")
+  })
+
+  it("keeps the typed text while the caller hasn't taken the value", async () => {
+    const user = userEvent.setup()
+    render(<DatePicker value={undefined} onChange={() => {}} locale={enUS} />)
+    const input = screen.getByRole("textbox")
+    await user.type(input, "03/14/2026")
+    expect(input).toHaveValue("03/14/2026")
+  })
+
+  it("picking a day clears a typed error and reports it cleared", async () => {
+    const user = userEvent.setup()
+    const onValidationChange = vi.fn()
+    render(
+      <DatePicker
+        value={new Date(2026, 2, 14)}
+        onChange={() => {}}
+        locale={enUS}
+        onValidationChange={onValidationChange}
+      />
+    )
+    const input = screen.getByRole("textbox")
+    await user.type(input, "x")
+    expect(input).toHaveAttribute("aria-invalid", "true")
+    await user.click(screen.getByRole("button", { name: "Open calendar" }))
+    await user.click(await screen.findByRole("button", { name: /March 20(th)?, 2026/ }))
+    expect(onValidationChange.mock.calls.at(-1)?.[0]).toBeNull()
+    expect(input).not.toHaveAttribute("aria-invalid", "true")
+  })
+
   it("opens the calendar on the value's month and reports a picked day", async () => {
     const user = userEvent.setup()
     const onChange = vi.fn()
@@ -242,6 +285,26 @@ describe("range date picker", () => {
       "The end date can't be before the start date"
     )
     expect(end).toHaveAttribute("aria-invalid", "true")
+  })
+
+  it("a new range replaces both typed ends", async () => {
+    const user = userEvent.setup()
+    const props = { mode: "range" as const, onChange: () => {}, locale: enUS }
+    const { rerender } = render(<DatePicker {...props} value={undefined} />)
+    const start = screen.getByLabelText("Start date")
+    const end = screen.getByLabelText("End date")
+    await user.type(start, "03/14/2026")
+    await user.type(end, "03/01/2026")
+    expect(end).toHaveAttribute("aria-invalid", "true")
+    rerender(
+      <DatePicker
+        {...props}
+        value={{ from: new Date(2026, 3, 1), to: new Date(2026, 3, 5) }}
+      />
+    )
+    expect(start).toHaveValue("04/01/2026")
+    expect(end).toHaveValue("04/05/2026")
+    expect(end).not.toHaveAttribute("aria-invalid", "true")
   })
 
   it("accepts the same day at both ends", async () => {
