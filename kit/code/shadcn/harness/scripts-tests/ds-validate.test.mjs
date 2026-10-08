@@ -1,5 +1,5 @@
 // @vitest-environment node
-// design-system-kit 0.3.0 · profile shadcn · harness: ds-validate tests
+// design-system-kit 0.3.1 · profile shadcn · harness: ds-validate tests
 import { describe, expect, it } from "vitest"
 import { spawnSync } from "node:child_process"
 import { join, dirname } from "node:path"
@@ -153,6 +153,17 @@ describe("ds-validate: pre-flight", () => {
     const r = validate(dir, { preflight: true, testedRange: join(dir, "range.json") })
     expect(fields(r)).toEqual(["package next"])
     expect(r.errors[0].message).toMatch(/14\.2\.0, outside the tested range 15\.5\.0 – 15\.5\.27/)
+  })
+})
+
+describe("ds-validate: token file header", () => {
+  it("warns when the token file's Snapshot synced line isn't lastSynced", () => {
+    const header = (t) => `/*\n * Snapshot synced: ${t}\n */\n:root {}\n`
+    expect(validate(repo({ files: { "src/styles/ds-tokens.css": header("2026-10-07T18:00:00Z") } })).warnings).toEqual([])
+    const r = validate(repo({ files: { "src/styles/ds-tokens.css": header("2026-10-07T17:00:00Z") } }))
+    expect(r.errors).toEqual([])
+    expect(r.warnings.map((w) => w.field)).toEqual(["src/styles/ds-tokens.css"])
+    expect(r.warnings[0].fix).toMatch(/set lastSynced before regenerating/)
   })
 })
 

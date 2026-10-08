@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// design-system-kit 0.3.0 · profile shadcn · kit file — fix it in the kit, not per client
+// design-system-kit 0.3.1 · profile shadcn · kit file — fix it in the kit, not per client
 /**
  * ds-validate.mjs — the contract's config validation.
  *
@@ -29,7 +29,7 @@ import { fileURLToPath } from "node:url"
 import { SHADCN_MAP, ALIAS_COLORS } from "./ds-tokens.mjs"
 
 /** The kit these scripts belong to. A repo may not claim a newer one. */
-export const KIT_VERSION = "0.3.0"
+export const KIT_VERSION = "0.3.1"
 const SCHEMA = "ttt-ds/1"
 const PROFILE = "shadcn"
 
@@ -270,6 +270,13 @@ export function validate(repo, { preflight = false, testedRange, system } = {}) 
         checkClientRamps(tokens, config.tokensIn, system, warn, notes)
       }
     }
+  }
+
+  // ---- the token file was generated from this snapshot -------------------------
+  if (typeof config.tokensOut === "string" && existsSync(join(repo, config.tokensOut))) {
+    const synced = /Snapshot synced: (\S+)/.exec(readFileSync(join(repo, config.tokensOut), "utf8").slice(0, 600))?.[1]
+    if (synced && config.lastSynced && synced !== config.lastSynced)
+      warn(config.tokensOut, `says "Snapshot synced: ${synced}" but lastSynced is ${config.lastSynced}`, "regenerate it with node scripts/ds-tokens.mjs (set lastSynced before regenerating)")
   }
 
   // ---- wiring: @source resolves to the source root -------------------------------

@@ -1,5 +1,5 @@
 {
-  "//": "design-system-kit 0.3.0 \u00b7 profile shadcn \u00b7 wiring: merged into the repo's package.json by Setup. Existing entries are never changed; missing ones are added at these versions. `dependencies` covers what the kit's components import beyond shadcn init's own (sonner for Sonner, react-day-picker and date-fns for Calendar and DatePicker, next-themes for theme switching).",
+  "//": "design-system-kit 0.3.1 \u00b7 profile shadcn \u00b7 wiring: merged into the repo's package.json by Setup. Existing entries are never changed; missing ones are added at these versions. `dependencies` covers what the kit's components import beyond shadcn init's own (sonner for Sonner, react-day-picker and date-fns for Calendar and DatePicker, next-themes for theme switching).",
   "scripts": {
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",

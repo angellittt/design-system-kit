@@ -1,10 +1,12 @@
 # Pull — design → code and Figma
 
-design-system-kit 0.3.0
+design-system-kit 0.3.1
 
-Brings the design system's design-owned values to their two consumers: the
-repo (the token snapshot, the generated token file and assets — one PR, or
-none if nothing changed) and the Figma library's variables. Design → code
+Brings the design system's design-owned values to everything built from
+them: the repo (the token snapshot, the generated token file and assets — one
+PR, or none if nothing changed), the design system's own preview bundle
+(its CSS is generated from the token file), and the Figma library's
+variables. Design → code
 and design → Figma are one direction, so pull owns both. Code never changes
 a token here, and Figma never holds up the code PR.
 
@@ -49,13 +51,17 @@ On a new branch from an up-to-date `main` (`ds-sync/pull-<YYYY-MM-DD>`):
 1. Write the design system's `project/tokens.json` to the repo's `tokensIn`
    (default `.ttt/tokens.json`) **byte for byte** — this snapshot is the only
    thing that ever writes it.
-2. Regenerate the token file:
+2. Set `.ttt/design-system.json` → `lastSynced` to the system clock
+   (`date -u +%Y-%m-%dT%H:%M:%SZ`) **now, before regenerating**: the token
+   file's header records it ("Snapshot synced: …"), so setting it later
+   leaves the header one pull behind.
+3. Regenerate the token file:
 
    ```bash
    node scripts/ds-tokens.mjs
    ```
 
-3. Copy changed assets to where the repo keeps them (fonts: the folder the
+4. Copy changed assets to where the repo keeps them (fonts: the folder the
    framework's font loader reads; logos and icons: where the repo already
    has them). If the repo has no place for a new kind of asset, list it in
    Gaps rather than inventing one.
@@ -72,7 +78,8 @@ git diff -U0 -- <tokensOut> | grep '^[-+]' | grep -v '^[-+][-+]' | grep -v 'Snap
 
 - Only the header line ("Snapshot synced: …") changed, and no asset changed →
   **nothing changed** in code. Say so, discard the branch, open no PR — and
-  still run step 7, since Figma may be behind. (A snapshot
+  still run steps 7 and 9, since Figma and the preview bundle may be
+  behind. (A snapshot
   whose only differences are usage text lands here — that's expected.)
 - Anything else → those lines are the "Values changed" for the report: name
   each token and its old → new value per theme.
@@ -121,15 +128,46 @@ with Light and Dark, aliased wherever the token aliases.
 Figma changes are not in the PR (Figma has no branch); the report says
 what changed there.
 
-## 8. lastSynced, branch, PR
+## 8. Branch and PR
 
-1. Set `.ttt/design-system.json` → `lastSynced` to the system clock
-   (`date -u +%Y-%m-%dT%H:%M:%SZ`).
+1. `ds:validate` must not warn that the token file's header and `lastSynced`
+   disagree — if it does, step 3.3 ran before step 3.2: regenerate.
 2. Commit the snapshot, token file, assets and `lastSynced` — nothing else.
 3. Push and open a PR whose body is the report (`report.md`).
 4. In the design system, the changelog entries this pull carries keep
    "Code pending" until the PR merges; the next Sync run flips them
    (common.md §6). Their Figma mark becomes ✓ now if step 7 read the change
-   back, else stays `pending`. That changelog edit is the only thing pull
-   publishes to the design system (owner only, common.md §4; re-read first,
-   §3).
+   back, else stays `pending`. That changelog edit and the preview bundle
+   (step 9) are the only things pull publishes to the design system — in one
+   call, index last (owner only, common.md §4; re-read first, §3).
+
+## 9. Preview bundle
+
+The design system's previews render with `components/bundle.css`, which is
+generated from the token file. A token change that never reaches it leaves
+the previews showing the old tokens until someone runs publish-back — so pull
+rebuilds it.
+
+Build it on the pull branch — or on `main` if step 4 found nothing to change
+in code, since an earlier pull may have left the bundle behind:
+
+```bash
+node scripts/ds-build-bundle.mjs --check          # toolchain pins; stop if they don't match
+node scripts/ds-build-bundle.mjs <out>/components
+```
+
+This is safe to publish before the PR merges, unlike publish-back's bundle:
+step 6 guarantees pull changed no component file, so the bundle is `main`'s
+components with the tokens the design system already holds.
+
+- Compare `bundle.js` and `bundle.css` with the live ones (`cmp`); send only
+  what differs. (`bundle.js` inlines the repo config, so `lastSynced` alone
+  can make it differ.)
+- If `bundle.css` differs, **check every preview** against the new bundle as
+  Sync's `publish.md` §4 describes — both themes, zero errors, and the
+  computed-style comparison against the live bundle. Every difference goes
+  under "Visible preview differences": that is the designer's token change,
+  seen on the components. A preview that breaks is reported and a deviation
+  logged, never hidden.
+- Publish with the changelog edit (step 8.4), the index last, then read back
+  what you sent (common.md §3).

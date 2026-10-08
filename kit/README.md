@@ -1,4 +1,4 @@
-# TTT design system kit · ttt-ds/1 · kit 0.3.0
+# TTT design system kit · ttt-ds/1 · kit 0.3.1
 
 The starting point for every client design system, bundled into TTT's four skills: **Setup** (design system + Figma + code branch, ending in a PR), **Sync** (pull → PR, publish-back), **Components** (check → propose → accept) and **Drift audit**. Extracted from Jelly, the worked example; the classification of what came over and why is in `docs/extraction/classification.md` at the repo root.
 
@@ -87,6 +87,10 @@ Placeholders to fill: `{{CLIENT_NAME}}`, `{{NAMESPACE}}`, `{{N_IMPLEMENTED}}`, `
 Reads the system's contract (schema and profile first), generates the theme file and installs components as the profile describes, writes the repo guardrails, and moves each component from `validated` to `implemented` once it's in the codebase.
 
 ## Changes
+
+**0.3.1** (2026-10-08)
+- Pull republishes the design system's **preview bundle** (new step 9): `bundle.css` is generated from the token file, so a token pull left the previews on the old tokens until a publish-back. It's built on the pull branch (or `main` when nothing changed in code), only what differs is sent, and a changed `bundle.css` gets the preview check, with differences reported as visible preview differences.
+- Pull sets `lastSynced` **before** regenerating the token file, whose "Snapshot synced" header records it; it was set afterwards, leaving the header one pull behind. `ds-validate` warns when the header and `lastSynced` disagree.
 
 **0.3.0** (2026-10-07)
 - **Setup** skill (`skills/setup/`, `/ds-setup`), drafted: prerequisites, pre-flight (ready / adaptable / blocked, including the existing-UI stop), every input asked for and none guessed, tokens, the code branch, the design system created from the Design System artifact type, a review gate, the Figma library after approval, the PR. It reuses `common.md` and Sync's `figma.md`.
