@@ -1,6 +1,6 @@
 # Code — the branch, then the PR
 
-design-system-kit 0.5.0
+design-system-kit 0.5.1
 
 Setup step 5 builds the code branch; step 9 opens its PR. Paths are the
 app's folder; commands use the repo's package manager (common.md, "The app
@@ -136,6 +136,12 @@ From `kit/code/<profile>/`, into the places the README table gives:
     `overrides`. If nothing runs jsx-a11y rules yet (no oxlint jsx-a11y
     plugin, no `eslint-plugin-jsx-a11y`), also add the jsx-a11y block from
     `wiring/next/eslint.config.mjs` and its plugin.
+  - React Doctor — if the repo runs it (a workflow using
+    `millionco/react-doctor`, a `doctor.config.*`, or a `reactDoctor` key in
+    `package.json`), add `wiring/doctor.design-system.jsonc`'s objects to its
+    config's `ignore.overrides` (no config yet → `doctor.config.json` beside
+    the app's `package.json`). Same paths as the lint blocks; without it every
+    setup PR reports the stock files' shadcn markup as new findings.
 - **CLAUDE.md** — append `wiring/CLAUDE.design-system.md`, every `{{…}}`
   filled and its `npm` commands written for the repo's package manager; `{{CLIENT_USAGE_RULES}}` and `{{AGREED_COMPONENT_RULES}}` start as
   "None yet." Remove its template comment.

@@ -1,4 +1,4 @@
-# TTT design system kit · ttt-ds/1 · kit 0.5.0
+# TTT design system kit · ttt-ds/1 · kit 0.5.1
 
 The starting point for every client design system, bundled into TTT's four skills: **Setup** (design system + Figma + code branch, ending in a PR), **Sync** (pull → PR, publish-back), **Components** (check → propose → accept) and **Drift audit**. Extracted from Jelly, the worked example; the classification of what came over and why is in `docs/extraction/classification.md` at the repo root.
 
@@ -70,6 +70,7 @@ In a monorepo, "the client repo" below means the app's folder (e.g. `apps/web`):
 | `wiring/locale.ts` | Seed for the app's locale defaults (locale, week start, date format). App-owned once copied: Setup fills it from the inputs; devs edit it | `<aliases.lib>/locale.ts` |
 | `wiring/next/eslint.config.mjs` | Next.js: flat config with the jsx-a11y rules | `eslint.config.mjs` (or its a11y block added to the repo's) |
 | `wiring/vite/eslint.design-system.mjs`, `wiring/vite/oxlint.design-system.jsonc` | Vite: blocks scoped to the component folder and `scripts/`, spread into the repo's ESLint config and added to `.oxlintrc.json` overrides | the app's own lint configs |
+| `wiring/doctor.design-system.jsonc` | React Doctor overrides for the same paths as the lint blocks: stock markup, cva and DatePicker helper exports, kit tests and scripts | the app's `doctor.config.json` → `ignore.overrides`, when the repo runs React Doctor |
 | `wiring/vite/fonts.css` | Vite: `@font-face` and the `--font-*` variables (no `next/font`) | beside the token file, imported after it |
 | `wiring/design-system.json` | The repo config template, `kitVersion` included | `.ttt/design-system.json` |
 | `wiring/CLAUDE.design-system.md` | The design-system section of `CLAUDE.md`, with the "Replaced by stock" table | appended to `CLAUDE.md` |
@@ -94,6 +95,12 @@ Placeholders to fill: `{{CLIENT_NAME}}`, `{{NAMESPACE}}`, `{{N_IMPLEMENTED}}`, `
 Reads the system's contract (schema and profile first), generates the theme file and installs components as the profile describes, writes the repo guardrails, and moves each component from `validated` to `implemented` once it's in the codebase.
 
 ## Changes
+
+**0.5.1** (2026-10-08) — profile `shadcn` 1.5, from the review of the Districtly setup PR
+- **DatePicker syncs from `value` without an effect.** Typed text is kept as a draft tied to the value it was typed against: when `value` changes (a pick, or the caller setting it) the input shows the new value in the same render, with no frame of stale text, and a calendar pick reports the cleared error from its own event. A caller that sets `value` itself (a form reset) clears any validation message it holds. Four new interaction tests.
+- **React Doctor stays quiet about stock files.** Setup adds `wiring/doctor.design-system.jsonc` to the app's React Doctor config when the repo runs it, mirroring the oxlint override: a fresh setup went from 35 findings to the repo's own 3.
+
+**Upgrading a 0.5.0 repo**: copy `date-picker.tsx` and its test; if the repo runs React Doctor, add the overrides; stamp the kit files and `kitVersion` 0.5.1.
 
 **0.5.0** (2026-10-08) — profile `shadcn` 1.4
 - **Figma libraries are constructed, not generated.** Setup's Figma step builds every component to `kit/code/shadcn/figma/specs.md` with the kit's builder (`figma/lib.js`): the page order and section layout of the reference library (root frame per page, a section per component with description, set and an "In use" example), State axes, component properties, `<Component>/<Part>` sets composed as instances, content in the client's voice, and icons from the app's own package (`figma/icons.mjs`) on a Utilities page. The styling maps become the check, not the blueprint. The read-back adds zero unbound paints, zero unstyled text, and a screenshot review per section. Sync's publish-back follows the same spec and builder. Learned on the Districtly run: the first, map-generated library was unusable.
