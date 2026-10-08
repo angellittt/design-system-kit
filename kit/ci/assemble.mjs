@@ -1,4 +1,4 @@
-// design-system-kit 0.10.2 · the kit's own CI: lay the kit out as an app has it
+// design-system-kit 0.11.0 · the kit's own CI: lay the kit out as an app has it
 //
 // app/ is rebuilt every run (and gitignored): the stock components, with the
 // kit's extension files over them as Setup installs them; the stock lib and

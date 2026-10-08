@@ -1,4 +1,4 @@
-# TTT design system kit · ttt-ds/1 · kit 0.10.2
+# TTT design system kit · ttt-ds/1 · kit 0.11.0
 
 The starting point for every client design system, bundled into TTT's four skills: **Setup** (design system + Figma + code branch, ending in a PR), **Sync** (pull → PR, publish-back), **Components** (check → propose → accept) and **Drift audit**. Extracted from Jelly, the worked example; the classification of what came over and why is in `docs/extraction/classification.md` at the repo root.
 
@@ -35,6 +35,8 @@ and in a repo that has `.ttt/design-system.json`:
 ```
 /ds-sync pull       # design → code and Figma: tokens and assets into a PR, token changes to Figma's variables
 /ds-sync publish    # code → design system → Figma
+/ds-sync restyle    # new brand inputs (usually the provisional ones) → design system, then pull
+/ds-sync restyle    # new brand inputs (usually the provisional ones) → design system, then pull
 /ds-upgrade         # catch the repo up to the installed kit, keeping the client's changes
 ```
 
@@ -45,12 +47,12 @@ If another plugin also defines `/ds-sync` or `/ds-setup`, use the namespaced for
 | `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json` | The plugin (`design-system-kit`) and the marketplace (`ttt-design`) |
 | `skills/setup/` | The Setup skill: `SKILL.md`, and the steps in `references/` (`preflight.md`, `inputs.md`, `generate.md`, `code.md`, `review.md`, `figma-library.md`, `report.md`) |
 | `commands/ds-setup.md` | `/ds-setup` |
-| `kit/tools/ds-setup.mjs` | Setup's tool, run from the kit (never copied into a repo): `tokens` generates the ramps from the brand inputs and fits contrast; `fill` fills the template's placeholders. Tests: `node --test kit/tools/ds-setup.test.mjs` |
+| `kit/tools/ds-setup.mjs` | Setup's tool, run from the kit (never copied into a repo): `tokens` generates the ramps from the brand inputs and fits contrast; `restyle` regenerates only what changed inputs drive on a live design system's tokens (Sync's restyle); `fill` fills the template's placeholders. Tests: `node --test kit/tools/ds-setup.test.mjs` |
 | `kit/tools/ds-upgrade.mjs` | Upgrade's tool, run from the kit: reconciles every kit file a repo carries with the installed version — against the kit file it started from (the release tag of its own stamp), through the repo's formatter — as stamp, replace, keep, merge or conflict; `--add <names>` adds components the repo doesn't have, with what they need. Tests: `node --test kit/tools/ds-upgrade.test.mjs` |
 | `skills/upgrade/` | The Upgrade skill: `SKILL.md`, and `references/upgrade.md` and `report.md` |
 | `commands/ds-upgrade.md` | `/ds-upgrade` |
-| `skills/sync/` | The Sync skill: `SKILL.md`, and the steps in `references/` (`pull.md`, `publish.md`, `figma.md`, `report.md`) |
-| `commands/ds-sync.md` | `/ds-sync pull \| publish` |
+| `skills/sync/` | The Sync skill: `SKILL.md`, and the steps in `references/` (`pull.md`, `publish.md`, `restyle.md`, `figma.md`, `report.md`) |
+| `commands/ds-sync.md` | `/ds-sync pull \| publish \| restyle` |
 | `kit/procedures/common.md` | The rules every skill follows — validate, versions, read-before-publish, owner only, clock, changelog, deviations, files, repos, report |
 
 Skills read kit files from the plugin root by path; nothing is copied into a session.
@@ -107,6 +109,15 @@ Placeholders to fill: `{{CLIENT_NAME}}`, `{{NAMESPACE}}`, `{{N_IMPLEMENTED}}`, `
 Reads the system's contract (schema and profile first), generates the theme file and installs components as the profile describes, writes the repo guardrails, and moves each component from `validated` to `implemented` once it's in the codebase.
 
 ## Changes
+
+**0.11.0** (2026-10-08) — provisional inputs and restyle: start generic, take on the style later
+- **Setup's inputs can be provisional** (`references/inputs.md`). Design teams often start generic and pass the style once the client approves UI samples, so each answer is *decided*, *provisional · default* (the kit's default, e.g. the template's placeholder brand ramp) or *provisional · extracted* (proposed by Claude from client material the person handed over, with its source, and accepted). Still nothing is guessed: provisional is an answer the person gives.
+- **Lock now, or provisional.** Inputs that change structure — client name and namespace, locale settings, status mode, kit extensions — are decided at Setup; the rest (brand colours, neutral tint, fonts, logo, guidelines and voice, radius, motion, status colours, client ramps, cover) can wait. `ds-setup.mjs tokens` refuses a lock-now key in `inputs.provisional`, and a brand colour can be `"default"` only while provisional. Two new tests.
+- **Extraction and directions.** Claude can propose inputs from client material (only what the person hands over), one line each with its source; when the designer is choosing between looks, one value set per direction, compared with the token tool before Setup starts on one.
+- **The System section lists what's provisional** (`01-system.md`, a **Provisional** line), and the brand book marks provisional values; review and the report say so.
+- **`/ds-sync restyle`** (`references/restyle.md`): new values for any of those inputs on a design system that exists — usually the provisional ones once the style is chosen, or a designer's later revision. `ds-setup.mjs restyle` runs Setup's generators and grafts only what the changed inputs drive onto the live tokens (the designer's other edits stay), moves the tokens that were a colour when it lands on another step, fits contrast, and reports the whole diff and every hand-edited step it replaces. The designer approves the diff and screenshots before anything is published; then the design system is updated and pull carries it to code and Figma, plus the font wiring and Figma text styles pull doesn't carry. Values only — structure changes stop with what they need instead. Five new tests (22).
+
+**Upgrading a 0.10.2 repo**: nothing but the stamp. A design system set up before 0.11.0 has no **Provisional** line; restyle treats that as none provisional, and adds the line the first time it publishes.
 
 **0.10.2** (2026-10-08) — React Doctor findings from Districtly's upgrade PR; Figma spec catch-up
 - **DataTable and DatePicker keep a default when an override is `undefined`.** `strings` merged as `{ ...defaults, ...overrides }`, so `strings={{ rowsPerPage: undefined }}` — easy to produce from a conditional — rendered a blank label (React Doctor: `no-spread-props-over-defaults-clobbers-with-undefined`). Both now merge through `withDefaults`, which skips `undefined`. Two new tests.

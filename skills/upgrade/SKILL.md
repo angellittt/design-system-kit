@@ -5,7 +5,7 @@ description: Upgrade a repo's TTT design system to the installed kit version —
 
 # Upgrade — catch a repo up to the kit
 
-design-system-kit 0.10.2 · schema `ttt-ds/1`
+design-system-kit 0.11.0 · schema `ttt-ds/1`
 
 The kit's tools and skills reach a repo when the plugin updates; the files the
 repo **carries** — components, `ds-validate.mjs`, the theme provider — don't.

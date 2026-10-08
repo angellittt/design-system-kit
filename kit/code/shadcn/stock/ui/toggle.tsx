@@ -1,4 +1,4 @@
-// design-system-kit 0.10.2 · profile shadcn · stock component (base-nova + baseline only)
+// design-system-kit 0.11.0 · profile shadcn · stock component (base-nova + baseline only)
 /**
  * Stock base-nova (shadcn 4.21.1, 2026-10-08) + TTT baseline:
  * - Focus: removed `outline-none` and `focus-visible:border-ring/ring-*` in favour of the global `:focus-visible` outline.

@@ -1,6 +1,6 @@
 # Upgrade — the steps
 
-design-system-kit 0.10.2
+design-system-kit 0.11.0
 
 `$KIT` is the plugin root. "The app" is the app's folder (common.md); every
 command runs there, with the repo's package manager and pinned toolchain

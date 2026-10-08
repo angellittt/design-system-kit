@@ -1,6 +1,6 @@
 # Report — how every Sync run ends
 
-design-system-kit 0.10.2
+design-system-kit 0.11.0
 
 The skill writes the report itself (common.md §10). It goes in the chat and,
 when there is a PR, as the PR body. A run that stopped still reports: say
@@ -32,8 +32,13 @@ that are empty — never drop a heading.
   byte-identical, so not sent); statuses changed; previews written; the
   preview check (count × themes, errors); the design-system version
   published; Figma changes and their read-back.
+- restyle: the changes asked for (old → new, each decided or still
+  provisional), the designer's approval and what they saw (screenshots,
+  contrast result), what was published to the design system, then pull's
+  items, plus fonts wired in code and text styles changed in Figma.
 
 **Values changed (old → new)**
+- restyle: the tool's whole diff, and every hand-edited step it replaced.
 - Every token value per theme, every status (`validated → implemented`),
   every version (kit, profile, React), every setting, every Figma binding
   and variable value or alias —

@@ -1,6 +1,6 @@
 # Generate — tokens, then the design system
 
-design-system-kit 0.10.2
+design-system-kit 0.11.0
 
 Two halves, with the code branch in between (`code.md`): the tokens come
 first because the code needs them; the design system comes after the code
@@ -130,12 +130,21 @@ left; then:
   sentences, the icon library (the profile's default unless the guidelines
   name one), logo usage. Keep every "TTT default" passage the guidelines
   don't override. Remove the `<!-- TEMPLATE … -->` comment. No `{{` may be
-  left.
+  left. A **provisional** input still fills its place, marked: a default
+  brand colour's row reads "Provisional — kit placeholder" with the
+  placeholder hex; principles or voice with no guidelines yet read
+  "Provisional — TTT default below until the client's guidelines are in";
+  an extracted value names its source in a short clause. Never present a
+  placeholder as the client's.
 - **`01-system.md`** — the client-specific choices line becomes one line per
   choice: status reuse (if chosen), each client-added ramp (`` A `data` ramp
   for … ``, so `ds-validate --system` finds it), radius or motion if not
   `default`, any adaptable pre-flight finding the code records (a different
   CSS path, aliases). "None yet" if there are none.
+  The **Provisional** line becomes one line per `inputs.provisional` entry:
+  the input and its kind — `` `brand.primary` — extracted: Volunteer handbook
+  p. 2 ``, `` `fonts` — kit default (system stack) `` — so restyle knows what's
+  still standing in. "None." if every input is decided.
 - **`02-using-in-code.md`** — generated, not filled:
   `node $KIT/ds-styling-maps.mjs --using-in-code <out>/ds/project/02-using-in-code.md`
   in the branch.

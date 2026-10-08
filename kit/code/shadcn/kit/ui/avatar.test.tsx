@@ -1,4 +1,4 @@
-// design-system-kit 0.10.2 · profile shadcn · kit extension test
+// design-system-kit 0.11.0 · profile shadcn · kit extension test
 import { describe, expect, it } from "vitest"
 import { render } from "@testing-library/react"
 

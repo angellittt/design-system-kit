@@ -1,11 +1,11 @@
-// design-system-kit 0.10.2 · Setup tool tests — node --test kit/tools/
+// design-system-kit 0.11.0 · Setup tool tests — node --test kit/tools/
 import { test } from "node:test"
 import assert from "node:assert/strict"
 import { readFileSync, mkdtempSync, writeFileSync, mkdirSync } from "node:fs"
 import { join, dirname } from "node:path"
 import { tmpdir } from "node:os"
 import { fileURLToPath } from "node:url"
-import { hexToOklch, generateRamp, fitOptions, anchorStep, applyInputs, fitContrast, flags, fill } from "./ds-setup.mjs"
+import { hexToOklch, generateRamp, fitOptions, anchorStep, applyInputs, fitContrast, flags, fill, restyle, diffTokens } from "./ds-setup.mjs"
 
 const KIT = join(dirname(fileURLToPath(import.meta.url)), "..")
 const template = JSON.parse(readFileSync(join(KIT, "template/tokens.json"), "utf8"))
@@ -75,6 +75,21 @@ test("every missing input is named, never guessed", () => {
   assert.throws(() => applyInputs(template, inputs({ brand: { primary: "#2f4bda", secondary: "#0f9d8a" } })), /inputs\.brand\.accent is missing/)
   assert.throws(() => applyInputs(template, inputs({ neutralTint: undefined })), /inputs\.neutralTint is missing/)
   assert.throws(() => applyInputs(template, inputs({ radius: "round" })), /sharp, default, soft/)
+})
+
+test("a provisional brand colour keeps the template's placeholder ramp, and only when it's listed as provisional", () => {
+  const brand = { primary: "default", secondary: "#0f9d8a", accent: "#f5a524" }
+  assert.throws(() => applyInputs(template, inputs({ brand })), /only a provisional input can be/)
+  const { tokens } = applyInputs(template, inputs({ brand, provisional: { "brand.primary": "default" } }))
+  for (const t of template.color.tokens.filter((x) => x.name.startsWith("brand-primary-"))) assert.equal(value(tokens, t.name), t.value)
+  assert.equal(anchorStep(tokens, "brand-primary"), "50")
+  assert.match(tokens.color.tokens.find((t) => t.name === "brand-primary-50").usage, /^Primitive brand-primary step 50\. Provisional:/)
+})
+
+test("lock-now inputs can't be provisional, and a provisional kind is default or extracted", () => {
+  for (const key of ["client", "settings", "status.mode", "extensions"]) assert.throws(() => applyInputs(template, inputs({ provisional: { [key]: "default" } })), /can't be provisional/)
+  assert.throws(() => applyInputs(template, inputs({ provisional: { radius: "maybe" } })), /"default" or "extracted: <source>"/)
+  assert.doesNotThrow(() => applyInputs(template, inputs({ provisional: { "brand.primary": "extracted: Volunteer handbook p. 2", fonts: "default" } })))
 })
 
 test("status reuse removes the status ramps and re-aliases everything that used them", () => {
@@ -152,4 +167,63 @@ test("mid-tone colours stay on their usual step", () => {
     assert.equal(value(tokens, "brand-primary-50"), primary.toLowerCase(), primary)
     assert.equal(value(tokens, "brand-accent-60"), accent.toLowerCase(), accent)
   }
+})
+
+// A design system set up generic: every brand colour the kit's placeholder.
+const generic = () => applyInputs(template, inputs({
+  brand: { primary: "default", secondary: "default", accent: "default" },
+  provisional: { "brand.primary": "default", "brand.secondary": "default", "brand.accent": "default" },
+})).tokens
+
+test("restyle replaces only what the changed inputs drive, and keeps the designer's other edits", () => {
+  const live = generic()
+  const edited = live.color.tokens.find((t) => t.name === "label-neutral")
+  edited.value.light = "{neutral-30}" // a designer's edit in claude.ai
+  const { tokens } = restyle(template, live, { brand: { primary: "#1f5f8b" } })
+  assert.equal(value(tokens, "brand-primary-50"), "#1f5f8b")
+  for (const name of ["brand-secondary-50", "brand-accent-60", "neutral-50", "negative-50"]) assert.equal(value(tokens, name), value(live, name))
+  assert.equal(value(tokens, "label-neutral").light, "{neutral-30}")
+  assert.deepEqual(tokens.radius, live.radius)
+  const diff = diffTokens(live, tokens)
+  assert.ok(diff.some((d) => d.startsWith("`brand-primary-50`: #2f4bda → #1f5f8b")))
+  assert.ok(diff.every((d) => /brand-primary/.test(d)), diff.join("\n"))
+})
+
+test("restyle lists the ramp steps it replaces that were edited by hand", () => {
+  const live = restyle(template, generic(), { brand: { primary: "#1f5f8b" } }).tokens
+  assert.deepEqual(restyle(template, live, { brand: { primary: "#2a6f97" } }).overwritten, [])
+  live.color.tokens.find((t) => t.name === "brand-primary-70").value = "#7aa6c8"
+  assert.deepEqual(restyle(template, live, { brand: { primary: "#2a6f97" } }).overwritten.map((x) => x.split(":")[0]), ["`brand-primary-70`"])
+  assert.deepEqual(restyle(template, generic(), { brand: { accent: "#f2a541" } }).overwritten, [])
+})
+
+test("restyle moves the tokens that were the colour when it lands on another step, and back again", () => {
+  const live = generic()
+  const dark = restyle(template, live, { brand: { secondary: "#14213D" } }).tokens
+  assert.notEqual(anchorStep(dark, "brand-secondary"), "50")
+  assert.match(value(dark, "secondary-normal").light, new RegExp(`brand-secondary-${anchorStep(dark, "brand-secondary")}`))
+  const back = restyle(template, dark, { brand: { secondary: "#0f9d8a" } }).tokens
+  assert.equal(anchorStep(back, "brand-secondary"), "50")
+  assert.equal(value(back, "secondary-normal").light, value(live, "secondary-normal").light)
+})
+
+test("restyle refuses structure, and changes radius, motion and one font without touching the rest", () => {
+  const live = generic()
+  for (const c of [{ client: "Other" }, { settings: {} }, { extensions: [] }, { status: { mode: "reuse" } }, {}]) assert.throws(() => restyle(template, live, c))
+  const { tokens } = restyle(template, live, { radius: "soft", motion: "playful", fonts: { display: "Fraunces", files: [{ family: "Fraunces", file: "f.woff2", weight: "100 900" }] } })
+  assert.notDeepEqual(tokens.radius, live.radius)
+  assert.equal(tokens.easing.tokens.find((t) => t.name === "ease-expressive").value, "cubic-bezier(0.34, 1.56, 0.64, 1)")
+  assert.match(tokens.type.families.display, /^"Fraunces"/)
+  assert.equal(tokens.type.families.sans, live.type.families.sans)
+  assert.deepEqual(tokens.type.fonts.map((f) => f.family), ["Fraunces"])
+})
+
+test("restyle can add a client ramp, and a restyled system still fits contrast", () => {
+  const live = generic()
+  const { tokens } = restyle(template, live, { brand: { primary: "#1f5f8b" }, clientRamps: [{ name: "attention", hex: "#ff6b5b", reason: "Hearing dates and comment windows." }] })
+  assert.equal(value(tokens, "attention-50"), "#ff6b5b")
+  assert.equal(fitContrast(tokens, pairs, intentional).unresolved.length, 0)
+  // An orange no single foreground can sit on is a design decision, as in Setup.
+  const orange = restyle(template, live, { brand: { primary: "#e8590c" } }).tokens
+  assert.deepEqual(fitContrast(orange, pairs, intentional).unresolved.map((r) => r.foreground), ["on-primary"])
 })
