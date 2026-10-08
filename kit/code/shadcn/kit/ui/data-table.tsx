@@ -1,4 +1,4 @@
-// design-system-kit 0.10.1 · profile shadcn · kit extension (replaces the stock file when chosen)
+// design-system-kit 0.10.2 · profile shadcn · kit extension (replaces the stock file when chosen)
 "use client"
 
 import * as React from "react"
@@ -118,6 +118,15 @@ const defaultStrings: DataTableStrings = {
   toggleColumns: "Toggle columns",
 }
 
+/** The defaults with the caller's overrides; an override left `undefined` keeps its default. */
+function withDefaults<T extends object>(defaults: T, overrides?: Partial<T>): T {
+  const out = { ...defaults }
+  if (overrides)
+    for (const k of Object.keys(overrides) as (keyof T)[])
+      if (overrides[k] !== undefined) out[k] = overrides[k] as T[keyof T]
+  return out
+}
+
 type UseDataTableOptions<TData> = Omit<TableOptions<TData>, "getCoreRowModel"> &
   Partial<Pick<TableOptions<TData>, "getCoreRowModel">> & {
     /** Rows per page on first render. */
@@ -156,7 +165,7 @@ function DataTable<TData>({
   empty?: React.ReactNode
   strings?: Partial<Pick<DataTableStrings, "empty">>
 }) {
-  const strings = { ...defaultStrings, ...overrides }
+  const strings = withDefaults(defaultStrings, overrides)
   const rows = table.getRowModel().rows
   return (
     <Table
@@ -261,7 +270,7 @@ function DataTablePagination<TData>({
   pageSizes?: number[]
   strings?: Partial<DataTableStrings>
 }) {
-  const strings = { ...defaultStrings, ...overrides }
+  const strings = withDefaults(defaultStrings, overrides)
   const id = React.useId()
   const { pageIndex, pageSize } = table.getState().pagination
   const selectable = table.options.enableRowSelection !== false
@@ -361,7 +370,7 @@ function DataTableViewOptions<TData>({
   table: TanStackTable<TData>
   strings?: Partial<DataTableStrings>
 }) {
-  const strings = { ...defaultStrings, ...overrides }
+  const strings = withDefaults(defaultStrings, overrides)
   const columns = table
     .getAllLeafColumns()
     .filter((column) => column.getCanHide() && column.accessorFn !== undefined)
@@ -394,7 +403,7 @@ function DataTableViewOptions<TData>({
 function dataTableSelectColumn<TData>(
   overrides?: Partial<Pick<DataTableStrings, "selectAll" | "selectRow">>
 ): ColumnDef<TData> {
-  const strings = { ...defaultStrings, ...overrides }
+  const strings = withDefaults(defaultStrings, overrides)
   return {
     id: "select",
     header: ({ table }) => (

@@ -1,4 +1,4 @@
-// design-system-kit 0.10.1 · Upgrade tool tests — node --test kit/tools/
+// design-system-kit 0.10.2 · Upgrade tool tests — node --test kit/tools/
 import { test } from "node:test"
 import assert from "node:assert/strict"
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync } from "node:fs"

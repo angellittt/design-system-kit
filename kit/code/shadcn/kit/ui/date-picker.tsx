@@ -1,4 +1,4 @@
-// design-system-kit 0.10.1 · profile shadcn · kit extension (replaces the stock file when chosen)
+// design-system-kit 0.10.2 · profile shadcn · kit extension (replaces the stock file when chosen)
 "use client"
 
 import * as React from "react"
@@ -128,6 +128,15 @@ const defaultStrings: DatePickerStrings = {
   rangePlaceholder: "Pick a date range",
 }
 
+/** The defaults with the caller's overrides; an override left `undefined` keeps its default. */
+function withDefaults<T extends object>(defaults: T, overrides?: Partial<T>): T {
+  const out = { ...defaults }
+  if (overrides)
+    for (const k of Object.keys(overrides) as (keyof T)[])
+      if (overrides[k] !== undefined) out[k] = overrides[k] as T[keyof T]
+  return out
+}
+
 type Common = {
   locale?: Locale
   /**
@@ -248,7 +257,7 @@ export function DatePicker(props: DatePickerProps) {
     strings: overrides,
     onValidationChange,
   } = props
-  const strings = { ...defaultStrings, ...overrides }
+  const strings = withDefaults(defaultStrings, overrides)
   const pattern = patternFor(locale, dateFormat)
   const hint = hintFor(locale, dateFormat)
   const fmt = React.useCallback(

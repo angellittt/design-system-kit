@@ -1,4 +1,4 @@
-// design-system-kit 0.10.1 · profile shadcn · wiring: React Doctor overrides
+// design-system-kit 0.10.2 · profile shadcn · wiring: React Doctor overrides
 //
 // For repos that run React Doctor (TTT's starter does, on every PR). Setup
 // adds these objects to the app's doctor.config.json "ignore.overrides" list
@@ -13,7 +13,9 @@
 //   content arrive through props the scanner can't see, and DatePicker focuses
 //   its calendar on open on purpose. shadcn's own markup (a role on <nav>, a
 //   role on the breadcrumb's current page, index keys on a static error list)
-//   stays as shadcn ships it, so stock files stay comparable to stock.
+//   stays as shadcn ships it, so stock files stay comparable to stock — as
+//   does a context value built inline (ToggleGroup's variant/size context,
+//   read by its three or four items; memoizing it would fork the stock file).
 // - cva variant helpers and the documented helpers of DatePicker (patternFor,
 //   hintFor, parseTyped) and DataTable (useDataTable, dataTableSelectColumn)
 //   are exported beside the component by design.
@@ -29,6 +31,7 @@
       "react-doctor/prefer-tag-over-role",
       "react-doctor/no-redundant-roles",
       "react-doctor/no-array-index-as-key",
+      "react-doctor/jsx-no-constructed-context-values",
       "react/only-export-components",
       "react/set-state-in-effect",
       "jsx-a11y/prefer-tag-over-role",

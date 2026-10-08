@@ -1,4 +1,4 @@
-// design-system-kit 0.10.1 · profile shadcn · stock component (base-nova + baseline only)
+// design-system-kit 0.10.2 · profile shadcn · stock component (base-nova + baseline only)
 "use client"
 
 import { Separator as SeparatorPrimitive } from "@base-ui/react/separator"

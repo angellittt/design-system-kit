@@ -1,6 +1,6 @@
 # Inputs — ask for every one, guess none
 
-design-system-kit 0.10.1
+design-system-kit 0.10.2
 
 Everything Setup generates comes from these answers. **Never fill one in
 yourself** — not from the repo, the client's website, a logo's colours or "a

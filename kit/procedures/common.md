@@ -1,6 +1,6 @@
 # Common procedure — every design-system skill
 
-design-system-kit 0.10.1 · schema `ttt-ds/1`
+design-system-kit 0.10.2 · schema `ttt-ds/1`
 
 Setup, Sync, Components and Drift audit all follow these rules. Each one was
 learned from a run that went wrong without it; none is optional. The rules

@@ -1,4 +1,4 @@
-// design-system-kit 0.10.1 · profile shadcn · kit extension test
+// design-system-kit 0.10.2 · profile shadcn · kit extension test
 import { describe, expect, it } from "vitest"
 import { render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
@@ -126,5 +126,17 @@ describe("empty", () => {
     expect(cell).toHaveAttribute("colspan", "4")
     expect(within(cell).getByText("No results")).toBeInTheDocument()
     expect(screen.getByText("Page 1 of 1")).toBeInTheDocument()
+  })
+})
+
+describe("strings", () => {
+  it("keeps a default when an override is undefined, and uses one that is set", () => {
+    function Pager() {
+      const table = useDataTable({ data: invoices, columns, pageSize: 2 })
+      return <DataTablePagination table={table} pageSizes={[]} strings={{ nextPage: undefined, previousPage: "Back" }} />
+    }
+    render(<Pager />)
+    expect(screen.getByRole("button", { name: "Next page" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Back" })).toBeInTheDocument()
   })
 })

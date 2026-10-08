@@ -1,4 +1,4 @@
-# TTT design system kit · ttt-ds/1 · kit 0.10.1
+# TTT design system kit · ttt-ds/1 · kit 0.10.2
 
 The starting point for every client design system, bundled into TTT's four skills: **Setup** (design system + Figma + code branch, ending in a PR), **Sync** (pull → PR, publish-back), **Components** (check → propose → accept) and **Drift audit**. Extracted from Jelly, the worked example; the classification of what came over and why is in `docs/extraction/classification.md` at the repo root.
 
@@ -107,6 +107,13 @@ Placeholders to fill: `{{CLIENT_NAME}}`, `{{NAMESPACE}}`, `{{N_IMPLEMENTED}}`, `
 Reads the system's contract (schema and profile first), generates the theme file and installs components as the profile describes, writes the repo guardrails, and moves each component from `validated` to `implemented` once it's in the codebase.
 
 ## Changes
+
+**0.10.2** (2026-10-08) — React Doctor findings from Districtly's upgrade PR; Figma spec catch-up
+- **DataTable and DatePicker keep a default when an override is `undefined`.** `strings` merged as `{ ...defaults, ...overrides }`, so `strings={{ rowsPerPage: undefined }}` — easy to produce from a conditional — rendered a blank label (React Doctor: `no-spread-props-over-defaults-clobbers-with-undefined`). Both now merge through `withDefaults`, which skips `undefined`. Two new tests.
+- **React Doctor overrides** (`wiring/doctor.design-system.jsonc`) add `react-doctor/jsx-no-constructed-context-values` for the component folder: ToggleGroup's stock context value is built inline, and memoizing it would fork the stock file. Same reasoning as the overrides 0.5.1 added.
+- **Figma spec** (`figma/specs.md`), from the Districtly build: Toggle's icon-only form is a `Content text · icon` variant, not a "Show label" boolean (a boolean can't change the padding, so icon-only toggles came out wider than tall); Button gains `State=disabled` on its outline icon sizes, so a pager's disabled arrows aren't faked with opacity.
+
+**Upgrading a 0.10.1 repo**: `/ds-upgrade` replaces `data-table.tsx` and `date-picker.tsx` (merging any client edits). If the repo runs React Doctor, add `react-doctor/jsx-no-constructed-context-values` to the component folder's override in its `doctor.config.json` (a section, done by hand — it isn't a whole kit file). Libraries built before 0.10.2 keep their Toggle and Button sets until a publish-back rebuilds them; nothing breaks meanwhile.
 
 **0.10.1** (2026-10-08) — Upgrade offers new components
 - **The offer** (`references/upgrade.md` step 5b): after the dry run, the components the kit has and the repo doesn't are offered once, in one message — what each is for, *candidate* where the profile says so, and what it brings — the way Setup offers kit extensions. Nothing is added unless named. 0.10.0 only listed them in the report, and nothing said how to ask for one.
