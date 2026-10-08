@@ -1,6 +1,6 @@
 # Code — the branch, then the PR
 
-design-system-kit 0.5.1
+design-system-kit 0.5.2
 
 Setup step 5 builds the code branch; step 9 opens its PR. Paths are the
 app's folder; commands use the repo's package manager (common.md, "The app
@@ -131,7 +131,9 @@ From `kit/code/<profile>/`, into the places the README table gives:
   - Next.js: `wiring/next/eslint.config.mjs`, or its jsx-a11y block added to
     the repo's flat config.
   - Vite: spread `wiring/vite/eslint.design-system.mjs` into the repo's flat
-    config after its own entries; if the repo runs oxlint, add
+    config after its own entries — when that config is TypeScript
+    (`eslint.config.ts`), copy `wiring/vite/eslint.design-system.d.mts` beside
+    the `.mjs` too, or the import fails the typecheck; if the repo runs oxlint, add
     `wiring/vite/oxlint.design-system.jsonc`'s object to `.oxlintrc.json`
     `overrides`. If nothing runs jsx-a11y rules yet (no oxlint jsx-a11y
     plugin, no `eslint-plugin-jsx-a11y`), also add the jsx-a11y block from
@@ -142,6 +144,16 @@ From `kit/code/<profile>/`, into the places the README table gives:
     config's `ignore.overrides` (no config yet → `doctor.config.json` beside
     the app's `package.json`). Same paths as the lint blocks; without it every
     setup PR reports the stock files' shadcn markup as new findings.
+- **Formatter** — if the repo runs Prettier (a Prettier config, or a hook or
+  script that calls it), add the kit-owned and generated paths to the
+  `.prettierignore` Prettier reads (the one where it runs: the repo root in a
+  monorepo, so prefix the app's folder, e.g. `apps/web/`), creating it if
+  there's none: `.ttt/` (the token snapshot stays byte for byte), `scripts/`
+  (kit files), and the token file (`tokensOut`, regenerated). Add a comment
+  line naming the kit. Components are left to the formatter: the unmodified
+  stock check compares after it (§3). Never change the repo's Prettier config
+  itself. The same goes for any other formatter that rewrites on commit: keep
+  it off those paths, and say how in the PR.
 - **CLAUDE.md** — append `wiring/CLAUDE.design-system.md`, every `{{…}}`
   filled and its `npm` commands written for the repo's package manager; `{{CLIENT_USAGE_RULES}}` and `{{AGREED_COMPONENT_RULES}}` start as
   "None yet." Remove its template comment.
@@ -173,6 +185,9 @@ name the components (or scripts) that need it, e.g. "`react-day-picker@10.0.2`
 — Calendar, DatePicker".
 
 ## 6. Check the branch
+
+Under the repo's pinned Node (common.md §9): a non-login shell can pick up
+another version, and tools that load TypeScript plugins (oxlint) fail on it.
 
 ```bash
 npm run ds:contrast

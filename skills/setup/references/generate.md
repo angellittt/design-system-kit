@@ -1,6 +1,6 @@
 # Generate — tokens, then the design system
 
-design-system-kit 0.5.1
+design-system-kit 0.5.2
 
 Two halves, with the code branch in between (`code.md`): the tokens come
 first because the code needs them; the design system comes after the code

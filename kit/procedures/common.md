@@ -1,6 +1,6 @@
 # Common procedure — every design-system skill
 
-design-system-kit 0.5.1 · schema `ttt-ds/1`
+design-system-kit 0.5.2 · schema `ttt-ds/1`
 
 Setup, Sync, Components and Drift audit all follow these rules. Each one was
 learned from a run that went wrong without it; none is optional. The rules
@@ -155,6 +155,7 @@ component that misses its agreed styling, a token code can't honour — is a
 
 - Never write to a `tttstudios` repository — no branch, commit, push, PR or comment. Read only, and only if the user asked.
 - Work on a branch, never directly on `main`; end with a PR. Commit messages and PR bodies end with the attribution the session specifies.
+- Run the repo's commands under its **pinned toolchain**. If it pins Node (`mise.toml` or `.tool-versions`, `.nvmrc` or `.node-version`, `volta` or `engines` in `package.json`), activate it first in the same shell (e.g. `eval "$(mise env -s bash)"`) and check `node -v`. A command that fails under the wrong version isn't a repo or kit failure: switch and re-run before reporting it.
 - Don't change a package under a running dev server you didn't start (its cache keeps the old files and every page starts failing). Build with `npm run build:safe` (`.next-build`) while a dev server runs.
 
 ## 10. The report

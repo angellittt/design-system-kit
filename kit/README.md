@@ -1,4 +1,4 @@
-# TTT design system kit · ttt-ds/1 · kit 0.5.1
+# TTT design system kit · ttt-ds/1 · kit 0.5.2
 
 The starting point for every client design system, bundled into TTT's four skills: **Setup** (design system + Figma + code branch, ending in a PR), **Sync** (pull → PR, publish-back), **Components** (check → propose → accept) and **Drift audit**. Extracted from Jelly, the worked example; the classification of what came over and why is in `docs/extraction/classification.md` at the repo root.
 
@@ -14,6 +14,15 @@ The repo is a Claude Code plugin marketplace:
 /plugin marketplace add angellittt/design-system-kit
 /plugin install design-system-kit@ttt-design
 ```
+
+**Updating.** A new release on GitHub doesn't reach your machine by itself. Refresh the marketplace, then update the plugin, then start a new session (a running session keeps the version it loaded):
+
+```
+claude plugin marketplace update ttt-design
+claude plugin update design-system-kit@ttt-design
+```
+
+`claude plugin list` shows the installed version; it must match the `kit` version in this README's title. A copy left over from an older install shows as orphaned and is never run.
 
 Then, in a new client repo (no `.ttt/design-system.json` yet):
 
@@ -70,6 +79,7 @@ In a monorepo, "the client repo" below means the app's folder (e.g. `apps/web`):
 | `wiring/locale.ts` | Seed for the app's locale defaults (locale, week start, date format). App-owned once copied: Setup fills it from the inputs; devs edit it | `<aliases.lib>/locale.ts` |
 | `wiring/next/eslint.config.mjs` | Next.js: flat config with the jsx-a11y rules | `eslint.config.mjs` (or its a11y block added to the repo's) |
 | `wiring/vite/eslint.design-system.mjs`, `wiring/vite/oxlint.design-system.jsonc` | Vite: blocks scoped to the component folder and `scripts/`, spread into the repo's ESLint config and added to `.oxlintrc.json` overrides | the app's own lint configs |
+| `wiring/vite/eslint.design-system.d.mts` | Vite: types for the ESLint blocks, for an app whose flat config is TypeScript | beside `eslint.design-system.mjs` |
 | `wiring/doctor.design-system.jsonc` | React Doctor overrides for the same paths as the lint blocks: stock markup, cva and DatePicker helper exports, kit tests and scripts | the app's `doctor.config.json` → `ignore.overrides`, when the repo runs React Doctor |
 | `wiring/vite/fonts.css` | Vite: `@font-face` and the `--font-*` variables (no `next/font`) | beside the token file, imported after it |
 | `wiring/design-system.json` | The repo config template, `kitVersion` included | `.ttt/design-system.json` |
@@ -95,6 +105,17 @@ Placeholders to fill: `{{CLIENT_NAME}}`, `{{NAMESPACE}}`, `{{N_IMPLEMENTED}}`, `
 Reads the system's contract (schema and profile first), generates the theme file and installs components as the profile describes, writes the repo guardrails, and moves each component from `validated` to `implemented` once it's in the codebase.
 
 ## Changes
+
+**Upgrading a repo**, for every version: the upgrade is its own PR, never a side effect of Sync. Follow the version's steps below, then set `kitVersion`, stamp every kit file with the new version, and update the design system's System section Versions row (profile and kit) — read before you publish (common.md §3) — so all three agree (common.md §2).
+
+**0.5.2** (2026-10-08) — profile `shadcn` 1.5, lessons from the Districtly Setup run
+- **`wiring/vite/eslint.design-system.d.mts`**: types for the kit's ESLint blocks, copied beside them when the app's flat config is TypeScript (TTT's starter has `eslint.config.ts`). Without it the import fails the typecheck.
+- **Formatter wiring**: Setup keeps Prettier (or any formatter that rewrites on commit) off the kit-owned and generated paths — `.ttt/`, `scripts/`, the token file — through the `.prettierignore` it reads. The token snapshot must stay byte for byte.
+- **Pinned toolchain**: commands run under the repo's pinned Node (common.md §9); a non-login shell picked up Node 22 instead of the starter's 24, and oxlint's TypeScript plugin failed to load.
+- **Upgrades update the System section's Versions row** (above), so the design system doesn't keep naming the old kit.
+- **Updating the plugin**: Install covers refreshing the marketplace and updating the plugin locally.
+
+**Upgrading a 0.5.1 repo**: if the app's ESLint config is TypeScript and has no declaration for the kit's block, copy `eslint.design-system.d.mts` beside it; if the repo runs Prettier and its `.prettierignore` doesn't cover `.ttt/`, `scripts/` and the token file, add them.
 
 **0.5.1** (2026-10-08) — profile `shadcn` 1.5, from the review of the Districtly setup PR
 - **DatePicker syncs from `value` without an effect.** Typed text is kept as a draft tied to the value it was typed against: when `value` changes (a pick, or the caller setting it) the input shows the new value in the same render, with no frame of stale text, and a calendar pick reports the cleared error from its own event. A caller that sets `value` itself (a form reset) clears any validation message it holds. Four new interaction tests.

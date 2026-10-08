@@ -1,4 +1,4 @@
-// design-system-kit 0.5.1 · profile shadcn · kit extension test
+// design-system-kit 0.5.2 · profile shadcn · kit extension test
 import { describe, expect, it, vi } from "vitest"
 import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"

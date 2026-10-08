@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// design-system-kit 0.5.1 · profile shadcn · kit file — fix it in the kit, not per client
+// design-system-kit 0.5.2 · profile shadcn · kit file — fix it in the kit, not per client
 /**
  * ds-types.mjs — `components/index.d.ts` for the design system, generated from
  * the repo's own `components/ui` exports.
