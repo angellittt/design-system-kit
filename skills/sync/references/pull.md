@@ -1,6 +1,6 @@
 # Pull — design → code and Figma
 
-design-system-kit 0.6.0
+design-system-kit 0.6.1
 
 Brings the design system's design-owned values to everything built from
 them: the repo (the token snapshot, the generated token file and assets — one
@@ -50,7 +50,10 @@ On a new branch from an up-to-date `main` (`ds-sync/pull-<YYYY-MM-DD>`):
 
 1. Write the design system's `project/tokens.json` to the repo's `tokensIn`
    (default `.ttt/tokens.json`) **byte for byte** — this snapshot is the only
-   thing that ever writes it.
+   thing that ever writes it. Write `project/01-system.md` to `systemIn`
+   (`.ttt/system.md`) the same way: the tests check the app against it. A
+   repo without `systemIn` (set up before kit 0.6.1) gets it now — add the
+   key, and say so in the report.
 2. Set `.ttt/design-system.json` → `lastSynced` to the system clock
    (`date -u +%Y-%m-%dT%H:%M:%SZ`) **now, before regenerating**: the token
    file's header records it ("Snapshot synced: …"), so setting it later
@@ -99,7 +102,7 @@ npm run ds:contrast
 ## 6. Validate, test, build
 
 ```bash
-npm run ds:validate -- --system <scratch>/01-system.md   # the live System section
+npm run ds:validate      # against the System snapshot you just wrote
 npm run typecheck
 npm test
 npm run build:safe      # or npm run build when no dev server is running
@@ -132,7 +135,11 @@ what changed there.
 
 1. `ds:validate` must not warn that the token file's header and `lastSynced`
    disagree — if it does, step 3.3 ran before step 3.2: regenerate.
-2. Commit the snapshot, token file, assets and `lastSynced` — nothing else.
+2. Commit the snapshots (tokens and System section), token file, assets and
+   `lastSynced` — nothing else. If the tests fail on drift (the System
+   section now records a locale, week start or date format the app doesn't
+   use), the PR still opens: the report says which side to change, and the
+   app's change is its own PR.
 3. Push and open a PR whose body is the report (`report.md`).
 4. In the design system, the changelog entries this pull carries keep
    "Code pending" until the PR merges; the next Sync run flips them

@@ -1,5 +1,5 @@
 // @vitest-environment node
-// design-system-kit 0.6.0 · profile shadcn · harness: ds-validate tests
+// design-system-kit 0.6.1 · profile shadcn · harness: ds-validate tests
 import { describe, expect, it } from "vitest"
 import { spawnSync } from "node:child_process"
 import { join, dirname } from "node:path"
@@ -266,6 +266,29 @@ describe("ds-validate: the app's locale module", () => {
 
   it("notes the comparison was skipped without --system", () => {
     expect(validate(repo()).notes.join("\n")).toMatch(/not compared with the System section/)
+  })
+
+  it("reads the committed System snapshot (systemIn) by default, and --system wins", () => {
+    const line = (tag) => `# System\n\n**Client settings** — locale \`${tag}\` · week starts Monday · date format \`DD/MM/YYYY\`.\n`
+    const dir = repo({ config: { ...goodConfig(), systemIn: ".ttt/system.md" }, files: { ".ttt/system.md": line("en-CA") } })
+    const fromSnapshot = validate(dir)
+    expect(at(fromSnapshot.warnings)).toContain("src/lib/locale.ts › localeTag")
+    expect(fromSnapshot.notes.join("\n")).not.toMatch(/not compared/)
+    expect(at(validate(dir, { system: sys(line("en-US")) }).warnings)).not.toContain("src/lib/locale.ts › localeTag")
+  })
+
+  it("warns when systemIn points at nothing", () => {
+    const dir = repo({ config: { ...goodConfig(), systemIn: ".ttt/system.md" } })
+    expect(validate(dir).warnings.find((w) => w.field === "systemIn")?.message).toMatch(/doesn't exist/)
+  })
+
+  it("tags each disagreement with the System section as drift, and nothing else", () => {
+    const dir = repo()
+    const { warnings } = validate(dir, { system: sys("**Client settings** — locale `en-CA` · week starts Sunday · date format `DD/MM/YYYY`.") })
+    const drift = warnings.filter((w) => w.kind === "drift").map((w) => w.field)
+    expect(drift).toEqual(expect.arrayContaining(["src/lib/locale.ts › localeTag", "src/lib/locale.ts › weekStartsOn"]))
+    expect(warnings.filter((w) => w.kind !== "drift").map((w) => w.field)).not.toContain("src/lib/locale.ts › weekStartsOn")
+    expect(validate(dir, { system: sys("No settings here.") }).warnings.find((w) => w.field === "System section")?.kind).toBe("drift")
   })
 })
 

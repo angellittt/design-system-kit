@@ -1,4 +1,4 @@
-# TTT design system kit · ttt-ds/1 · kit 0.6.0
+# TTT design system kit · ttt-ds/1 · kit 0.6.1
 
 The starting point for every client design system, bundled into TTT's four skills: **Setup** (design system + Figma + code branch, ending in a PR), **Sync** (pull → PR, publish-back), **Components** (check → propose → accept) and **Drift audit**. Extracted from Jelly, the worked example; the classification of what came over and why is in `docs/extraction/classification.md` at the repo root.
 
@@ -86,7 +86,7 @@ In a monorepo, "the client repo" below means the app's folder (e.g. `apps/web`):
 | `wiring/CLAUDE.design-system.md` | The design-system section of `CLAUDE.md`, with the "Replaced by stock" table | appended to `CLAUDE.md` |
 | `wiring/package.fragment.json`, `wiring/<framework>/package.fragment.json` | Scripts and dependencies the above need — shared, then the framework's | merged into the app's `package.json` (missing entries only) |
 | `harness/vitest.config.ts`, `harness/test/setup.ts` | Vitest + jsdom + Testing Library | `vitest.config.ts`, `src/test/setup.ts` |
-| `harness/scripts-tests/` | Tests for `ds-validate` and `ds-contrast` (node environment) | `scripts/__tests__/` |
+| `harness/scripts-tests/` | Tests for `ds-validate` and `ds-contrast` (node environment), and `ds-drift.test.mjs`, which validates the repo itself against its System section snapshot so CI fails on drift | `scripts/__tests__/` |
 | `harness/fixture/` | The bundle-builder fixture: a deliberately different repo shape (namespace `Acme`, `~` alias, `lib/ui`) | `scripts/__fixtures__/` (its `run.mjs` finds the builder at `../ds-build-bundle.mjs`) |
 | `figma/specs.md` | How each baseline component is constructed in Figma: measurements, tokens, parts, variants and states, properties, the "In use" example | read by Setup's and Sync's Figma steps; not copied |
 | `figma/lib.js` | The Figma builder library, prepended to every `use_figma` script that builds library pages | not copied |
@@ -105,6 +105,12 @@ Placeholders to fill: `{{CLIENT_NAME}}`, `{{NAMESPACE}}`, `{{N_IMPLEMENTED}}`, `
 Reads the system's contract (schema and profile first), generates the theme file and installs components as the profile describes, writes the repo guardrails, and moves each component from `validated` to `implemented` once it's in the codebase.
 
 ## Changes
+
+**0.6.1** (2026-10-08) — two loose ends from the Districtly run
+- **Status colours: Setup asks what each one means** before a brand colour goes on a status ramp. Components hard-wire them: `negative` colours every error and destructive action across 13 stock components. A colour the brand reserves for something else (Districtly's coral marked "attention moments", not errors) keeps the status default and gets a home of its own: a client-added ramp or the accent. See Setup's `inputs.md`.
+- **Drift is checked in CI.** The repo commits a snapshot of the System section, `.ttt/system.md` (config `systemIn`), written by Setup and Sync's pull like the token snapshot. `ds:validate` reads it by default (`--system` still wins) and tags each disagreement as `drift`. The new harness test `ds-drift.test.mjs` runs validation on the repo inside its own tests, so the existing CI test job fails on drift and on config errors. Tried on Districtly: it passes, then fails with "weekStartsOn is Sunday; the System section records Monday" after the app's week start is changed.
+
+**Upgrading a 0.6.0 repo**: copy the 0.6.1 scripts and `scripts/__tests__/` (with the new `ds-drift.test.mjs`); write the design system's `project/01-system.md` to `.ttt/system.md`; add `"systemIn": ".ttt/system.md"` to the config. A Sync pull does the last two by itself.
 
 **0.6.0** (2026-10-08) — the token tool places brand colours the designer's way
 - **A colour can sit on another step.** Brand and status colours take `{ "hex", "step" }` as well as a hex, like client-added ramps already did. The report's Notes list the semantic tokens still on the usual step.

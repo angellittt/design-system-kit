@@ -1,4 +1,4 @@
-// design-system-kit 0.6.0 · profile shadcn · kit extension (replaces the stock file when chosen)
+// design-system-kit 0.6.1 · profile shadcn · kit extension (replaces the stock file when chosen)
 /**
  * Stock base-nova (shadcn 4.21.1, 2026-10-07) + TTT baseline:
  * - "use client" added.

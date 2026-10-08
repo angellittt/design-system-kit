@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// design-system-kit 0.6.0 · profile shadcn · kit file — fix it in the kit, not per client
+// design-system-kit 0.6.1 · profile shadcn · kit file — fix it in the kit, not per client
 /**
  * ds-validate.mjs — the contract's config validation.
  *
@@ -7,10 +7,14 @@
  *   node scripts/ds-validate.mjs --preflight   # …and installed versions vs the tested range
  *   node scripts/ds-validate.mjs --repo <dir>  # validate another checkout
  *   node scripts/ds-validate.mjs --system <01-system.md>
- *                                             # …and check client-added ramps are listed
- *                                             # in the design system's System section, and
- *                                             # that its Client settings line matches the
- *                                             # app's locale module
+ *                                             # compare with a live copy of the System
+ *                                             # section instead of the committed snapshot
+ *                                             # (systemIn, normally .ttt/system.md):
+ *                                             # client-added ramps are listed there, and
+ *                                             # its Client settings line matches the app's
+ *                                             # locale module. A difference is a "drift"
+ *                                             # warning; scripts/__tests__/ds-drift.test.mjs
+ *                                             # fails the repo's tests on one
  *   node scripts/ds-validate.mjs --template <config.json> --tokens <tokens.json>
  *                                             # the kit's own templates ("{{…}}" allowed)
  *
@@ -23,7 +27,8 @@
  * values, and that the repo's `kitVersion` is no newer than these scripts. Every error names the field and says how to
  * fix it. Exits 1 on any error; warnings don't fail.
  *
- * Runs in CI and at the start of every skill run.
+ * Runs at the start of every skill run, and in CI through the repo's tests
+ * (ds-drift.test.mjs).
  */
 
 import { readFileSync, existsSync } from "node:fs"
@@ -32,7 +37,7 @@ import { fileURLToPath } from "node:url"
 import { SHADCN_MAP, ALIAS_COLORS } from "./ds-tokens.mjs"
 
 /** The kit these scripts belong to. A repo may not claim a newer one. */
-export const KIT_VERSION = "0.6.0"
+export const KIT_VERSION = "0.6.1"
 const SCHEMA = "ttt-ds/1"
 const PROFILE = "shadcn"
 
@@ -154,6 +159,7 @@ const CONFIG_SCHEMA = {
   profile: { required: true, check: (v) => v === PROFILE ? null : `these scripts are profile "${PROFILE}"; install the kit's code for "${v}" instead` },
   kitVersion: { required: true, check: (v) => semver(v) ? null : 'set it to the kit version the repo was set up or last synced with, e.g. "0.1.1"' },
   tokensIn: { required: true, check: str('set it to the token snapshot path, normally ".ttt/tokens.json"') },
+  systemIn: { required: false, check: str('set it to the System section snapshot path, normally ".ttt/system.md"') },
   tokensOut: { required: true, check: (v) => typeof v === "string" && v.endsWith(".css") ? null : 'set it to the generated token file, e.g. "src/styles/ds-tokens.css"' },
   lastSynced: { required: true, check: (v) => typeof v === "string" && /^\d{4}-\d\d-\d\dT\d\d:\d\d(:\d\d)?(\.\d+)?Z$/.test(v) && !isNaN(Date.parse(v)) ? null : 'use an RFC 3339 UTC time from the system clock, e.g. "2026-10-07T18:01:26Z"' },
   typeClassPrefix: { required: true, check: (v) => typeof v === "string" && /^[a-z][a-z0-9-]*-$/.test(v) ? null : 'lowercase, ending in "-", e.g. "type-"' },
@@ -243,7 +249,8 @@ export function validate(repo, { preflight = false, testedRange, system } = {}) 
   const warnings = []
   const notes = []
   const err = (field, message, fix) => errors.push({ field, message, fix })
-  const warn = (field, message, fix) => warnings.push({ field, message, fix })
+  // kind "drift": code and the design system's System section disagree.
+  const warn = (field, message, fix, kind) => warnings.push({ field, message, fix, ...(kind && { kind }) })
 
   // ---- config --------------------------------------------------------------
   const configPath = join(repo, ".ttt/design-system.json")
@@ -278,6 +285,15 @@ export function validate(repo, { preflight = false, testedRange, system } = {}) 
     const v = /design-system-kit (\d+\.\d+\.\d+)/.exec(readFileSync(p, "utf8").slice(0, 400))?.[1]
     if (!v) warn(`scripts/${name}.mjs`, "doesn't name a kit version", "copy it from the kit unchanged")
     else if (v !== KIT_VERSION) warn(`scripts/${name}.mjs`, `is kit ${v}; ds-validate is ${KIT_VERSION}`, "copy all kit scripts from one kit version")
+  }
+
+  // ---- System section snapshot -------------------------------------------------
+  // The design system's 01-system.md, committed beside the token snapshot so the
+  // drift checks run in CI. --system (a live copy) wins over it.
+  if (!system && typeof config.systemIn === "string") {
+    const p = join(repo, config.systemIn)
+    if (existsSync(p)) system = p
+    else warn("systemIn", `points at ${config.systemIn}, which doesn't exist`, "run Sync's pull to write the snapshot (Setup writes the first one)")
   }
 
   // ---- token snapshot ----------------------------------------------------------
@@ -423,13 +439,13 @@ function checkClientRamps(tokens, file, system, warn, notes) {
   const added = [...new Set(prims.map((t) => rampOf(t.name)))].filter((r) => !STANDARD_RAMPS.includes(r) && !hueIn(r))
   if (!added.length) return
   if (!system) {
-    notes.push(`client-added ramps ${added.join(", ")} — not checked against the System section (pass --system <01-system.md>)`)
+    notes.push(`client-added ramps ${added.join(", ")} — not checked against the System section (set systemIn, or pass --system <01-system.md>)`)
     return
   }
   if (!existsSync(system)) { warn("--system", `points at ${system}, which doesn't exist`, "save the design system's project/01-system.md and pass its path"); return }
   const listed = listedInSystem(readFileSync(system, "utf8"))
   for (const ramp of added) if (!listed.has(ramp))
-    warn(`${file} › ${ramp}-*`, "is a client-added ramp the System section doesn't list", `add it to the System section's client-specific choices, e.g. "A \`${ramp}\` ramp for …"`)
+    warn(`${file} › ${ramp}-*`, "is a client-added ramp the System section doesn't list", `add it to the System section's client-specific choices, e.g. "A \`${ramp}\` ramp for …"`, "drift")
 }
 
 /**
@@ -457,14 +473,14 @@ function checkLocale(repo, system, err, warn, notes) {
   else if (!mod.imports.has(mod.locale)) err(`${rel} › locale`, `is ${mod.locale}, which isn't imported from date-fns/locale`, `import { ${mod.locale} } from "date-fns/locale"`)
   else if (isLocale(mod.localeTag ?? "") && mod.locale !== mod.localeTag.replace(/-/g, ""))
     warn(`${rel} › locale`, `is ${mod.locale}, but localeTag is ${mod.localeTag}`, `use date-fns's locale for ${mod.localeTag} (usually ${mod.localeTag.replace(/-/g, "")}), or the closest one it ships`)
-  if (!system) { notes.push(`${rel} not compared with the System section's Client settings (pass --system <01-system.md>)`); return }
+  if (!system) { notes.push(`${rel} not compared with the System section's Client settings (set systemIn, or pass --system <01-system.md>)`); return }
   if (!existsSync(system)) { warn("--system", `points at ${system}, which doesn't exist`, "save the design system's project/01-system.md and pass its path"); return }
   const sys = readSystemSettings(readFileSync(system, "utf8"))
-  if (!sys) { warn("System section", "has no Client settings line", "add one: **Client settings** — locale `…` · week starts … · date format `…`."); return }
+  if (!sys) { warn("System section", "has no Client settings line", "add one: **Client settings** — locale `…` · week starts … · date format `…`.", "drift"); return }
   const show = (k, v) => k === "weekStartsOn" ? (DAYS[v] ?? String(v)) : JSON.stringify(v)
   for (const k of Object.keys(LOCALE_SCHEMA))
     if (sys[k] !== undefined && mod[k] !== undefined && sys[k] !== mod[k])
-      warn(`${rel} › ${k}`, `is ${show(k, mod[k])}; the System section records ${show(k, sys[k])}`, "design records the decision and code holds it: fix whichever is wrong, in a PR or a design-system edit")
+      warn(`${rel} › ${k}`, `is ${show(k, mod[k])}; the System section records ${show(k, sys[k])}`, "design records the decision and code holds it: fix whichever is wrong — code in a PR, or the design system's System section and then Sync's pull to refresh the snapshot", "drift")
 }
 
 function uiDir(repo) {
