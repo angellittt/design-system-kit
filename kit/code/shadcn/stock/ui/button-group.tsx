@@ -1,4 +1,4 @@
-// design-system-kit 0.9.0 · profile shadcn · stock component (base-nova + baseline only)
+// design-system-kit 0.10.0 · profile shadcn · stock component (base-nova + baseline only)
 /**
  * Stock base-nova (shadcn 4.21.1, 2026-10-08) + TTT baseline:
  * - Radius roles (D1), matching Button inside a group (`in-data-[slot=button-group]:rounded-md`): the last child's and a trailing select trigger's `rounded-r-lg` / `rounded-b-lg` -> `-md`; ButtonGroupText `rounded-lg` -> `rounded-md`.

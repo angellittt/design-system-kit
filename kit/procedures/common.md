@@ -1,6 +1,6 @@
 # Common procedure — every design-system skill
 
-design-system-kit 0.9.0 · schema `ttt-ds/1`
+design-system-kit 0.10.0 · schema `ttt-ds/1`
 
 Setup, Sync, Components and Drift audit all follow these rules. Each one was
 learned from a run that went wrong without it; none is optional. The rules
@@ -69,7 +69,7 @@ Compare three things:
 | The design system | its System section (`project/01-system.md`) → the Versions row |
 
 - `schema` or `profile` name different from the kit's → **stop**. That needs a migration, not a sync.
-- Kit versions differ (repo older than the plugin, scripts stamped with different versions, or the System section behind) → **warn** in the first message and in the report, and say which files are behind. Don't quietly run newer rules over older files, and don't copy newer kit files in as a side effect — catching a repo up to a kit version is its own change, with its own PR.
+- Kit versions differ (repo older than the plugin, scripts stamped with different versions, or the System section behind) → **warn** in the first message and in the report, and say which files are behind. Don't quietly run newer rules over older files, and don't copy newer kit files in as a side effect — catching a repo up to a kit version is its own change, with its own PR: `/ds-upgrade` (the Upgrade skill) does it.
 - The repo newer than the installed plugin → **stop**: install the matching plugin version first.
 
 ## 3. Read the live design system — twice

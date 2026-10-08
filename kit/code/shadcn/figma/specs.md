@@ -1,6 +1,6 @@
 # Figma component specs — profile shadcn (base-nova)
 
-design-system-kit 0.9.0 · profile shadcn
+design-system-kit 0.10.0 · profile shadcn
 
 How each baseline component is built in a client's Figma library. Measurements
 are base-nova's (the stock files in `kit/code/shadcn/stock/ui/`); colours,
