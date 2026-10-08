@@ -36,7 +36,7 @@ Sidebar is the app shell for dashboards and portals: a column with grouped navig
 
 **Do** keep to five to eight top-level items in one or two groups. **Don't** nest more than one level, or put the page's main actions in the sidebar — they belong in the page header.
 
-**Styling map** — generated from `src/components/ui/sidebar.tsx` on 2026-10-07. Values come from the code; a token change regenerates the token file, not this table.
+**Styling map** — generated from `src/components/ui/sidebar.tsx` on 2026-10-08. Values come from the code; a token change regenerates the token file, not this table.
 
 | Part | State or variant | Attribute | Token |
 |---|---|---|---|
@@ -69,11 +69,11 @@ Sidebar is the app shell for dashboards and portals: a column with grouped navig
 | group-action | — | size | `space-5` |
 | group-action | — | padding | `space-0` |
 | group-action | [&>svg] | size | `space-4` |
-| group-action | hover | background | `background-elevated` |
+| group-action | hover | background | `fill-normal` |
 | group-action | hover | text | `label-normal` |
 | group-content | — | size | w-full — fixed in code |
 | group-content | — | type | text-sm — fixed in code |
-| group-label | — | text | `label-normal` |
+| group-label | — | text | `label-normal` · 70% |
 | group-label | — | radius | `radius-md` |
 | group-label | — | size | `space-8` |
 | group-label | — | padding | `space-2` |
@@ -96,13 +96,13 @@ Sidebar is the app shell for dashboards and portals: a column with grouped navig
 | inset | md · peer-data-[variant=inset] | shadow | `shadow-sm` |
 | menu | — | size | `space-0` |
 | menu | — | size | w-full — fixed in code |
-| menu | — | gap | `space-0` |
+| menu | — | gap | `space-1` |
 | menu-action | — | text | `label-normal` |
 | menu-action | — | radius | `radius-md` |
 | menu-action | — | size | `space-5` |
 | menu-action | — | padding | `space-0` |
 | menu-action | [&>svg] | size | `space-4` |
-| menu-action | hover | background | `background-elevated` |
+| menu-action | hover | background | `fill-normal` |
 | menu-action | hover | text | `label-normal` |
 | menu-action | peer-data-active | text | `label-normal` |
 | menu-action | peer-hover | text | `label-normal` |
@@ -121,15 +121,16 @@ Sidebar is the app shell for dashboards and portals: a column with grouped navig
 | menu-button | — | type | text-left — fixed in code |
 | menu-button | — | type | text-sm — fixed in code |
 | menu-button | [&_svg] | size | `space-4` |
-| menu-button | active | background | `background-elevated` |
+| menu-button | active | background | `fill-strong` |
 | menu-button | active | text | `label-normal` |
 | menu-button | active | type | font-medium — fixed in code |
+| menu-button | active · hover | background | `fill-strong` |
 | menu-button | collapsible=icon | size | `space-8` |
 | menu-button | collapsible=icon | padding | `space-2` |
 | menu-button | group-has-data-[sidebar=menu-action] | padding | `space-8` |
-| menu-button | hover | background | `background-elevated` |
+| menu-button | hover | background | `fill-normal` |
 | menu-button | hover | text | `label-normal` |
-| menu-button | open · hover | background | `background-elevated` |
+| menu-button | open · hover | background | `fill-normal` |
 | menu-button | open · hover | text | `label-normal` |
 | menu-button | size=default | size | `space-8` |
 | menu-button | size=default | type | text-sm — fixed in code |
@@ -138,13 +139,13 @@ Sidebar is the app shell for dashboards and portals: a column with grouped navig
 | menu-button | size=lg · collapsible=icon | padding | `space-0` |
 | menu-button | size=sm | size | `space-1` × 7 |
 | menu-button | size=sm | type | text-xs — fixed in code |
-| menu-button | variant=default · hover | background | `background-elevated` |
+| menu-button | variant=default · hover | background | `fill-normal` |
 | menu-button | variant=default · hover | text | `label-normal` |
 | menu-button | variant=outline | background | `background-normal` |
 | menu-button | variant=outline | shadow | `line-normal` |
-| menu-button | variant=outline · hover | background | `background-elevated` |
+| menu-button | variant=outline · hover | background | `fill-normal` |
 | menu-button | variant=outline · hover | text | `label-normal` |
-| menu-button | variant=outline · hover | shadow | `background-elevated` |
+| menu-button | variant=outline · hover | shadow | `fill-normal` |
 | menu-skeleton | — | radius | `radius-md` |
 | menu-skeleton | — | size | `space-8` |
 | menu-skeleton | — | padding | `space-2` |
@@ -162,9 +163,10 @@ Sidebar is the app shell for dashboards and portals: a column with grouped navig
 | menu-sub-button | — | gap | `space-2` |
 | menu-sub-button | [&>svg] | text | `label-normal` |
 | menu-sub-button | [&>svg] | size | `space-4` |
-| menu-sub-button | active | background | `background-elevated` |
+| menu-sub-button | active | background | `fill-strong` |
 | menu-sub-button | active | text | `label-normal` |
-| menu-sub-button | hover | background | `background-elevated` |
+| menu-sub-button | active · hover | background | `fill-strong` |
+| menu-sub-button | hover | background | `fill-normal` |
 | menu-sub-button | hover | text | `label-normal` |
 | menu-sub-button | size=md | type | text-sm — fixed in code |
 | menu-sub-button | size=sm | type | text-xs — fixed in code |

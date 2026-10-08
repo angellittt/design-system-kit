@@ -76,8 +76,8 @@ rings) are what the code uses and can be read back, not values to choose.
 | **Accordion** | v-stack of Accordion/Item instances, one open | — | — | — |
 | **Separator** | 1px line-normal: 240×1 / 1×24 | Orientation horizontal · vertical | — | — |
 | **Skeleton** | fill-alternative, radius-md, 200×16 | — | — | a circle (resized instance) and two text lines |
-| Sidebar/Item *(part)* | 240×32, radius-md, p 8, gap 8: 16px icon (named "Icon", swap per item), body-2 label (active label-1), count badge (caption-1); hover and active background-elevated | State default · hover · active | Label, Count, Show badge | — |
-| **Sidebar** | 256×600 v-stack, background-alternative, 1px line-normal right edge: header (logo mark + name), groups (caption-2 label, Sidebar/Item instances), spacer, footer (Avatar sm + name) | — | — | — |
+| Sidebar/Item *(part)* | 240×32, radius-md, p 8, gap 8: 16px icon (named "Icon", swap per item), body-2 label (active label-1), count badge (caption-1); hover fill-normal, active fill-strong | State default · hover · active | Label, Count, Show badge | — |
+| **Sidebar** | 256×600 v-stack, background-alternative, 1px line-normal right edge: header (logo mark + name), groups (caption-2 label, Sidebar/Item instances 4px apart), spacer, footer (Avatar sm + name) | — | — | — |
 | Table/Row *(part)* | h-row of fixed-width cells (p 8); header cells 40 tall, label-1; body body-2 with a status Badge; 1px line-normal bottom; hover and selected fill-alternative; footer fill-alternative, label-1 | Type header · body · footer × State default · hover · selected | — | — |
 | **Table** | v-stack of Table/Row instances in a line-normal, radius-lg, clipped frame + caption (body-2 label-alternative) | — | — | real records |
 | **Empty** | v-stack centred, dashed line-normal border, radius-xl, p 24, gap 16: optional 32px fill-alternative icon tile (radius-lg), title label-1, description body-2 label-alternative (centred, 300 wide), an outline Button | Variant default · icon | Title, Description | — |

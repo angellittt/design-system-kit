@@ -2,7 +2,7 @@
 
 **Profile** `shadcn` 1.8 · **Platform** web · **Frameworks** Next.js, Vite · **For schema** `ttt-ds/1`
 
-**1.8** (kit 0.8.1) — DatePicker follows shadcn's own examples: typed, the calendar button sits inside the field (an Input Group, as in the "Input" example); `typed={false}` is the "Basic" / "Range" button trigger showing the value, no longer a lone icon button.
+**1.8** (kit 0.8.1) — DatePicker follows shadcn's own examples: typed, the calendar button sits inside the field (an Input Group, as in the "Input" example); `typed={false}` is the "Basic" / "Range" button trigger showing the value, no longer a lone icon button. Sidebar: `sidebar-accent` maps to `fill-normal` (hover); the current item takes `fill-strong`; items are 4px apart.
 
 **1.7** (kit 0.8.0) — A client repo carries the app, not the kit: the tools run from the plugin; the repo keeps `scripts/ds-validate.mjs` and `scripts/ds-drift.test.mjs` for CI, the ESLint helper is pasted into its config, fonts come from packages where they exist, and the `CLAUDE.md` section is a third of its old length.
 
@@ -161,7 +161,7 @@ Setup's first step reads the repo and reports **ready**, **adaptable** (e.g. dif
 | `border` · `input` · `ring` | `line-normal` · `line-strong` · `focus-ring` |
 | `sidebar` · `sidebar-foreground` | `background-alternative` · `label-normal` |
 | `sidebar-primary` · `sidebar-primary-foreground` | `primary-normal` · `on-primary` |
-| `sidebar-accent` · `sidebar-accent-foreground` | `background-elevated` · `label-normal` |
+| `sidebar-accent` · `sidebar-accent-foreground` | `fill-normal` · `label-normal` — hover; the current item and pressed take `fill-strong` |
 | `sidebar-border` · `sidebar-ring` | `line-normal` · `focus-ring` |
 | `chart-1` … `chart-5` | `chart-1` … `chart-5` |
 | `brand-secondary` (+ `-foreground`, `-soft`, `-text`) | `secondary-normal` · `on-secondary` · `secondary-soft` · `secondary-text` |
