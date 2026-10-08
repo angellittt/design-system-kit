@@ -1,4 +1,4 @@
-<!-- design-system-kit 0.8.0 · profile shadcn · wiring: CLAUDE.md design-system section.
+<!-- design-system-kit 0.8.1 · profile shadcn · wiring: CLAUDE.md design-system section.
      Setup appends this to the repo's CLAUDE.md and fills every {{…}}; Sync keeps it
      current. Commands are written for npm: Setup rewrites them for the repo's package
      manager. Agreed component rules from accepted proposals go under "Component rules".

@@ -104,6 +104,12 @@ Reads the system's contract (schema and profile first), generates the theme file
 
 ## Changes
 
+**0.8.1** (2026-10-08) — profile `shadcn` 1.8; two component fixes from Districtly
+- **DatePicker follows shadcn's examples.** It had used the older composition, an `Input` beside an outline icon `Button`, and `typed={false}` left the icon button on its own. Now the typed field is an Input Group with the calendar button inside it at the end (shadcn's "Input" example; ArrowDown opens the calendar), a range types both ends in one field, and `typed={false}` is shadcn's "Basic" / "Range" trigger: an outline button showing the value, or "Pick a date". Picking a single date closes the calendar. Props, parsing and validation are unchanged; five new tests.
+- **Combobox multi-select list keeps the field's width.** The template's example didn't anchor the list, so it anchored to the chips' text input and narrowed with every chip. The preview and README now use shadcn's `useComboboxAnchor()` on `ComboboxChips` and `ComboboxContent`; the component itself was already stock.
+
+**Upgrading a 0.8.0 repo**: replace `src/components/ui/date-picker.tsx` with 0.8.1's; add the anchor to any multi-select `Combobox` (`const anchor = useComboboxAnchor()`, `<ComboboxChips ref={anchor}>`, `<ComboboxContent anchor={anchor}>`); stamp the config and `ds-validate.mjs`. Then `/ds-sync publish` refreshes the DatePicker and Combobox pages and Figma's DatePicker.
+
 **0.8.0** (2026-10-08) — profile `shadcn` 1.7; a client repo carries the app, not the kit
 - **Tools run from the plugin.** The skills run `ds-tokens`, `ds-contrast`, `ds-build-bundle`, `ds-pack-react`, `ds-styling-maps` and `ds-types` from the installed plugin (`$KIT`), in the app's folder; each takes the current directory (or `--repo`) as the app and loads the app's own esbuild, TypeScript and React. A repo carries **one** kit script, `scripts/ds-validate.mjs` — now self-contained (it holds the token mapping) — with `scripts/ds-drift.test.mjs`, so its CI still fails on config errors and drift. `package.json` gets one script, `ds:validate`.
 - **The kit tests itself.** Script tests, the bundle fixture and the extensions' interaction tests no longer ship into repos: `kit/ci` assembles the kit as an app has it and runs a strict typecheck, the component and script tests, the Setup tool's tests and the fixture (`npm test`), and `.github/workflows/kit.yml` runs it on every PR. Its first run caught five kit tests with an unused `React` import, fixed.

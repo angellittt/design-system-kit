@@ -1,4 +1,4 @@
-<!-- @dsCard group="Forms" height=260 -->
+<!-- @dsCard group="Forms" height=350 -->
 <!doctype html>
 <html>
 <head><meta charset="utf-8"><title>DatePicker — preview</title>
@@ -26,13 +26,17 @@ ReactDOM.createRoot(document.getElementById('root')).render(h(function Demo(){
   var one = React.useState(new Date(2026, 3, 9));
   var range = React.useState({from:new Date(2026, 3, 6), to:new Date(2026, 3, 17)});
   var err = React.useState(null);
+  var pick = React.useState(undefined);
   return h('div',{className:'col',style:{maxWidth:380}},
     h(J.Field,null, h(J.FieldLabel,{htmlFor:'due'},'Due date'),
       h(J.DatePicker,{id:'due',value:one[0],onChange:one[1]}),
       h(J.FieldDescription,null,J.hintFor())),
     h(J.Field,{'data-invalid': err[0] ? true : undefined}, h(J.FieldLabel,{htmlFor:'sch'},'Schedule'),
       h(J.DatePicker,{mode:'range',id:'sch',value:range[0],onChange:range[1],onValidationChange:err[1]}),
-      err[0] ? h(J.FieldError,{id:'sch-error'},err[0]) : h(J.FieldDescription,null,'Start and end, '+J.hintFor())));
+      err[0] ? h(J.FieldError,{id:'sch-error'},err[0]) : h(J.FieldDescription,null,'Start and end, '+J.hintFor())),
+    h(J.Field,null, h(J.FieldLabel,{htmlFor:'pick'},'Start date'),
+      h(J.DatePicker,{id:'pick',typed:false,value:pick[0],onChange:pick[1]}),
+      h(J.FieldDescription,null,'Picking only (typed={false})')));
 }));
 </script>
 </body>

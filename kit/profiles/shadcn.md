@@ -1,6 +1,8 @@
 # Part 2 — Library profile: shadcn
 
-**Profile** `shadcn` 1.7 · **Platform** web · **Frameworks** Next.js, Vite · **For schema** `ttt-ds/1`
+**Profile** `shadcn` 1.8 · **Platform** web · **Frameworks** Next.js, Vite · **For schema** `ttt-ds/1`
+
+**1.8** (kit 0.8.1) — DatePicker follows shadcn's own examples: typed, the calendar button sits inside the field (an Input Group, as in the "Input" example); `typed={false}` is the "Basic" / "Range" button trigger showing the value, no longer a lone icon button.
 
 **1.7** (kit 0.8.0) — A client repo carries the app, not the kit: the tools run from the plugin; the repo keeps `scripts/ds-validate.mjs` and `scripts/ds-drift.test.mjs` for CI, the ESLint helper is pasted into its config, fonts come from packages where they exist, and the `CLAUDE.md` section is a third of its old length.
 
@@ -289,7 +291,7 @@ reaches neither bundle.
 | Divider rows | Accordion | `variant="flush"` |
 | Semantic colour | Badge, Avatar, Alert | `tone` prop, alongside stock's `variant` |
 | Initials | Avatar | `initialsOf()` helper |
-| Typed date entry *(candidate)* | DatePicker | Input alongside the calendar, parsed in the locale's format |
+| Typed date entry *(candidate)* | DatePicker | A typed field with the calendar button inside it, parsed in the locale's format |
 | Dismiss button *(candidate)* | Alert | close slot; component emits `onDismiss`, the app remembers dismissal |
 | Urgent-only interruption *(candidate)* | Alert | `urgent` prop; only urgent alerts use `role="alert"` |
 | Error icon *(candidate)* | Field | `FieldError` always renders the alert icon, so errors never rely on colour alone |

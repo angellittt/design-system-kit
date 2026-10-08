@@ -12,9 +12,12 @@ Date Picker enters a single date or a date range, by picking from a calendar or 
 </Field>
 
 <DatePicker mode="range" value={range} onChange={setRange} onValidationChange={setError} />
+
+<DatePicker typed={false} value={date} onChange={setDate} /> {/* picking only */}
 ```
 
-- **Modes** single and range. A range uses two inputs; the end can't precede the start.
+- **Layout, as in shadcn's examples.** Typed (the default): one field with the calendar button inside it at the end — shadcn's "Input" example; ArrowDown in the field opens the calendar too. `typed={false}`: picking only — an outline button showing the value ("Pick a date" when empty) that opens the calendar, shadcn's "Basic" and "Range" examples.
+- **Modes** single and range. A range types both ends in the one field; the end can't precede the start. Picking a single date closes the calendar; a range stays open for its second end.
 - **Client settings.** Locale, week start and date format default to the app's `@/lib/locale` (app-owned; the System section records the same decision) — never from a locale imported in the component. A set `dateFormat` overrides the locale's own pattern; otherwise the pattern comes from the locale. Pass `locale` or `dateFormat` to override one instance.
 - **Typed input.** The pattern is spelled for people by `hintFor()` — show it as the Field description. Invalid dates set `aria-invalid` and report a message through `onValidationChange`, worded as a fix ("Use MM/DD/YYYY — for example 00/00/0000"); show it as the `FieldError`. Typing updates the calendar; picking updates the input and clears the error. When you set `value` yourself (a form reset), the input shows it at once and drops its error; clear any message you hold from `onValidationChange` too. Overflowing dates (13/40/2026) are rejected rather than rolled forward.
 - The calendar opens on the selected month, is keyboard-navigable (arrows, Page Up/Down for months) and is the stock `Calendar`. The date input is Field exception 3 — the picker as a whole goes in a Field.
@@ -119,8 +122,8 @@ Stock shadcn has a Calendar but no Date Picker component, only a documented comp
 **Contract**
 - Status: validated
 - Tier: core
-- Source: shadcn Calendar + Popover (documented composition) + kit typed input
+- Source: shadcn Calendar + Popover + Input Group (documented compositions) + kit typed input
 - Code: `components/ui/` date-picker.tsx, calendar.tsx (date-picker.tsx is a kit file; calendar.tsx is stock)
 - Kit extensions: opt-in, chosen at the design review:
-  - The whole component, with *Typed date entry* (candidate) — stock is a calendar in a popover and nothing else, so a date two years out costs a dozen clicks, and screens that add typing re-implement the parse, the format hint and the error wording, each slightly differently. The extension owns all three, takes the pattern from the client's settings rather than hardcoding one, and round-trips the parse. `typed={false}` leaves the calendar button alone.
+  - The whole component, with *Typed date entry* (candidate) — stock is a calendar in a popover and nothing else, so a date two years out costs a dozen clicks, and screens that add typing re-implement the parse, the format hint and the error wording, each slightly differently. The extension owns all three, takes the pattern from the client's settings rather than hardcoding one, and round-trips the parse. `typed={false}` gives shadcn's button trigger instead, for picking only.
 - Client extensions: none
