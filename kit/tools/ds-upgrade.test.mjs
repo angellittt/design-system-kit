@@ -1,4 +1,4 @@
-// design-system-kit 0.10.0 · Upgrade tool tests — node --test kit/tools/
+// design-system-kit 0.10.1 · Upgrade tool tests — node --test kit/tools/
 import { test } from "node:test"
 import assert from "node:assert/strict"
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync } from "node:fs"
@@ -22,7 +22,7 @@ const git = (cwd, ...args) => execFileSync("git", args, { cwd, encoding: "utf8" 
 // stock and extension Table differently, drops a file and adds Toggle.
 const button = (v, variant) => lines(stamp(STOCK, v), "export function Button() {", "  const a = 1", "  const b = 2", "  const c = 3", "  const d = 4", `  return "${variant}"`, "}")
 const stockTable = (v) => lines(stamp(STOCK, v), "export const Table = 'stock'")
-const extTable = (v, extra = "") => lines(stamp(EXT, v), "export const Table = 'kit'", `export const density = 'comfortable'${extra}`)
+const extTable = (v, extra = "") => lines(stamp(EXT, v), "export const Table = 'kit'", `export const density = 'comfortable'${extra}`, "export function TableSortButton() {}")
 
 function kit() {
   const dir = mkdtempSync(join(tmpdir(), "kit-src-"))
@@ -49,7 +49,9 @@ function kit() {
     "stock/ui/table.tsx": stockTable("1.1.0"),
     "kit/ui/table.tsx": extTable("1.1.0", " // compact too"),
     "stock/ui/card.tsx": lines(stamp(STOCK, "1.1.0"), "export const Card = 1"),
-    "stock/ui/toggle.tsx": lines(stamp(STOCK, "1.1.0"), "export const Toggle = 1"),
+    "stock/ui/toggle.tsx": lines(stamp(STOCK, "1.1.0"), 'import { Toggle as P } from "@base-ui/react/toggle"', "export const Toggle = P", "export const toggleVariants = 1"),
+    "stock/ui/toggle-group.tsx": lines(stamp(STOCK, "1.1.0"), 'import { toggleVariants } from "@/components/ui/toggle"', "export function ToggleGroup() { return toggleVariants }"),
+    "kit/ui/data-table.tsx": lines(stamp(EXT, "1.1.0"), 'import { useReactTable } from "@tanstack/react-table"', 'import { Table, TableSortButton } from "@/components/ui/table"', "export function DataTable() { return [Table, TableSortButton, useReactTable] }"),
     "wiring/locale.ts": lines("// design-system-kit 1.1.0 · profile shadcn · wiring: the app's locale defaults", "export const locale = 'en-US'"),
   })
   return dir
@@ -137,4 +139,46 @@ test("files without a kit stamp are ignored", async () => {
   const plan = await reconcile({ app: dir, kitSrc: kit(), to: "1.1.0" })
   assert.equal(plan.files.length, 0)
   assert.ok(!existsSync(join(dir, ".ds-upgrade")), "reconcile itself writes no plan; the CLI does")
+})
+
+// --add
+const pkg = JSON.stringify({ dependencies: { "@base-ui/react": "1.8.0" } })
+const base = () => ({ "package.json": pkg, [`${ui}/table.tsx`]: stockTable("1.0.0"), [`${ui}/button.tsx`]: button("1.0.0", "solid") })
+
+test("adding a component brings what it imports from the component folder", async () => {
+  const dir = app(base())
+  const plan = await reconcile({ app: dir, kitSrc: kit(), to: "1.1.0", add: ["toggle-group"], write: true })
+  assert.deepEqual(plan.added.map((a) => [a.name, a.reason]), [["toggle-group", "asked"], ["toggle", "needed by toggle-group"]])
+  assert.ok(existsSync(join(dir, ui, "toggle.tsx")) && existsSync(join(dir, ui, "toggle-group.tsx")))
+  assert.deepEqual(plan.packages, [], "@base-ui/react is declared")
+})
+
+test("an unmodified stock file is swapped for the kit extension the new component needs", async () => {
+  const dir = app(base())
+  const plan = await reconcile({ app: dir, kitSrc: kit(), to: "1.1.0", add: ["data-table"], write: true })
+  const table = plan.added.find((a) => a.name === "table")
+  assert.equal(table.kitPath, "kit/code/shadcn/kit/ui/table.tsx")
+  assert.equal(table.replaces, true)
+  assert.equal(table.reason, "needed by data-table")
+  assert.match(readFileSync(join(dir, ui, "table.tsx"), "utf8"), /TableSortButton/)
+  assert.deepEqual(plan.packages, ["@tanstack/react-table"])
+})
+
+test("a customized stock file blocks the component instead of being overwritten", async () => {
+  const custom = lines(stamp(STOCK, "1.0.0"), "export const Table = 'brand'")
+  const dir = app({ ...base(), [`${ui}/table.tsx`]: custom })
+  const plan = await reconcile({ app: dir, kitSrc: kit(), to: "1.1.0", add: ["data-table", "toggle"], write: true })
+  assert.equal(plan.blocked.length, 1)
+  assert.match(plan.blocked[0].why, /table.tsx is customized \(keep\)/)
+  assert.deepEqual(plan.added.map((a) => a.name), ["toggle"], "the other request still goes ahead")
+  assert.ok(!existsSync(join(dir, ui, "data-table.tsx")))
+  assert.equal(readFileSync(join(dir, ui, "table.tsx"), "utf8"), custom.replace("1.0.0", "1.1.0"), "only the reconcile's restamp")
+})
+
+test("a component the repo has is reported, and a dry run writes nothing", async () => {
+  const dir = app(base())
+  const plan = await reconcile({ app: dir, kitSrc: kit(), to: "1.1.0", add: ["button", "toggle"] })
+  assert.match(plan.blocked[0].why, /already in the repo/)
+  assert.ok(!existsSync(join(dir, ui, "toggle.tsx")))
+  assert.match(planMarkdown(plan), /## Components added[\s\S]*toggle\.tsx[\s\S]*\*\*button not added\*\*/)
 })

@@ -1,6 +1,6 @@
 # Upgrade — the steps
 
-design-system-kit 0.10.0
+design-system-kit 0.10.1
 
 `$KIT` is the plugin root. "The app" is the app's folder (common.md); every
 command runs there, with the repo's package manager and pinned toolchain
@@ -15,7 +15,11 @@ version: an upgrade restamps only what it touched, so a repo on 0.8.1 can
 hold files stamped 0.8.0, and that's correct.
 
 - `kitVersion` equals the plugin's, and no file is stamped older → nothing
-  to do. Say so and stop (no branch, no PR).
+  to reconcile. Run steps 2 and 5's dry run anyway: if the plan lists
+  components available but not in the repo, go to step 5b (the offer) — a
+  repo already on the kit's version adds components this way, on a branch
+  `ds-add/<YYYY-MM-DD>`, and skips steps 3 and 6. If nothing is available, or
+  the user takes none, say so and stop (no branch, no PR).
 - The repo is **newer** than the plugin → stop: update the plugin first
   (`kit/README.md`, Install → Updating).
 - `schema` or `profile` differ from the kit's → stop: that's a migration.
@@ -54,7 +58,7 @@ paragraph. Split their steps into:
 
 ## 4. Branch
 
-On a new branch from an up-to-date `main`: `ds-upgrade/<to-version>`. The
+On a new branch from an up-to-date `main`: `ds-upgrade/<to-version>` (`ds-add/<YYYY-MM-DD>` when the repo is already on the kit's version and only components are being added). The
 working tree must be clean; if it isn't, stop and say what's uncommitted.
 
 ## 5. Reconcile the kit files
@@ -90,11 +94,46 @@ lists under **Client extensions** is recorded; one that isn't is
 summary, so a dev records it as a client extension or drops it. Don't decide
 for them.
 
-Then write:
+## 5b. Offer what's new
+
+The plan's **Available in the kit, not in this repo** lists components the
+kit has and this repo doesn't. Offer them **once, in one message, before
+writing** — the way Setup offers kit extensions (`skills/setup/references/inputs.md`,
+"Offering kit extensions"): one line each, by component name, with what it's
+for (the first sentence of `kit/template/components/<Component>/README.md`),
+*candidate* when the profile's Kit extensions table marks it so, and what it
+brings with it (the next paragraph). For example:
+
+> The kit now has components this repo doesn't. Add any to this upgrade?
+> - **Toggle** — turns one option on or off from a button: bold, pin, show archived.
+> - **DataTable** — records people sort, select, page through and filter. *Candidate.* Brings Table's kit file (replacing the stock one) and `@tanstack/react-table`.
+
+What a component brings: a dry run with `--add <names>` says, before anyone
+answers — run it with every available name and read **Components added**:
+files it needs from the component folder, a stock file swapped for its kit
+extension, packages to add, and anything **not added** because a file it
+needs is customized (say why in the offer; it can't be taken until a dev
+resolves that).
+
+Nothing is added unless named; "none" is a fine answer. Ask with the
+session's question tool when it has one (multi-select, one option per
+component); otherwise ask in chat and wait.
+
+## 5c. Write
+
+With the chosen names (omit `--add` for none):
 
 ```
-node $KIT/kit/tools/ds-upgrade.mjs --kit-src <out>/kit-src --to <plugin version> --out <out>/upgrade --write
+node $KIT/kit/tools/ds-upgrade.mjs --kit-src <out>/kit-src --to <plugin version> --out <out>/upgrade --add <chosen,names> --write
 ```
+
+For each package under "Packages to add", add it with the repo's package
+manager at its tested max (`$KIT/kit/code/shadcn/scripts/tested-range.json`),
+or, for one with no tested range, at the version the profile names for it
+(`@tanstack/react-table` 8.21.3). An added component's design-system page
+(README, preview) and Figma section arrive with `/ds-sync publish` after the
+merge, like any component change. Components offered and not taken stay
+listed in the report.
 
 Delete `obsolete` files. For each **conflict**, never pick a side: the
 repo's file stays as it was (its old stamp means the next run still finds
@@ -102,10 +141,6 @@ its base). Put the conflicted merge and the kit's file
 (`<out>/upgrade/conflicts/<path>.conflict` and `.kit`) in the PR body as
 diffs under "Needs a dev", and say what the kit changed there (from the
 changelog). The PR stays a draft while any conflict is open.
-
-**Available, not installed**: the plan lists stock components and kit files
-the new kit has and the repo doesn't. Adding one is a product choice — list
-them in the report; add only those the user names.
 
 ## 6. The other steps
 
