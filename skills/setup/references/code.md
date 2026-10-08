@@ -1,6 +1,6 @@
 # Code — the branch, then the PR
 
-design-system-kit 0.3.0
+design-system-kit 0.3.1
 
 Setup step 5 builds the code branch; step 9 opens its PR. Everything comes
 from `kit/code/<profile>/` in the plugin, laid out as `kit/README.md`'s

@@ -3,7 +3,7 @@
   "tracker": "{{TRACKER_URL}}",
   "schema": "ttt-ds/1",
   "profile": "shadcn",
-  "kitVersion": "0.3.0",
+  "kitVersion": "0.3.1",
   "tokensIn": ".ttt/tokens.json",
   "tokensOut": "src/styles/ds-tokens.css",
   "lastSynced": "{{NOW_ISO}}",

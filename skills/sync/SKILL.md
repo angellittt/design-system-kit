@@ -5,13 +5,14 @@ description: Sync a TTT design system with code or Figma. Use when the user want
 
 # Sync — design system ⇄ code ⇄ Figma
 
-design-system-kit 0.3.0 · schema `ttt-ds/1`
+design-system-kit 0.3.1 · schema `ttt-ds/1`
 
 Two directions, one skill:
 
 - **pull** — design → code and Figma. The design system's tokens and assets
-  come down into the repo as a PR, and token changes go to the Figma
-  library's variables. Nothing code-owned changes; Figma never blocks the PR.
+  come down into the repo as a PR, the design system's preview bundle is
+  rebuilt with them, and token changes go to the Figma library's
+  variables. Nothing code-owned changes; Figma never blocks the PR.
 - **publish** — code → design system → Figma. The repo's components go up:
   bundle, previews, styling maps, types, "Used by" lists, "Using in code",
   statuses, then the Figma library.

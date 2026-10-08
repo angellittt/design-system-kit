@@ -1,6 +1,6 @@
 # Report — how every Sync run ends
 
-design-system-kit 0.3.0
+design-system-kit 0.3.1
 
 The skill writes the report itself (common.md §10). It goes in the chat and,
 when there is a PR, as the PR body. A run that stopped still reports: say
@@ -24,8 +24,10 @@ that are empty — never drop a heading.
   and merge time, or the Figma read-back (common.md §6).
 - pull: the snapshot, the token file, assets, `lastSynced`; the branch and PR;
   the result of `ds:validate`, `ds:contrast` (pairs × themes, failing,
-  intentional), typecheck, tests, build; the Figma variables created,
-  changed and removed, and their read-back — or that Figma wasn't reached.
+  intentional), typecheck, tests, build; the preview bundle — sent or
+  already current, and the preview check when `bundle.css` changed; the
+  Figma variables created, changed and removed, and their read-back — or
+  that Figma wasn't reached.
 - publish: every design-system path sent (and what was regenerated but
   byte-identical, so not sent); statuses changed; previews written; the
   preview check (count × themes, errors); the design-system version

@@ -1,6 +1,6 @@
 # Publish — code → design system
 
-design-system-kit 0.3.0
+design-system-kit 0.3.1
 
 Sends what the code is now — components, previews, generated documentation,
 statuses — to the design system, then hands off to `figma.md`.
