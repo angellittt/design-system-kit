@@ -1,6 +1,6 @@
 # Pre-flight — can Setup run here?
 
-design-system-kit 0.3.1
+design-system-kit 0.4.0
 
 Two checks before Setup asks for a single input. Both are cheap, and both stop
 the run if they fail: everything after them writes things (a branch, a design
@@ -15,7 +15,9 @@ one (not only the first) with what would satisfy it, and end with the report.
 |---|---|---|
 | **A profile** | Ask which UI library the project uses; it must have a file in `kit/profiles/`. Today: `shadcn`. | A profile file exists for it. Another library needs a new profile first — that's kit work, not Setup. |
 | **An app set up per the profile's dev checklist** | Read the profile's "Dev setup checklist" and check the repo against it: framework, `components.json`, the `init` command's values, ESLint. | The repo has the app, on a git branch you can push from (`git remote -v`; not a `tttstudios` remote). |
-| **No design system yet** | `.ttt/design-system.json` must not exist. | If it exists, the repo is set up: use Sync. |
+| **The app** | In a monorepo (a `pnpm-workspace.yaml`, or `workspaces` in the root `package.json`), ask which workspace package is the app, e.g. `apps/web`. Otherwise the repo root is the app. | One folder with the app's `package.json`. Everything below is checked **in that folder**; git commands run at the git root. |
+| **Package manager** | The lockfile at the workspace root: `package-lock.json` (npm), `pnpm-lock.yaml` (pnpm), `yarn.lock` (Yarn). | One of them. Yarn Plug'n'Play (`.pnp.cjs`) is "missing": the kit's scripts read `node_modules`. Use this manager for every command (common.md). |
+| **No design system yet** | `.ttt/design-system.json` must not exist in the app's folder. | If it exists, the app is set up: use Sync. |
 | **PR access** | `gh auth status`, then `gh repo view <owner>/<repo> --json viewerPermission` — `WRITE`, `MAINTAIN` or `ADMIN`. | The person running Setup can push a branch and open a PR. |
 | **Owner** | Ask: "You'll own this design system — only your account can update it, and you'll review every publish-back. OK?" | An explicit yes. The design system is created under their account (contract, Ownership). |
 | **A ClickUp tracker** | Ask for the project's ClickUp **list** link. | A `https://app.clickup.com/…` list URL. Deviations are logged there (common.md §7). |
@@ -37,19 +39,28 @@ Read the repo against the profile's **Config**, **Dev setup checklist** and
   value and records it. Examples (shadcn): a different global CSS path
   (`src/app/globals.css`), different aliases, an existing ESLint config to
   add the a11y block to.
-- **blocked** — Setup can't proceed. Examples (shadcn): Tailwind v3, no
-  `shadcn init`, a different primitive library (Radix instead of Base UI), a
-  package in a different major from its tested range, or **substantial
-  existing custom UI**.
+- **blocked** — Setup can't proceed. Examples (shadcn): no framework the
+  profile supports (the app's `package.json` must depend on exactly one of
+  `next` or `vite`), Tailwind v3, no `shadcn init`, a different primitive
+  library (Radix instead of Base UI), a package in a different major from its
+  tested range for that framework, or **substantial existing custom UI**.
+
+**Framework.** Read it from the app's `package.json` and say which; the
+tested range, the dev checklist and the wiring are that framework's
+(profile, Stack). Record it — the code step writes it to the config.
 
 ### Versions
 
-On the profile's tested range: run the kit's validator against the repo's
-lockfile without copying anything in yet —
+On the profile's tested range: run the kit's validator against the app's
+installed packages without copying anything in yet, from the app's folder —
 
 ```bash
 node <plugin root>/kit/code/<profile>/scripts/ds-validate.mjs --repo . --preflight
 ```
+
+It picks the framework's range from the app's `package.json`, and reads
+versions for any package manager, including tools installed at a monorepo's
+root (profile, Stack).
 
 It will also report that `.ttt/design-system.json` doesn't exist — expected
 before Setup; ignore that one error. Every `package …` error is a finding:

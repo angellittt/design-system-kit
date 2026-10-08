@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// design-system-kit 0.3.1 · profile shadcn · kit file — fix it in the kit, not per client
+// design-system-kit 0.4.0 · profile shadcn · kit file — fix it in the kit, not per client
 /**
  * Pack React and ReactDOM as classic-script globals for a design system's
  * `components/lib/`.
@@ -22,16 +22,16 @@ import { build } from "esbuild"
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs"
 import { resolve, join, dirname } from "node:path"
 import { fileURLToPath } from "node:url"
+import { installedVersion } from "./ds-validate.mjs"
 
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), "..")
 const OUT = resolve(process.argv[2] ?? join(REPO, "dist/ds-lib"))
 mkdirSync(OUT, { recursive: true })
 
-const lock = JSON.parse(readFileSync(join(REPO, "package-lock.json"), "utf8"))
 const versionOf = (p) => {
-  const e = lock.packages?.[`node_modules/${p}`]
-  if (!e?.version) throw new Error(`${p} not found in package-lock.json`)
-  return e.version
+  const v = installedVersion(REPO, p)
+  if (!v) throw new Error(`${p} isn't installed where this app can reach it`)
+  return v
 }
 
 /**

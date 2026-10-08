@@ -1,4 +1,4 @@
-# TTT design system kit · ttt-ds/1 · kit 0.3.1
+# TTT design system kit · ttt-ds/1 · kit 0.4.0
 
 The starting point for every client design system, bundled into TTT's four skills: **Setup** (design system + Figma + code branch, ending in a PR), **Sync** (pull → PR, publish-back), **Components** (check → propose → accept) and **Drift audit**. Extracted from Jelly, the worked example; the classification of what came over and why is in `docs/extraction/classification.md` at the repo root.
 
@@ -57,6 +57,8 @@ Skills read kit files from the plugin root by path; nothing is copied into a ses
 
 Generic: no client names, tokens, prefixes or values. Every file names the kit version in its header.
 
+In a monorepo, "the client repo" below means the app's folder (e.g. `apps/web`): every path is relative to it.
+
 | Folder | What it holds | Lands in the client repo at |
 |---|---|---|
 | `stock/ui/` | Stock `base-nova` components as installed by shadcn 4.21.1 on 2026-10-07, plus **baseline** changes only (each file's header lists them) | `components.json` → `aliases.ui` (default `src/components/ui/`) |
@@ -64,17 +66,19 @@ Generic: no client names, tokens, prefixes or values. Every file names the kit v
 | `kit/ui/` | **Kit extensions.** Each `<name>.tsx` is the complete component — the stock file, its baseline changes and the extensions — so opting in replaces the stock file. `date-picker.tsx` has no stock counterpart. Interaction tests sit beside them as `<name>.test.tsx` | `aliases.ui`, replacing the stock file; tests beside it |
 | `scripts/` | `ds-tokens`, `ds-validate`, `ds-contrast`, `ds-pack-react`, `ds-build-bundle`, `ds-styling-maps`, `ds-types` (see the profile's Kit tooling), with `contrast-pairs.json` and `tested-range.json` | `scripts/` |
 | `wiring/theme-block.css`, `wiring/focus.css` | The theme block that replaces shadcn's theme variables, and the single `:focus-visible` rule | merged into the global CSS (`components.json` → `tailwind.css`) |
-| `wiring/theme-provider.tsx` | next-themes on `data-theme` | `<aliases.components>/theme-provider.tsx`, wrapped around the root layout |
+| `wiring/theme-provider.tsx` | next-themes on `data-theme` (works on Vite too) | `<aliases.components>/theme-provider.tsx`, wrapped around the root layout (Next.js) or the root render in `main.tsx` (Vite) |
 | `wiring/ds-settings.ts` | The one reader of client settings; Setup adds the client's locale to `LOCALES` | `<aliases.lib>/ds-settings.ts` |
-| `wiring/eslint.config.mjs` | Flat config with the jsx-a11y rules | `eslint.config.mjs` (or its a11y block added to the repo's) |
+| `wiring/next/eslint.config.mjs` | Next.js: flat config with the jsx-a11y rules | `eslint.config.mjs` (or its a11y block added to the repo's) |
+| `wiring/vite/eslint.design-system.mjs`, `wiring/vite/oxlint.design-system.jsonc` | Vite: blocks scoped to the component folder and `scripts/`, spread into the repo's ESLint config and added to `.oxlintrc.json` overrides | the app's own lint configs |
+| `wiring/vite/fonts.css` | Vite: `@font-face` and the `--font-*` variables (no `next/font`) | beside the token file, imported after it |
 | `wiring/design-system.json` | The repo config template, settings and `kitVersion` included | `.ttt/design-system.json` |
 | `wiring/CLAUDE.design-system.md` | The design-system section of `CLAUDE.md`, with the "Replaced by stock" table | appended to `CLAUDE.md` |
-| `wiring/package.fragment.json` | Scripts and dev dependencies the above need | merged into `package.json` (missing entries only) |
+| `wiring/package.fragment.json`, `wiring/<framework>/package.fragment.json` | Scripts and dependencies the above need — shared, then the framework's | merged into the app's `package.json` (missing entries only) |
 | `harness/vitest.config.ts`, `harness/test/setup.ts` | Vitest + jsdom + Testing Library | `vitest.config.ts`, `src/test/setup.ts` |
 | `harness/scripts-tests/` | Tests for `ds-validate` and `ds-contrast` (node environment) | `scripts/__tests__/` |
 | `harness/fixture/` | The bundle-builder fixture: a deliberately different repo shape (namespace `Acme`, `~` alias, `lib/ui`) | `scripts/__fixtures__/` (its `run.mjs` finds the builder at `../ds-build-bundle.mjs`) |
 
-`build:safe` also needs `distDir: process.env.NEXT_DIST_DIR || ".next"` in `next.config`.
+On Next.js, `build:safe` also needs `distDir: process.env.NEXT_DIST_DIR || ".next"` in `next.config`. On Vite it is plain `vite build`.
 
 ## How Setup uses it
 
@@ -87,6 +91,14 @@ Placeholders to fill: `{{CLIENT_NAME}}`, `{{NAMESPACE}}`, `{{N_IMPLEMENTED}}`, `
 Reads the system's contract (schema and profile first), generates the theme file and installs components as the profile describes, writes the repo guardrails, and moves each component from `validated` to `implemented` once it's in the codebase.
 
 ## Changes
+
+**0.4.0** (2026-10-08) — profile `shadcn` 1.3
+- **Vite** joins Next.js as a supported framework of the shadcn profile, proven by an acceptance run on TTT's full-stack starter (pnpm + Turborepo, `apps/web` on Vite 7, ESLint 10, Vitest 4, oxlint). Components, kit extensions, scripts and the token mapping are shared; the framework sets the tested range, the dev checklist, pre-flight and the wiring. The repo config gains `framework` (`"next"` | `"vite"`; absent means `"next"`).
+- `tested-range.json` has shared `packages` plus `frameworks.next` and `frameworks.vite`; `ds-validate --preflight` checks the app's framework (read from its `package.json` when there's no config yet).
+- **Monorepos and pnpm**: the scripts read installed versions from an npm lockfile in the app's folder or above it, else from `node_modules` up to the workspace root — `ds-validate`, `ds-build-bundle` and `ds-pack-react` no longer require a `package-lock.json`. Every skill runs in the app's folder with the repo's package manager (`common.md`).
+- Wiring: `wiring/next/` (the ESLint flat config, the Next.js package fragment) and `wiring/vite/` (ESLint and oxlint blocks scoped to the component folder and `scripts/`, `fonts.css` with `@font-face` and the `--font-*` variables unlayered, the Vite package fragment). The shared package fragment keeps the `ds:*` scripts and component dependencies.
+- Setup: pre-flight asks for the app's folder in a monorepo and reads the framework and package manager; the "unmodified stock" check compares after the repo's formatter (a Prettier hook reformats every file shadcn writes); the code step wires fonts, the theme provider, lint and the test config per framework.
+- Fixed, found by the Vite run: `ds-styling-maps --using-in-code` printed `<prefix>undefined` for a type scale with no `body` style (operator precedence); an unused import in the DatePicker test; an unused parameter in `ds-validate`.
 
 **0.3.1** (2026-10-08)
 - Pull republishes the design system's **preview bundle** (new step 9): `bundle.css` is generated from the token file, so a token pull left the previews on the old tokens until a publish-back. It's built on the pull branch (or `main` when nothing changed in code), only what differs is sent, and a changed `bundle.css` gets the preview check, with differences reported as visible preview differences.

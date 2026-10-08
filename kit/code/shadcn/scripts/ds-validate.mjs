@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// design-system-kit 0.3.1 · profile shadcn · kit file — fix it in the kit, not per client
+// design-system-kit 0.4.0 · profile shadcn · kit file — fix it in the kit, not per client
 /**
  * ds-validate.mjs — the contract's config validation.
  *
@@ -29,7 +29,7 @@ import { fileURLToPath } from "node:url"
 import { SHADCN_MAP, ALIAS_COLORS } from "./ds-tokens.mjs"
 
 /** The kit these scripts belong to. A repo may not claim a newer one. */
-export const KIT_VERSION = "0.3.1"
+export const KIT_VERSION = "0.4.0"
 const SCHEMA = "ttt-ds/1"
 const PROFILE = "shadcn"
 
@@ -157,6 +157,7 @@ const CONFIG_SCHEMA = {
   namespace: { required: true, check: (v) => typeof v === "string" && /^[A-Z][A-Za-z0-9_$]*$/.test(v) ? null : 'a PascalCase JavaScript identifier for the bundle global, e.g. "Acme"' },
   bundleExtras: { required: false, check: (v) => isObject(v) && Object.values(v).every((a) => Array.isArray(a) && a.every((n) => typeof n === "string" && /^[A-Za-z_$][\w$]*$/.test(n))) ? null : 'map a module to the export names the bundle adds, e.g. {"sonner": ["toast"]}' },
   componentFiles: { required: false, check: (v) => isObject(v) && Object.entries(v).every(([k, a]) => /^[A-Z][A-Za-z0-9]*$/.test(k) && Array.isArray(a) && a.length && a.every((f) => typeof f === "string" && /^[a-z0-9-]+\.tsx$/.test(f))) ? null : 'map each PascalCase component to its .tsx files, e.g. {"Input": ["input.tsx", "label.tsx"]}' },
+  framework: { required: false, check: (v) => v in FRAMEWORKS ? null : `one of ${Object.keys(FRAMEWORKS).map((f) => `"${f}"`).join(", ")}; leave it out for "next"` },
   settings: { required: true, check: (v) => isObject(v) ? null : "add settings: { locale, weekStartsOn, dateFormat }" },
   contrast: { required: false, check: (v) => isObject(v) ? null : 'an object: { "intentional": [{ "foreground", "background"?, "reason" }] }' },
   usingInCode: { required: false, check: (v) => isObject(v) ? null : 'an object: { "notes": ["…"] }' },
@@ -229,7 +230,7 @@ export function validate(repo, { preflight = false, testedRange, system } = {}) 
   if (!existsSync(configPath)) {
     err(".ttt/design-system.json", "not found", "this repo isn't connected to a design system; Setup writes it")
     // Setup's pre-flight runs before the config exists: the lockfile check still applies.
-    if (preflight) checkTestedRange(repo, testedRange, err, warn)
+    if (preflight) checkTestedRange(repo, testedRange, err)
     return { errors, warnings, notes }
   }
   let config
@@ -293,7 +294,7 @@ export function validate(repo, { preflight = false, testedRange, system } = {}) 
   }
 
   // ---- pre-flight: installed versions vs the tested range --------------------------
-  if (preflight) checkTestedRange(repo, testedRange, err, warn)
+  if (preflight) checkTestedRange(repo, testedRange, err, config.framework ?? "next")
 
   return { errors, warnings, notes }
 }
@@ -458,20 +459,67 @@ function checkSource(repo, err, warn) {
   }
 }
 
-function installedVersion(repo, name) {
-  const lock = join(repo, "package-lock.json")
-  if (existsSync(lock)) {
-    const v = JSON.parse(readFileSync(lock, "utf8")).packages?.[`node_modules/${name}`]?.version
-    if (v) return v
+/**
+ * The version of a package as the app sees it, for any package manager and
+ * for an app inside a workspace (e.g. `apps/web` in a pnpm monorepo):
+ *
+ * 1. an npm `package-lock.json` in the app's folder or any folder above it —
+ *    the app's own entry first (`apps/web/node_modules/x` in a workspace
+ *    lock), then the hoisted one (`node_modules/x`);
+ * 2. otherwise the installed package itself, found the way Node resolves it:
+ *    `node_modules/<name>/package.json` in the app's folder, then each
+ *    folder above it (pnpm's symlinks, Yarn without Plug'n'Play, devDeps
+ *    hoisted to the workspace root).
+ *
+ * null when it isn't installed anywhere the app can reach.
+ */
+export function installedVersion(app, name) {
+  const root = resolve(app)
+  for (let dir = root; ; dir = dirname(dir)) {
+    const lock = join(dir, "package-lock.json")
+    if (existsSync(lock)) {
+      const pkgs = JSON.parse(readFileSync(lock, "utf8")).packages ?? {}
+      const rel = relative(dir, root).split("\\").join("/")
+      const v = (rel && pkgs[`${rel}/node_modules/${name}`]?.version) || pkgs[`node_modules/${name}`]?.version
+      if (v) return v
+      break
+    }
+    if (dirname(dir) === dir) break
   }
-  const pkg = join(repo, "node_modules", name, "package.json")
-  return existsSync(pkg) ? JSON.parse(readFileSync(pkg, "utf8")).version : null
+  for (let dir = root; ; dir = dirname(dir)) {
+    const pkg = join(dir, "node_modules", name, "package.json")
+    if (existsSync(pkg)) return JSON.parse(readFileSync(pkg, "utf8")).version ?? null
+    if (dirname(dir) === dir) return null
+  }
 }
 
-function checkTestedRange(repo, testedRange, err, warn) {
+/** The frameworks this profile supports, and the package that marks each. */
+export const FRAMEWORKS = { next: "next", vite: "vite" }
+
+/** The app's framework from its own package.json (pre-flight runs before there's a config). */
+export function detectFramework(app) {
+  const p = join(app, "package.json")
+  if (!existsSync(p)) return null
+  const pkg = JSON.parse(readFileSync(p, "utf8"))
+  const deps = { ...pkg.dependencies, ...pkg.devDependencies }
+  const found = Object.entries(FRAMEWORKS).filter(([, marker]) => marker in deps).map(([name]) => name)
+  return found.length === 1 ? found[0] : null
+}
+
+function checkTestedRange(repo, testedRange, err, framework) {
   const rangePath = testedRange ?? join(HERE, "tested-range.json")
   if (!existsSync(rangePath)) { err("tested-range.json", "not found next to the scripts", "copy it from the kit with the scripts"); return }
-  const { packages } = JSON.parse(readFileSync(rangePath, "utf8"))
+  const range = JSON.parse(readFileSync(rangePath, "utf8"))
+  let packages = range.packages
+  if (range.frameworks) {
+    const fw = framework ?? detectFramework(repo)
+    if (!fw || !range.frameworks[fw]) {
+      err("framework", fw ? `is "${fw}", which this kit has no tested range for` : "can't be told from the app's package.json",
+        `this profile supports ${Object.keys(range.frameworks).join(" and ")} — the app's package.json must depend on exactly one of ${Object.values(FRAMEWORKS).join(", ")}`)
+      return
+    }
+    packages = { ...range.packages, ...range.frameworks[fw] }
+  }
   for (const [name, { min, max, required }] of Object.entries(packages)) {
     const v = installedVersion(repo, name)
     if (!v) {

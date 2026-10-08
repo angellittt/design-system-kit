@@ -1,6 +1,8 @@
 # Part 2 — Library profile: shadcn
 
-**Profile** `shadcn` 1.2 · **Platform** web · **For schema** `ttt-ds/1`
+**Profile** `shadcn` 1.3 · **Platform** web · **Frameworks** Next.js, Vite · **For schema** `ttt-ds/1`
+
+**1.3** (kit 0.4.0) — Vite joins Next.js as a supported framework: same components, scripts and mapping; per-framework stack, tested range, dev checklist, pre-flight and wiring (fonts, linting, build). Apps inside a monorepo, and pnpm, are supported.
 
 **1.2** (kit 0.1.0, 0.1.1) — kit extension catalog: Tabs pill/underline and Card compact are stock now; Alert joins Semantic colour; Clickable rows added as a candidate. Mapping gains `font-heading`; the generator emits the spacing base, the status shorthands and font fallbacks. Kit code vendored under `kit/code/shadcn/`. Kit 0.1.1 adds config validation, contrast checking and the tested range (no change to the mapping or catalog).
 
@@ -8,41 +10,70 @@ Everything in this part is specific to shadcn/ui. The universal rules in Part 1 
 
 ## Stack
 
-**Tested range.** For each package, the lowest and highest version the kit's last acceptance runs passed on — a fresh app built from the dev setup checklist below, with the kit applied from the kit alone and every check green (token generation, `ds-validate`, `ds-contrast`, typecheck, `eslint .`, the kit's tests, `next build`, the bundle builder and its fixture, the styling maps, the types file, and three components in the browser in both themes). The range is nothing more than that: a version no acceptance run has passed on is untested, however close. It widens only when another acceptance run passes. Its machine-readable copy is `kit/code/shadcn/scripts/tested-range.json`, installed with the scripts, which also lists the runs.
+The profile supports two **frameworks**: **Next.js** (App Router) and **Vite** (a React single-page app). The UI library is the same in both — the stock components, kit extensions, scripts, token mapping and design-system output don't change. What differs is the framework's own packages, the app's wiring (fonts, linting, the build script) and the tested range. The repo config records which (`framework`: `"next"` or `"vite"`; absent means `"next"`), and pre-flight reads it from the app's `package.json` before there is a config.
 
-Kit 0.1.1's runs (2026-10-07): **floor** — `create-next-app@15.5` and `shadcn@4.21.1 init` exactly as installed; **ceiling** — the same app with React at 19.3.0, the newest 19.x. Every other package resolved to the newest version in its allowed major in both runs, so its range is a single version.
+**Tested range.** For each package, the lowest and highest version the kit's acceptance runs passed on — an app built from the dev setup checklist below, with the kit applied from the kit alone and every check green (token generation, `ds-validate`, `ds-contrast`, typecheck, lint, the kit's tests, the framework's production build, the bundle builder and its fixture, the styling maps, the types file, and three components in the browser in both themes, their handlers firing). The range is nothing more than that: a version no acceptance run has passed on is untested, however close. It widens only when another acceptance run passes, and only for the framework that run used. Its machine-readable copy is `kit/code/shadcn/scripts/tested-range.json` (`packages` shared, `frameworks.next` and `frameworks.vite` on top), installed with the scripts, which also lists the runs.
+
+The runs:
+
+- **Next.js floor** (kit 0.1.1, 2026-10-07) — `create-next-app@15.5` and `shadcn@4.21.1 init` exactly as installed; **ceiling** — the same app with React at 19.3.0, the newest 19.x.
+- **Vite floor** (kit 0.4.0, 2026-10-08) — TTT's full-stack starter template as cloned: a pnpm 10 + Turborepo monorepo whose `apps/web` is Vite 7 + React 19.2, with ESLint 10, Vitest 4 and oxlint at the workspace root; plus Tailwind 4.3.3 with `@tailwindcss/vite` and `shadcn@4.21.1 init` run in `apps/web`.
+
+Every other package resolved to one version per run, so most ranges are a single version.
+
+**Shared** — the same range for both frameworks:
 
 | Package | Tested min | Tested max | Notes |
 |---|---|---|---|
-| next | 15.5.27 | 15.5.27 | App Router |
-| react | 19.1.0 | 19.3.0 | shadcn's current components pass `ref` as a prop (React 19); Next.js 15 App Router runs React 19 |
+| react | 19.1.0 | 19.3.0 | shadcn's current components pass `ref` as a prop (React 19) |
 | react-dom | 19.1.0 | 19.3.0 |  |
 | tailwindcss | 4.3.3 | 4.3.3 | CSS-first config, no `tailwind.config` |
-| @tailwindcss/postcss | 4.3.3 | 4.3.3 |  |
 | @tailwindcss/cli | 4.3.3 | 4.3.3 | Bundle builder only |
-| shadcn | 4.21.4 | 4.21.4 | The package `shadcn init` installs; the init itself is run as `shadcn@4.21.1` |
 | @base-ui/react | 1.8.0 | 1.8.0 | Primitives (Base UI). shadcn's default since July 2026; Radix remains supported but isn't this profile's choice |
 | class-variance-authority | 0.7.1 | 0.7.1 | Variants and kit extensions |
 | cn | 0.4.0 | 0.4.0 | `cn()` — stock components import it from the `cn` package; `lib/utils` re-exports it |
 | tw-animate-css | 1.4.0 | 1.4.0 |  |
-| lucide-react | 1.52.0 | 1.52.0 | Default icon library |
-| next-themes | 0.4.6 | 0.4.6 | Light/dark switching |
+| next-themes | 0.4.6 | 0.4.6 | Light/dark switching — framework-agnostic despite the name |
 | sonner | 2.0.8 | 2.0.8 | Toasts |
 | typescript | 5.9.3 | 5.9.3 |  |
 | react-day-picker | 10.0.2 | 10.0.2 | Calendar and DatePicker |
 | date-fns | 4.4.0 | 4.4.0 | Calendar, DatePicker, `ds-settings` locales |
 | esbuild | 0.28.2 | 0.28.2 | Bundle builder only |
+
+**Next.js:**
+
+| Package | Tested min | Tested max | Notes |
+|---|---|---|---|
+| next | 15.5.27 | 15.5.27 | App Router; Next.js 15 runs React 19 |
+| @tailwindcss/postcss | 4.3.3 | 4.3.3 |  |
+| shadcn | 4.21.4 | 4.21.4 | The package `shadcn init` installs; the init itself is run as `shadcn@4.21.1` |
+| lucide-react | 1.52.0 | 1.52.0 | Default icon library |
 | vitest | 3.2.7 | 3.2.7 | Kit harness |
 | eslint | 9.39.5 | 9.39.5 | Flat config, `eslint .` |
 | eslint-plugin-jsx-a11y | 6.10.2 | 6.10.2 | Accessibility rules |
 
+**Vite:**
+
+| Package | Tested min | Tested max | Notes |
+|---|---|---|---|
+| vite | 7.3.1 | 7.3.1 |  |
+| @vitejs/plugin-react | 5.1.4 | 5.1.4 |  |
+| @tailwindcss/vite | 4.3.3 | 4.3.3 | Tailwind's Vite plugin (no PostCSS) |
+| shadcn | 4.21.0 | 4.21.0 | As `shadcn@4.21.1 init` installed it in the starter |
+| lucide-react | 1.49.0 | 1.49.0 | As installed |
+| vitest | 4.1.11 | 4.1.11 | The repo's own runner; the kit's tests run on it |
+| eslint | 10.0.3 | 10.0.3 | The repo's own config; accessibility rules came from oxlint's jsx-a11y plugin |
+| jsdom | 28.1.0 | 28.1.0 | Test environment |
+
 `@tanstack/react-table` (^8, stay on v8 — v9 drops `useReactTable`) is a reference version only: no kit component uses it, so no acceptance run exercises it.
 
-A client project's own versions come from its **lockfile**, which wins over any range; pre-flight compares the two.
+A client project's own versions are what it has **installed**, which win over any range; pre-flight compares the two. The scripts read them for any package manager and for an app inside a workspace: an npm `package-lock.json` in the app's folder or above it, otherwise the installed package under `node_modules` in the app's folder or any folder above it (pnpm, Yarn without Plug'n'Play, devDependencies hoisted to a monorepo root).
 
 ## Config
 
-`components.json`: style `base-nova` — written by `npx shadcn@4.21.1 init --preset nova --base base` (the CLI has no `base-nova` preset name; Nova on Base UI is stored as `base-nova`) (Base UI primitives, Nova's compact style for dashboards and portals), base colour `neutral`, CSS variables on, RSC on, TSX, icon library `lucide`, menu colour `default`, menu accent `subtle`. Aliases `@/components`, `@/components/ui`, `@/lib`, `@/lib/utils`, `@/hooks`. Global CSS `src/styles/globals.css` by default; `create-next-app` puts it at `src/app/globals.css`, which pre-flight records as adaptable.
+`components.json`: style `base-nova` — written by `npx shadcn@4.21.1 init --preset nova --base base` (the CLI has no `base-nova` preset name; Nova on Base UI is stored as `base-nova`) (Base UI primitives, Nova's compact style for dashboards and portals), base colour `neutral`, CSS variables on, RSC on (Next.js) or off (Vite — the CLI sets it), TSX, icon library `lucide`, menu colour `default`, menu accent `subtle`. Aliases `@/components`, `@/components/ui`, `@/lib`, `@/lib/utils`, `@/hooks`. Global CSS `src/styles/globals.css` by default; `create-next-app` puts it at `src/app/globals.css`, a Vite app wherever its entry CSS is (e.g. `src/index.css`) — pre-flight records either as adaptable.
+
+**Vite specifics.** `shadcn init` on Vite needs, before it runs: Tailwind v4 through `@tailwindcss/vite` (the plugin in `vite.config`, `@import "tailwindcss"` at the top of the entry CSS), and the `@/*` alias in **both** `tsconfig.json` and `tsconfig.app.json` (a Vite `tsconfig.json` is only references; the CLI and the kit's scripts read `paths` from it) plus a resolver in `vite.config` (`vite-tsconfig-paths`, or `resolve.alias`). The CLI may add a font package (e.g. `@fontsource-variable/geist`) and import it in the entry CSS; Setup leaves it and records it.
 
 **Why these choices.** Base UI is shadcn's default and recommended primitive library for new projects, so it's the stock path (see "prefer stock"). Nova is the compact style suited to TTT's typical work — dashboards, admin portals, resource tools. One style per profile version: the kit vendors and tests one style's files. A different style or primitive library for a client is a profile change decided at kickoff.
 
@@ -71,29 +102,32 @@ A client project's own versions come from its **lockfile**, which wins over any 
 
 What the dev's own app setup must include before the designer runs Setup:
 
-- Next.js with the App Router, TypeScript, Tailwind v4 — versions within this profile's tested range.
-- `shadcn init` run with the Config values above (style, base colour, CSS variables, icon library, aliases): `npx shadcn@4.21.1 init --preset nova --base base`.
+- **Next.js** with the App Router, **or Vite** with `@vitejs/plugin-react` — TypeScript and Tailwind v4 either way (`@tailwindcss/postcss` on Next.js, `@tailwindcss/vite` on Vite), versions within this profile's tested range for that framework.
+- `shadcn init` run with the Config values above (style, base colour, CSS variables, icon library, aliases): `npx shadcn@4.21.1 init --preset nova --base base` — on Vite, after the "Vite specifics" above.
+- **In a monorepo**, all of this lives in one app's folder (e.g. `apps/web`): that folder is where `components.json`, `.ttt/` and `scripts/` go, and the one Setup is pointed at. Workspace-root tooling (ESLint, Vitest, oxlint) is fine; its versions count for the app.
 - No custom theme yet — shadcn's default theme variables are fine; Setup replaces them.
 - Little or no custom UI. Stock shadcn components already added are fine.
-- ESLint configured to run unattended (flat config, `eslint .`; `next lint` is deprecated). Setup adds the accessibility rules on top.
+- Linting that runs unattended: an ESLint flat config (`eslint .`; `next lint` is deprecated), optionally oxlint as well. Setup adds the kit's scoped blocks and, where nothing runs jsx-a11y rules yet, the accessibility rules.
 - The designer has PR access to the repo.
 
 ## Pre-flight
 
 Setup's first step reads the repo and reports **ready**, **adaptable** (e.g. different aliases or CSS path — Setup uses the repo's values and records them) or **blocked** (e.g. Tailwind v3, no shadcn init, or substantial existing custom UI). Missing packages that selected components need are added at their tested max; existing packages are never upgraded or downgraded. Modified stock components are never overwritten; differences are listed in the PR.
 
-**Versions** — pre-flight runs `node scripts/ds-validate.mjs --preflight`, which reads each package's installed version from `package-lock.json` and compares it with `scripts/tested-range.json`. A package outside its tested range is an error naming the package, its version and the range: Setup reports the repo **blocked** for a different major, and otherwise flags the package for the dev and goes on — the dev either moves it into range or runs an acceptance run that widens the range. A required package that isn't installed is added at its tested max.
+**Framework, app and package manager** — pre-flight reads the framework from the app's `package.json` (`next` or `vite` as a dependency; both or neither is **blocked**), the app's folder (the repo root, or the workspace package the person names — e.g. `apps/web`), and the package manager from the lockfile beside the workspace root (`package-lock.json` npm, `pnpm-lock.yaml` pnpm, `yarn.lock` Yarn; Yarn Plug'n'Play is **blocked** — the scripts read `node_modules`). Every command Setup and Sync run uses that package manager, in the app's folder (`pnpm add …` there, not `npm install`).
+
+**Versions** — pre-flight runs `node scripts/ds-validate.mjs --preflight`, which reads each package's installed version (see Stack) and compares it with `scripts/tested-range.json` — the shared rows plus the app's framework. A package outside its tested range is an error naming the package, its version and the range: Setup reports the repo **blocked** for a different major, and otherwise flags the package for the dev and goes on — the dev either moves it into range or runs an acceptance run that widens the range. A required package that isn't installed is added at its tested max.
 
 ## How this profile provides each layer
 
 - **Base** — components are copied into `components/ui` by the shadcn CLI and owned by the project.
-- **Repo config** — `.ttt/design-system.json` records the design system link, tracker link, schema, profile, token file path, `typeClassPrefix` and `lastSynced`.
+- **Repo config** — `.ttt/design-system.json` records the design system link, tracker link, schema, profile, `framework`, token file path, `typeClassPrefix` and `lastSynced`. In a monorepo it sits in the app's folder.
 - **Token snapshot** — only Sync's pull writes `.ttt/tokens.json`, run by a person in Claude Code; there is no unattended fetch from claude.ai. The snapshot is committed, and everything generated reads it, never the design system directly, so CI regenerates from the snapshot alone.
 - **Token file** — a generator (e.g. `scripts/ds-tokens.mjs`) turns the snapshot into `src/styles/ds-tokens.css` (default path; adaptable): every token as a CSS variable, light and dark via `[data-theme]`, aliases as `var()` references, the Tailwind v4 `@theme` mapping below, the type classes from the type groups (one Tailwind utility per text style, `type-<style>` by default, e.g. `type-body-1`; the prefix is adaptable and recorded as `typeClassPrefix`), and Tailwind's spacing base set from `space-1`. One generator covers all tokens. A token change regenerates this file and no component file.
-- **Fonts** — the framework's font loader (`next/font`) owns `--font-display`, `--font-sans`, `--font-mono` and the font files; the generator emits `--font-fallback-*` from the design system's type families. The families the layout loads must match the design system's fonts (checked by the drift audit).
+- **Fonts** — the generator emits `--font-fallback-*` from the design system's type families; something else sets `--font-display`, `--font-sans`, `--font-mono` to the loaded faces. **Next.js**: `next/font` (its `variable` option, on `<html>`). **Vite**: `wiring/vite/fonts.css` — `@font-face` per file (or an `@fontsource` import) and the three variables on an **unlayered** `:root`, imported after the token file, so it beats the token file's own `@theme` declaration. The families the app loads must match the design system's fonts (checked by the drift audit).
 - **Preview runtime** — the design system's preview frame loads React 18 unless told otherwise, and React 19 ships no browser-global build. Publish-back therefore builds React 19 and ReactDOM 19 as classic-script globals (`window.React`, `window.ReactDOM`) into `components/lib/`, and lists them in `libraries` with `name`, `version`, `global` and `file`. *To test on first use.*
 - **Theme block** — Setup replaces only shadcn's theme variable block in the global CSS with an import of the token file.
-- **Theme switching** — next-themes with `attribute="data-theme"`; Tailwind's `dark:` variant points at `[data-theme="dark"]`.
+- **Theme switching** — next-themes with `attribute="data-theme"` (it works the same outside Next.js); Tailwind's `dark:` variant points at `[data-theme="dark"]`. The provider wraps the root layout's body (Next.js) or the root render in `main.tsx` (Vite).
 - **Focus** — one base `:focus-visible` rule (2px solid `ring`, 2px offset) rather than per-component outline utilities. Text fields keep stock's border and ring, which replaces it.
 - **Kit and client extensions** — `cva` variants and props on the copied component, or small companion parts exported from the same file.
 - **Repo guardrails** — Setup writes a design-system section in `CLAUDE.md` (usage rules, agreed component rules, styling guardrails); Sync keeps it current. Other repo docs point to it rather than repeating it.
@@ -151,7 +185,7 @@ Everything else Setup applies comes from the same folder:
 |---|---|
 | `kit/code/shadcn/stock/` | Stock base-nova components (shadcn 4.21.1, 2026-10-07) with baseline changes only |
 | `kit/code/shadcn/kit/` | Kit extensions — each a complete component file that replaces the stock one when chosen — and their interaction tests |
-| `kit/code/shadcn/wiring/` | Theme block, focus rule, theme provider, `ds-settings`, ESLint flat config with jsx-a11y, `.ttt/design-system.json` template, `CLAUDE.md` design-system section, `package.json` fragment |
+| `kit/code/shadcn/wiring/` | Shared: theme block, focus rule, theme provider, `ds-settings`, `.ttt/design-system.json` template, `CLAUDE.md` design-system section, `package.json` fragment. `wiring/next/`: ESLint flat config with jsx-a11y, the Next.js package fragment (`build:safe` into `.next-build`). `wiring/vite/`: ESLint and oxlint blocks scoped to the component folder and scripts, `fonts.css`, the Vite package fragment |
 | `kit/code/shadcn/harness/` | Vitest + jsdom setup, and the bundle fixture (installed at `scripts/__fixtures__/`) |
 
 | Script | Produces | Reads its configuration from |

@@ -1,6 +1,7 @@
-<!-- design-system-kit 0.3.1 · profile shadcn · wiring: CLAUDE.md design-system section.
+<!-- design-system-kit 0.4.0 · profile shadcn · wiring: CLAUDE.md design-system section.
      Setup appends this to the repo's CLAUDE.md and fills every {{…}}; Sync keeps it
-     current. Agreed component rules from accepted proposals go under
+     current. Commands are written for npm: Setup rewrites them for the repo's package
+     manager (pnpm run …, yarn …). Agreed component rules from accepted proposals go under
      "Component rules". Delete this comment when filling. -->
 
 # Design system
@@ -171,10 +172,12 @@ are agreed in review but not yet in code — don't import them.
   needs `!` in `sonner.tsx`, and it colours the description from its own
   variable rather than `--normal-text`.
 - **Use `npm run build:safe`, not `npm run build`, while the dev server is
-  running.** Both write to `.next` otherwise, and the running server starts
-  404ing every chunk. `build:safe` targets `.next-build`.
-- **Restart the dev server after changing `postcss.config.mjs`** — Tailwind
-  silently emits zero utilities otherwise.
+  running** (Next.js). Both write to `.next` otherwise, and the running server
+  starts 404ing every chunk. `build:safe` targets `.next-build`. On Vite it is
+  plain `vite build` — the dev server never writes `dist/`.
+- **Restart the dev server after changing `postcss.config.mjs`** (Next.js) or
+  the Tailwind plugin in `vite.config` (Vite) — Tailwind silently emits zero
+  utilities otherwise.
 - `@tanstack/react-table` must stay on **v8**; v9 has no `useReactTable`.
 - **Tailwind's automatic source detection scans more than you think** — it
   walks up from the CSS entry, markdown included. The global CSS declares
