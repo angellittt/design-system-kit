@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// design-system-kit 0.3.1 · profile shadcn · kit file — fix it in the kit, not per client
+// design-system-kit 0.4.0 · profile shadcn · kit file — fix it in the kit, not per client
 /**
  * ds-styling-maps.mjs — the styling map in every implemented component's
  * README, generated from that component's code.
@@ -824,7 +824,7 @@ function usingInCode() {
       rows.push([code("font-heading"), families.includes("display") ? "the display family" : "the sans family"])
   }
   const styles = (tokens.type?.groups ?? []).flatMap((g) => g.styles.map((st) => st.name))
-  if (styles.length) rows.push([`${code(`${prefix}<style>`)} (e.g. ${code(prefix + styles.find((n) => /body/.test(n)) ?? prefix + styles[0])})`, `text styles from the type groups (${styles.length})`])
+  if (styles.length) rows.push([`${code(`${prefix}<style>`)} (e.g. ${code(prefix + (styles.find((n) => /body/.test(n)) ?? styles[0]))})`, `text styles from the type groups (${styles.length})`])
   const base = fam("spacing").find((t) => t.name === "space-1")
   if (SPACING_BASE && base) {
     const overrides = [...theme.matchAll(/--spacing-((?:[a-z0-9-]|\\\.)+):\s*var\(--((?:[a-z0-9-]|\\\.)+)\)/g)].map((m) => m[1].replace(/\\\./g, "."))

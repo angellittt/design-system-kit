@@ -1,8 +1,10 @@
 # Code — the branch, then the PR
 
-design-system-kit 0.3.1
+design-system-kit 0.4.0
 
-Setup step 5 builds the code branch; step 9 opens its PR. Everything comes
+Setup step 5 builds the code branch; step 9 opens its PR. Paths are the
+app's folder; commands use the repo's package manager (common.md, "The app
+and its package manager"). Everything comes
 from `kit/code/<profile>/` in the plugin, laid out as `kit/README.md`'s
 "`kit/code/shadcn/`" table says — read that table first; it's the map for
 this whole step. Paths below are shadcn's; another profile names its own.
@@ -14,8 +16,9 @@ you go; every commit message ends with the session's attribution.
 
 **Only design-system paths change**: the component folder, `scripts/`, the
 wiring files, `.ttt/`, the token file, `CLAUDE.md`'s design-system section,
-`package.json` and its lockfile, the test harness, `next.config` (`distDir`)
-and the font files. Nothing else in the app is touched; if something else
+`package.json` and its lockfile, the test harness, the lint configs (Vite:
+the scoped blocks), `next.config` (`distDir`, Next.js only) and the font
+files. Nothing else in the app is touched; if something else
 would have to change, list it in the report instead.
 
 ## 2. Components — never overwrite a modified stock file
@@ -32,12 +35,16 @@ extension and for DatePicker:
 | Exists and is **unmodified stock** | Replace it with the kit's file (stock + baseline changes, or the extension). |
 | Exists and is **modified** | **Leave it.** List it in the PR with a short summary of how it differs from stock. If a chosen extension needed it, the extension isn't installed — say so. |
 
-**Unmodified** means byte-identical to what `shadcn@4.21.1 add <name>`
-writes for this repo's `components.json`. Find out without touching the
-repo: copy `components.json`, `tsconfig.json` and `package.json` to a scratch
-folder, run `npx shadcn@4.21.1 add <name> --yes --overwrite` there, and
-compare the two files. Whitespace-only differences count as modified — when in
-doubt, leave it.
+**Unmodified** means identical to what `shadcn@4.21.1 add <name>` writes for
+this app's `components.json`, **after both are run through the repo's own
+formatter**. Many repos reformat on commit (a Prettier pre-commit hook adds
+semicolons and quotes to every file shadcn wrote), so a byte comparison would
+call every stock file modified. Find out without touching the repo: copy
+`components.json`, `tsconfig.json` (and `tsconfig.app.json` on Vite) and
+`package.json` to a scratch folder, run `npx shadcn@4.21.1 add <name> --yes
+--overwrite` there, format both copies with the repo's formatter config
+(e.g. `npx prettier --config <repo>/.prettierrc`), and compare. Any
+difference left counts as modified — when in doubt, leave it.
 
 If the repo's aliases differ from `@/components/ui`, `@/lib/utils`,
 `@/hooks`, rewrite the kit files' imports to the repo's aliases as you copy
@@ -63,32 +70,55 @@ From `kit/code/<profile>/`, into the places the README table gives:
   (fill `{{SOURCE_ROOT}}` — the path from the CSS file to the source root —
   and `{{TOKENS_IMPORT}}`), and add `wiring/focus.css`.
 - **Theme provider** — `wiring/theme-provider.tsx` →
-  `<aliases.components>/theme-provider.tsx`; wrap the root layout's body in it
-  and add `suppressHydrationWarning` to `<html>`.
-- **Fonts** — font files into the repo (e.g. `src/app/fonts/`), loaded with
-  `next/font/local` in the root layout as `--font-display`, `--font-sans`,
-  `--font-mono` (profile, "Fonts"). A family left `default` loads nothing;
-  the fallback stack applies.
+  `<aliases.components>/theme-provider.tsx`. Next.js: wrap the root layout's
+  body in it and add `suppressHydrationWarning` to `<html>`. Vite: wrap the
+  root render in `main.tsx` (`<ThemeProvider><App /></ThemeProvider>`).
+- **Fonts** (profile, "Fonts") — a family left `default` loads nothing; the
+  fallback stack applies.
+  - Next.js: font files into the repo (e.g. `src/app/fonts/`), loaded with
+    `next/font/local` in the root layout as `--font-display`, `--font-sans`,
+    `--font-mono`.
+  - Vite: font files into `src/assets/fonts/`; `wiring/vite/fonts.css` →
+    beside the token file, one `@font-face` per file and the variables for
+    the families that load, **unlayered**, imported in the global CSS right
+    after the token file. A font package `shadcn init` added (e.g.
+    `@fontsource-variable/geist`) stays; list it in the report.
 - **Client settings** — `wiring/ds-settings.ts` →
   `<aliases.lib>/ds-settings.ts`: fix the config import path if `lib/` isn't
   at `src/lib`, and add the client's locale to `LOCALES` (its date-fns
   import, by name).
-- **ESLint** — `wiring/eslint.config.mjs`, or its jsx-a11y block added to the
-  repo's flat config.
+- **Lint** — never change the repo's own rules; add the kit's scoped blocks.
+  - Next.js: `wiring/next/eslint.config.mjs`, or its jsx-a11y block added to
+    the repo's flat config.
+  - Vite: spread `wiring/vite/eslint.design-system.mjs` into the repo's flat
+    config after its own entries; if the repo runs oxlint, add
+    `wiring/vite/oxlint.design-system.jsonc`'s object to `.oxlintrc.json`
+    `overrides`. If nothing runs jsx-a11y rules yet (no oxlint jsx-a11y
+    plugin, no `eslint-plugin-jsx-a11y`), also add the jsx-a11y block from
+    `wiring/next/eslint.config.mjs` and its plugin.
 - **CLAUDE.md** — append `wiring/CLAUDE.design-system.md`, every `{{…}}`
-  filled; `{{CLIENT_USAGE_RULES}}` and `{{AGREED_COMPONENT_RULES}}` start as
+  filled and its `npm` commands written for the repo's package manager; `{{CLIENT_USAGE_RULES}}` and `{{AGREED_COMPONENT_RULES}}` start as
   "None yet." Remove its template comment.
-- **Harness** — `harness/vitest.config.ts`, `harness/test/setup.ts`,
-  `harness/scripts-tests/` → `scripts/__tests__/`, `harness/fixture/` →
-  `scripts/__fixtures__/`.
-- **`next.config`** — `distDir: process.env.NEXT_DIST_DIR || ".next"`.
+- **Harness** — `harness/scripts-tests/` → `scripts/__tests__/`,
+  `harness/fixture/` → `scripts/__fixtures__/`. The test config:
+  - no Vitest config yet → `harness/vitest.config.ts` and
+    `harness/test/setup.ts`;
+  - the repo has one (usual on Vite) → keep it, and make sure it runs in
+    `jsdom`, its setup file imports `@testing-library/jest-dom/vitest`, its
+    `include` reaches `src/**/*.test.tsx` and `scripts/**/*.test.mjs`, and its
+    `exclude` has `scripts/__fixtures__/**` (the fixture keeps a test file on
+    purpose, to prove the bundle drops it).
+- **`next.config`** (Next.js only) — `distDir: process.env.NEXT_DIST_DIR ||
+  ".next"`.
 
 ## 4. Packages — add missing, never change existing
 
-Merge `wiring/package.fragment.json` into `package.json`: add every script,
-dependency and dev dependency that's **missing**; never change one that's
+Merge `wiring/package.fragment.json`, then `wiring/<framework>/package.fragment.json`,
+into the app's `package.json`: add every script, dependency and dev
+dependency that's **missing**; never change one that's
 there, whatever its version. Install each added package at its **tested
-max** (`scripts/tested-range.json`), e.g. `npm install sonner@2.0.8` —
+max** for the framework (`scripts/tested-range.json`), e.g. `pnpm add
+sonner@2.0.8` in the app's folder —
 pre-flight already flagged any existing one outside the range.
 
 For the PR, record **why** each added package is there: search the files
@@ -101,9 +131,9 @@ name the components (or scripts) that need it, e.g. "`react-day-picker@10.0.2`
 ```bash
 npm run ds:contrast
 npm run typecheck
-npx eslint .
+npm run lint              # the repo's own lint script (ESLint, and oxlint if it has it)
 npm test
-npm run build:safe        # or npm run build when no dev server is running
+npm run build:safe        # Next.js: beside a dev server; Vite: plain vite build
 npm run ds:fixture
 ```
 

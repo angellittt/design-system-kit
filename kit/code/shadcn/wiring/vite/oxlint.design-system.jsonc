@@ -1,0 +1,32 @@
+// design-system-kit 0.4.0 · profile shadcn · wiring (Vite): oxlint override
+//
+// For repos that lint with oxlint. Setup adds this object to the app's
+// .oxlintrc.json "overrides" list (create the list if there isn't one); it
+// never edits the repo's own rules. Proven on the kit's Vite acceptance run.
+//
+// Why each rule is off, only for these paths:
+// - Vendored stock components are wrappers: roles, handlers and labels arrive
+//   through props the linter can't see (prefer-tag-over-role, the two
+//   interaction rules, label-has-associated-control), and DatePicker focuses
+//   its input when the calendar opens on purpose (no-autofocus).
+// - cva variant helpers are exported beside the component by design
+//   (only-export-components); use-mobile is stock (set-state-in-effect).
+// - Kit tests assert on elements they just rendered (no-non-null-assertion).
+// - Kit scripts are linted in the kit, not per client.
+{
+  "files": ["src/components/ui/**", "src/hooks/use-mobile.ts", "scripts/**"],
+  "rules": {
+    "jsx-a11y/prefer-tag-over-role": "off",
+    "jsx-a11y/click-events-have-key-events": "off",
+    "jsx-a11y/no-noninteractive-element-interactions": "off",
+    "jsx-a11y/label-has-associated-control": "off",
+    "jsx-a11y/no-autofocus": "off",
+    "react/only-export-components": "off",
+    "react/set-state-in-effect": "off",
+    "typescript/no-non-null-assertion": "off",
+    "unicorn/prefer-string-starts-ends-with": "off",
+    "unicorn/no-useless-spread": "off",
+    "eslint/no-unused-vars": "off",
+    "eslint/no-constant-binary-expression": "off"
+  }
+}

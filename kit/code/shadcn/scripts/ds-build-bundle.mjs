@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// design-system-kit 0.3.1 · profile shadcn · kit file — fix it in the kit, not per client
+// design-system-kit 0.4.0 · profile shadcn · kit file — fix it in the kit, not per client
 /**
  * Build the design system's preview bundle from a repo's component layer.
  *
@@ -33,6 +33,7 @@ import { resolve, join, dirname } from "node:path"
 import { fileURLToPath } from "node:url"
 import { createRequire } from "node:module"
 import { execFileSync } from "node:child_process"
+import { installedVersion } from "./ds-validate.mjs"
 
 /**
  * Where the dependencies live — always the repo this script is installed in.
@@ -140,11 +141,8 @@ function loadConfig() {
 // ---- toolchain check -------------------------------------------------------
 
 function installedVersions() {
-  const lock = JSON.parse(readFileSync(join(TOOL_ROOT, "package-lock.json"), "utf8"))
   const out = {}
-  for (const name of Object.keys(PINS)) {
-    out[name] = lock.packages?.[`node_modules/${name}`]?.version ?? null
-  }
+  for (const name of Object.keys(PINS)) out[name] = installedVersion(TOOL_ROOT, name)
   return out
 }
 

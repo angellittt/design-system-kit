@@ -1,11 +1,11 @@
 // @vitest-environment node
-// design-system-kit 0.3.1 · profile shadcn · harness: ds-validate tests
+// design-system-kit 0.4.0 · profile shadcn · harness: ds-validate tests
 import { describe, expect, it } from "vitest"
 import { spawnSync } from "node:child_process"
 import { join, dirname } from "node:path"
 import { fileURLToPath } from "node:url"
-import { validate, validateTemplate, isDateFormat, isLocale, compareVersions, KIT_VERSION, rampOf, hueIn, listedInSystem } from "../ds-validate.mjs"
-import { writeFileSync, mkdtempSync } from "node:fs"
+import { validate, validateTemplate, isDateFormat, isLocale, compareVersions, KIT_VERSION, rampOf, hueIn, listedInSystem, installedVersion, detectFramework } from "../ds-validate.mjs"
+import { writeFileSync, mkdtempSync, mkdirSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { repo, goodConfig, snapshot } from "./helpers.mjs"
 
@@ -164,6 +164,54 @@ describe("ds-validate: token file header", () => {
     expect(r.errors).toEqual([])
     expect(r.warnings.map((w) => w.field)).toEqual(["src/styles/ds-tokens.css"])
     expect(r.warnings[0].fix).toMatch(/set lastSynced before regenerating/)
+  })
+})
+
+describe("ds-validate: frameworks and workspaces", () => {
+  const range = { packages: { react: { min: "19.1.0", max: "19.3.0", required: true } },
+    frameworks: { next: { next: { min: "15.5.27", max: "15.5.27", required: true } }, vite: { vite: { min: "7.3.1", max: "7.3.1", required: true }, eslint: { min: "10.0.3", max: "10.0.3" } } } }
+  const pkg = (dir, name, version) => { mkdirSync(join(dir, "node_modules", name), { recursive: true }); writeFileSync(join(dir, "node_modules", name, "package.json"), JSON.stringify({ name, version })) }
+  const workspace = (appDeps) => {
+    const root = mkdtempSync(join(tmpdir(), "ds-ws-"))
+    const app = join(root, "apps/web")
+    mkdirSync(app, { recursive: true })
+    writeFileSync(join(root, "pnpm-lock.yaml"), "lockfileVersion: '9.0'\n")
+    writeFileSync(join(app, "package.json"), JSON.stringify({ dependencies: appDeps }))
+    writeFileSync(join(root, "range.json"), JSON.stringify(range))
+    return { root, app }
+  }
+
+  it("reads versions from an app's node_modules and from the workspace root above it", () => {
+    const { root, app } = workspace({ vite: "^7" })
+    pkg(app, "react", "19.2.4")
+    pkg(root, "eslint", "10.0.3")
+    expect([installedVersion(app, "react"), installedVersion(app, "eslint"), installedVersion(app, "next")]).toEqual(["19.2.4", "10.0.3", null])
+  })
+
+  it("prefers the app's own entry in a workspace package-lock", () => {
+    const { root, app } = workspace({ vite: "^7" })
+    writeFileSync(join(root, "package-lock.json"), JSON.stringify({ packages: { "node_modules/react": { version: "19.1.0" }, "apps/web/node_modules/react": { version: "19.3.0" } } }))
+    expect(installedVersion(app, "react")).toBe("19.3.0")
+  })
+
+  it("detects the framework and checks that framework's range before a config exists", () => {
+    const { root, app } = workspace({ vite: "^7" })
+    expect(detectFramework(app)).toBe("vite")
+    pkg(app, "react", "19.2.4"); pkg(app, "vite", "7.3.1"); pkg(root, "eslint", "9.39.5")
+    const r = validate(app, { preflight: true, testedRange: join(root, "range.json") })
+    expect(fields(r)).toEqual([".ttt/design-system.json", "package eslint"])
+    expect(r.errors[1].message).toMatch(/9\.39\.5, outside the tested range 10\.0\.3/)
+  })
+
+  it("blocks an app that depends on neither or both frameworks", () => {
+    const { root, app } = workspace({ next: "15", vite: "7" })
+    expect(detectFramework(app)).toBe(null)
+    expect(fields(validate(app, { preflight: true, testedRange: join(root, "range.json") }))).toContain("framework")
+  })
+
+  it("accepts framework next or vite in the config, and nothing else", () => {
+    expect(validate(repo({ config: { ...goodConfig(), framework: "vite" } })).errors).toEqual([])
+    expect(fields(validate(repo({ config: { ...goodConfig(), framework: "remix" } })))).toContain("framework")
   })
 })
 

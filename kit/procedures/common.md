@@ -1,6 +1,6 @@
 # Common procedure — every design-system skill
 
-design-system-kit 0.3.1 · schema `ttt-ds/1`
+design-system-kit 0.4.0 · schema `ttt-ds/1`
 
 Setup, Sync, Components and Drift audit all follow these rules. Each one was
 learned from a run that went wrong without it; none is optional. The rules
@@ -16,6 +16,16 @@ session can't read it, stop and ask the user to allow reading the plugin
 folder — never run a step from memory instead. "The repo" is the client project the skill
 runs in; "the design system" is the claude.ai Design System artifact linked
 from the repo config.
+
+**The app and its package manager.** In a monorepo, "the repo" in every kit
+file means the **app's folder** — the workspace package that holds
+`components.json` and `.ttt/` (e.g. `apps/web`): kit commands run there, and
+git commands (branch, commit, PR) run at the git root. Commands are written
+for npm (`npm run ds:validate`, `npm install x@1.2.3`); run them with the
+repo's own package manager instead — the one whose lockfile is at the
+workspace root: `pnpm run ds:validate` / `pnpm add x@1.2.3`, `yarn
+ds:validate` / `yarn add x@1.2.3`. The profile's `framework` (repo config;
+absent means `next`) decides the few framework-specific steps.
 
 ---
 

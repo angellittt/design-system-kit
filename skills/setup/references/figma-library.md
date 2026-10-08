@@ -1,6 +1,6 @@
 # Figma library — only after approval
 
-design-system-kit 0.3.1
+design-system-kit 0.4.0
 
 The Figma library is generated from the **approved** design system — the
 live one you re-read after approval (`review.md` §3), never your local

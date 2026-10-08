@@ -1,9 +1,6 @@
 {
-  "//": "design-system-kit 0.3.1 \u00b7 profile shadcn \u00b7 wiring: merged into the repo's package.json by Setup. Existing entries are never changed; missing ones are added at these versions. `dependencies` covers what the kit's components import beyond shadcn init's own (sonner for Sonner, react-day-picker and date-fns for Calendar and DatePicker, next-themes for theme switching).",
+  "//": "design-system-kit 0.4.0 · profile shadcn · wiring: merged into the app's package.json by Setup, together with wiring/<framework>/package.fragment.json. Existing entries are never changed; missing ones are added at these versions. `dependencies` covers what the kit's components import beyond shadcn init's own (sonner for Sonner, react-day-picker and date-fns for Calendar and DatePicker, next-themes for theme switching).",
   "scripts": {
-    "lint": "eslint .",
-    "typecheck": "tsc --noEmit",
-    "build:safe": "NEXT_DIST_DIR=.next-build next build",
     "test": "vitest run",
     "test:watch": "vitest",
     "ds:tokens": "node scripts/ds-tokens.mjs",
@@ -23,12 +20,6 @@
   },
   "devDependencies": {
     "@tailwindcss/cli": "^4.3.3",
-    "@testing-library/jest-dom": "^7.0.1",
-    "@testing-library/react": "^16.3.3",
-    "@testing-library/user-event": "^14.6.7",
-    "esbuild": "^0.28.2",
-    "eslint-plugin-jsx-a11y": "^6.10.2",
-    "jsdom": "^29.1.1",
-    "vitest": "^3.2.7"
+    "esbuild": "^0.28.2"
   }
 }
