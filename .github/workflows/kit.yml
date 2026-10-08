@@ -26,3 +26,26 @@ jobs:
         run: |
           node app/scripts/ds-validate.mjs --template ../code/shadcn/wiring/design-system.json --tokens ../template/tokens.json
           node app/scripts/ds-contrast.mjs --tokens ../template/tokens.json --config ../code/shadcn/wiring/design-system.json
+  # A release tag is only a trustworthy upgrade base if every change to what
+  # clients copy ships as a new version. Harness and Figma files stay in the kit.
+  version:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: files clients copy changed, so the version is bumped
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          changed=$(git diff --name-only "$BASE"...HEAD -- kit/code kit/template ':!kit/code/shadcn/harness' ':!kit/code/shadcn/figma')
+          if [ -z "$changed" ]; then echo "no files clients copy changed"; exit 0; fi
+          now=$(node -p 'require("./.claude-plugin/plugin.json").version')
+          was=$(git show "$BASE:.claude-plugin/plugin.json" | node -p 'JSON.parse(require("fs").readFileSync(0, "utf8")).version')
+          if [ "$now" = "$was" ]; then
+            echo "$changed"
+            echo "::error::these files reach client repos but the version is still $now; bump .claude-plugin/plugin.json (and the marketplace entry)"
+            exit 1
+          fi
+          echo "version $was -> $now"

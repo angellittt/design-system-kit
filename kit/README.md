@@ -4,7 +4,7 @@ The starting point for every client design system, bundled into TTT's four skill
 
 **Scope:** greenfield projects — the app is set up by devs but has little or no custom UI. Setup's pre-flight stops on projects with substantial existing UI.
 
-**Version:** the kit's version is the plugin's (`.claude-plugin/plugin.json`). A client repo records the version it was set up or last synced with as `kitVersion` in `.ttt/design-system.json`, and every kit file it carries names that version in its header.
+**Version:** the kit's version is the plugin's (`.claude-plugin/plugin.json`). A client repo records the version it was set up or last synced with as `kitVersion` in `.ttt/design-system.json`, and every kit file it carries names that version in its header. Each release is tagged `v<version>` at the merge that brought it (`.github/workflows/release.yml`), so `git show v<kitVersion>:<path>` is any kit file exactly as a repo on that version received it — the base for upgrading a client's customized copy. A PR that changes what clients copy (`kit/code/`, `kit/template/`) must bump the version; the kit workflow checks it.
 
 ## Install
 
