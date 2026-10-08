@@ -1,6 +1,6 @@
 # Code — the branch, then the PR
 
-design-system-kit 0.5.2
+design-system-kit 0.6.0
 
 Setup step 5 builds the code branch; step 9 opens its PR. Paths are the
 app's folder; commands use the repo's package manager (common.md, "The app

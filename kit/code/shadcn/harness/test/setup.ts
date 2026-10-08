@@ -1,2 +1,2 @@
-// design-system-kit 0.5.2 · profile shadcn · harness: test setup
+// design-system-kit 0.6.0 · profile shadcn · harness: test setup
 import "@testing-library/jest-dom/vitest"

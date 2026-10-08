@@ -1,6 +1,6 @@
 # Generate — tokens, then the design system
 
-design-system-kit 0.5.2
+design-system-kit 0.6.0
 
 Two halves, with the code branch in between (`code.md`): the tokens come
 first because the code needs them; the design system comes after the code
@@ -24,9 +24,20 @@ The tool starts from `kit/template/tokens.json` and applies the inputs:
   generated from its hex in OKLCH. The hex lands **exactly** on the step the
   template documents ("…where the client's brand … colour lands"); the other
   steps keep the template ladder's lightness spacing and chroma profile, with
-  the brand hue. A colour too light or dark for its step is refused with a
-  message — ask the designer which step it belongs on; never move it
-  yourself.
+  the brand hue. An input of `{ "hex", "step" }` puts the hex on that step
+  instead (the designer's call, never yours); the report's Notes list the
+  semantic tokens still pointing at the usual step. Status colours work the
+  same way.
+- **A colour no step can hold** — darker or lighter than the whole ramp, like
+  a navy text ink offered as a brand colour — stops the tool with three
+  same-hue options on the role's usual step: the nearest that fits, a third of
+  the way to the step's own lightness, and the step's own. Show the designer
+  each with its ramp (`generateRamp`), plus the other ways out: a different
+  colour, or keeping the original for a role that isn't a ramp (text ink is
+  `label-normal`, changed at review). Record the answer as
+  `{ "hex", "step", "from": "<original>" }` and re-run; `from` puts the
+  substitution in the token's usage text and the Notes, and it goes in the
+  System section's client-specific choices. Never pick for them.
 - **Neutral**, **status** (separate or reuse), **client-added ramps**,
   **radius**, **motion** and **font families**, as `inputs.md` describes.
 - **Contrast fitting.** Every pair in `contrast-pairs.json` is checked in

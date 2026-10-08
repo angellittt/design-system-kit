@@ -1,4 +1,4 @@
-// design-system-kit 0.5.2 · profile shadcn · harness: script-test helpers
+// design-system-kit 0.6.0 · profile shadcn · harness: script-test helpers
 import { mkdtempSync, mkdirSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 import { tmpdir } from "node:os"

@@ -1,4 +1,4 @@
-# TTT design system kit · ttt-ds/1 · kit 0.5.2
+# TTT design system kit · ttt-ds/1 · kit 0.6.0
 
 The starting point for every client design system, bundled into TTT's four skills: **Setup** (design system + Figma + code branch, ending in a PR), **Sync** (pull → PR, publish-back), **Components** (check → propose → accept) and **Drift audit**. Extracted from Jelly, the worked example; the classification of what came over and why is in `docs/extraction/classification.md` at the repo root.
 
@@ -105,6 +105,12 @@ Placeholders to fill: `{{CLIENT_NAME}}`, `{{NAMESPACE}}`, `{{N_IMPLEMENTED}}`, `
 Reads the system's contract (schema and profile first), generates the theme file and installs components as the profile describes, writes the repo guardrails, and moves each component from `validated` to `implemented` once it's in the codebase.
 
 ## Changes
+
+**0.6.0** (2026-10-08) — the token tool places brand colours the designer's way
+- **A colour can sit on another step.** Brand and status colours take `{ "hex", "step" }` as well as a hex, like client-added ramps already did. The report's Notes list the semantic tokens still on the usual step.
+- **A colour no step can hold gets options, not a dead end.** It used to stop with "ask the designer which step it belongs on" even when no step could hold it (Districtly's Civic Ink, `#14213D`, is darker than the secondary ramp's darkest step). Now it offers three same-hue colours on the role's usual step: the nearest that fits, a third of the way, and the step's own lightness. The designer's answer is recorded as `{ "hex", "step", "from" }`, and `from` reaches the token's usage text and the System section.
+- **Chroma is capped** at 1.25× the brand colour's own, so a colour anchored near a grey end step doesn't turn the middle of its ramp brighter than the brand. Existing ramps are unchanged; the Districtly inputs produce identical tokens.
+- No change to client repos: the token tool runs from the kit. A repo upgrading from 0.5.2 only restamps.
 
 **Upgrading a repo**, for every version: the upgrade is its own PR, never a side effect of Sync. Follow the version's steps below, then set `kitVersion`, stamp every kit file with the new version, and update the design system's System section Versions row (profile and kit) — read before you publish (common.md §3) — so all three agree (common.md §2).
 
