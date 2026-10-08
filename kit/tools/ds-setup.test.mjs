@@ -1,11 +1,11 @@
-// design-system-kit 0.5.2 · Setup tool tests — node --test kit/tools/
+// design-system-kit 0.6.0 · Setup tool tests — node --test kit/tools/
 import { test } from "node:test"
 import assert from "node:assert/strict"
 import { readFileSync, mkdtempSync, writeFileSync, mkdirSync } from "node:fs"
 import { join, dirname } from "node:path"
 import { tmpdir } from "node:os"
 import { fileURLToPath } from "node:url"
-import { hexToOklch, generateRamp, anchorStep, applyInputs, fitContrast, flags, fill } from "./ds-setup.mjs"
+import { hexToOklch, generateRamp, fitOptions, anchorStep, applyInputs, fitContrast, flags, fill } from "./ds-setup.mjs"
 
 const KIT = join(dirname(fileURLToPath(import.meta.url)), "..")
 const template = JSON.parse(readFileSync(join(KIT, "template/tokens.json"), "utf8"))
@@ -29,9 +29,45 @@ test("the brand colour lands on its documented step, and lightness rises step by
   }
 })
 
-test("a colour too light for its step is refused, not stretched", () => {
-  const ladder = template.color.tokens.filter((t) => /^brand-primary-\d+$/.test(t.name)).map((t) => ({ step: t.name.split("-").pop(), ...hexToOklch(t.value) }))
-  assert.throws(() => generateRamp("#fffefe", "50", ladder), /too light to sit at step 50/)
+const ladderOf = (ramp) => template.color.tokens.filter((t) => new RegExp(`^${ramp}-\\d+$`).test(t.name)).map((t) => ({ step: t.name.split("-").pop(), ...hexToOklch(t.value) }))
+
+test("a colour no step can hold is refused, not stretched, with same-hue options that fit", () => {
+  assert.throws(() => generateRamp("#fffefe", "50", ladderOf("brand-primary")), /too light for this ramp at any step/)
+  // Districtly's Civic Ink: darker than the secondary ramp's darkest step.
+  assert.throws(() => applyInputs(template, inputs({ brand: { primary: "#2f4bda", secondary: "#14213D", accent: "#f5a524" } })),
+    /inputs\.brand\.secondary \(brand-secondary\): #14213D is too dark[\s\S]*a\) #[0-9a-f]{6} at step 50[\s\S]*"from": "#14213D"/)
+  const ink = hexToOklch("#14213D")
+  const options = fitOptions("#14213D", ladderOf("brand-secondary"), "50")
+  assert.equal(options.length, 3)
+  for (const o of options) {
+    assert.equal(o.step, "50")
+    assert.doesNotThrow(() => generateRamp(o.hex, o.step, ladderOf("brand-secondary")), `${o.hex} should fit`)
+    assert.ok(Math.abs(hexToOklch(o.hex).H - ink.H) < 3, `${o.hex} keeps the hue`)
+  }
+  const Ls = options.map((o) => hexToOklch(o.hex).L)
+  assert.ok(Ls[0] < Ls[1] && Ls[1] < Ls[2], "nearest first, the step's own last")
+})
+
+test("a colour can sit on another step, and the report says what still points at the usual one", () => {
+  const { tokens, notes } = applyInputs(template, inputs({ brand: { primary: "#2f4bda", secondary: { hex: "#384766", step: 20 }, accent: "#f5a524" } }))
+  assert.equal(value(tokens, "brand-secondary-20"), "#384766")
+  const Ls = tokens.color.tokens.filter((t) => t.name.startsWith("brand-secondary-")).map((t) => hexToOklch(t.value).L)
+  assert.ok(Ls.every((L, i) => i === 0 || L > Ls[i - 1]), "still monotonic")
+  assert.ok(notes.some((n) => /sits at step 20, not the usual 50\. `secondary-normal`/.test(n)))
+  assert.throws(() => applyInputs(template, inputs({ brand: { primary: "#2f4bda", secondary: { hex: "#384766", step: "dark" }, accent: "#f5a524" } })), /step is "dark"/)
+  assert.throws(() => applyInputs(template, inputs({ brand: { primary: "#2f4bda", secondary: { hex: "#384766", step: 45 }, accent: "#f5a524" } })), /step 45 isn't in the ramp/)
+})
+
+test("a stand-in colour records what it replaced", () => {
+  const { tokens, notes } = applyInputs(template, inputs({ brand: { primary: "#2f4bda", secondary: { hex: "#465676", step: "50", from: "#14213D" }, accent: "#f5a524" } }))
+  assert.match(tokens.color.tokens.find((t) => t.name === "brand-secondary-50").usage, /#465676, chosen in place of #14213D/)
+  assert.ok(notes.some((n) => /stands in for #14213D/.test(n)))
+})
+
+test("an anchor on a near-grey end step doesn't saturate the middle past the brand colour", () => {
+  const brand = hexToOklch("#1f2d4a")
+  const steps = generateRamp("#1f2d4a", "10", ladderOf("brand-secondary"))
+  assert.ok(steps.every((s) => hexToOklch(s.hex).C <= brand.C * 1.25 + 0.005), "chroma capped")
 })
 
 test("every missing input is named, never guessed", () => {

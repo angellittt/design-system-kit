@@ -1,6 +1,6 @@
 # Inputs — ask for every one, guess none
 
-design-system-kit 0.5.2
+design-system-kit 0.6.0
 
 Everything Setup generates comes from these answers. **Never fill one in
 yourself** — not from the repo, the client's website, a logo's colours or "a
@@ -17,7 +17,7 @@ read the answers back as a single summary and get a "yes" before generating.
 | # | Input | Format | Notes |
 |---|---|---|---|
 | 1 | **Client name** | text | Becomes the design system's title. The **namespace** (the bundle's JavaScript global, PascalCase, e.g. `Acme`) is derived from it — show it and confirm. |
-| 2 | **Brand colours** — primary, secondary, accent | `#rrggbb` each, with the brand's name for it (e.g. "Tomato") | Each lands exactly on its ramp's documented step: primary and secondary on **50**, accent on **60** (the template's usage text says where). The name goes in the brand book only — ramps are named by role, never by hue. |
+| 2 | **Brand colours** — primary, secondary, accent | `#rrggbb` each, with the brand's name for it (e.g. "Tomato"); or `{ "hex", "step" }` when the designer places one on another step | Each lands exactly on its ramp's documented step unless the designer names another: primary and secondary on **50**, accent on **60** (the template's usage text says where). Only the designer moves a colour off its usual step — a naturally very dark or very light brand colour may belong on another — and the report lists the semantic tokens still on the usual step. A colour **no step can hold** stops the token tool with three same-hue options (`generate.md` §1). The name goes in the brand book only — ramps are named by role, never by hue. |
 | 3 | **Neutral tint** | `#rrggbb` (a tinted grey, or the hue to lean toward), or `none` | `none` keeps TTT's cool grey. A tint shifts every neutral step's hue, with at most a whisper of chroma. |
 | 4 | **Fonts** | a family name for each of display, sans and mono, or `default`; plus the font files (woff2) with weight range and style | `default` keeps the system stack. Every family named needs its files: the design system serves them, and the code step wires them into `next/font`. Ask for the licence if it isn't a Google or open font. |
 | 5 | **Logo** | SVG files (primary, and any mono or mark versions) | Goes in the design system's Logos asset group. |
@@ -27,7 +27,7 @@ read the answers back as a single summary and get a "yes" before generating.
 | 9 | **Date format** | the typed-entry pattern: day, month and year, numeric, one separator — e.g. `DD/MM/YYYY`, `YYYY-MM-DD` — or "the locale's" | It is what DatePicker parses, not how dates are displayed: a display style such as "14 Nov 2026" is a voice rule for the brand book. `""` when the locale's own pattern is wanted. Locale, week start and date format seed the app's `locale.ts` and the System section's Client settings line. |
 | 10 | **Radius character** | `sharp` (½ the template's radii), `default`, `soft` (1½×), or exact px per radius token | `radius-full` stays a pill; `radius-inset` follows `radius-lg` minus `space-1`. |
 | 11 | **Motion character** | `calm` (no overshoot), `default`, `playful` (more overshoot) | Changes `ease-expressive`; durations stay. Reduced motion still removes scale and spring. |
-| 12 | **Status colours** | `separate` (default): positive, cautionary, negative each as `#rrggbb` or `default` (TTT's green, amber, red) — or `reuse`: map each status to a brand ramp (`brand-primary`, `brand-secondary`, `brand-accent`) | Reuse removes the separate status ramps. Separate keeps each its own hue — safer when a brand colour is red or green but means something else. |
+| 12 | **Status colours** | `separate` (default): positive, cautionary, negative each as `#rrggbb` (or `{ "hex", "step" }`, as for brand colours) or `default` (TTT's green, amber, red) — or `reuse`: map each status to a brand ramp (`brand-primary`, `brand-secondary`, `brand-accent`) | Reuse removes the separate status ramps. Separate keeps each its own hue — safer when a brand colour is red or green but means something else. |
 | 13 | **Kit extensions** | opt-in, from the profile's catalog | See below. Default is none: stock is preferred (contract, Component layers). |
 | 14 | **Client-added ramps** | for each: a role name, `#rrggbb`, the step it lands on (default 50), and why no standard ramp can supply it | Usually "none". Named by role (`data`, not `plum`) — the token tool refuses a hue name. Each one is recorded in the System section. |
 

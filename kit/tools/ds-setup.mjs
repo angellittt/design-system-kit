@@ -1,12 +1,13 @@
 #!/usr/bin/env node
-// design-system-kit 0.5.2 · Setup tool — runs from the kit, never copied into a client repo
+// design-system-kit 0.6.0 · Setup tool — runs from the kit, never copied into a client repo
 /**
  * ds-setup.mjs — the two mechanical parts of Setup's "generate" step.
  *
  *   node kit/tools/ds-setup.mjs tokens --inputs <inputs.json> --out <tokens.json> [--report <report.md>]
  *       The template's tokens with the client's inputs applied: role-named
  *       ramps generated from each brand hex (the hex lands on the ramp's
- *       documented step), the neutral tint, status ramps (separate or reusing
+ *       documented step, or the step the input names; a hex no step can hold
+ *       stops with same-hue options that fit), the neutral tint, status ramps (separate or reusing
  *       brand ramps), client-added ramps, radius and motion character, font
  *       families. Then every contrast pair is checked and the adjustable
  *       foregrounds (on-*, *-text, status-*, inverse-*, chart-*) are moved
@@ -97,6 +98,9 @@ function ladder(tokens, ramp) {
   return steps.map((t) => ({ step: split(t.name)[1], ...hexToOklch(t.value) }))
 }
 
+/** No generated step is more than this many times as saturated as the brand colour. */
+const MAX_CHROMA_RATIO = 1.25
+
 /**
  * A ramp from one colour: the colour sits exactly on `anchor`; the other
  * steps keep the template ladder's lightness spacing and chroma profile,
@@ -108,16 +112,44 @@ export function generateRamp(hex, anchor, templateLadder) {
   if (!at) throw new Error(`step ${anchor} isn't in the ramp (${templateLadder.map((s) => s.step).join(", ")})`)
   const Ls = templateLadder.map((s) => s.L)
   const [lo, hi] = [Math.min(...Ls), Math.max(...Ls)]
-  if (brand.L <= lo + 0.01 || brand.L >= hi - 0.01)
-    throw new Error(`${hex} is too ${brand.L <= lo + 0.01 ? "dark" : "light"} to sit at step ${anchor}: its lightness ${brand.L.toFixed(3)} is outside the ramp's ${lo.toFixed(3)}–${hi.toFixed(3)}. Ask the designer which step it belongs on.`)
+  if (brand.L <= lo + 0.01 || brand.L >= hi - 0.01) {
+    const dark = brand.L <= lo + 0.01
+    const options = fitOptions(hex, templateLadder, anchor)
+      .map((o, i) => `  ${"abc"[i]}) ${o.hex} at step ${o.step} — ${o.why}`).join("\n")
+    throw new Error(`${hex} is too ${dark ? "dark" : "light"} for this ramp at any step: its lightness ${brand.L.toFixed(3)} is outside the ramp's ${lo.toFixed(3)}–${hi.toFixed(3)}. Options for the designer, same hue:\n${options}\n  or another colour, or keep ${hex} for a role that isn't a ramp (e.g. text ink). Record the answer as { "hex": …, "step": …, "from": "${hex}" }.`)
+  }
   return templateLadder.map((s) => {
     if (s.step === at.step) return { step: s.step, hex: hex.toLowerCase() }
     const L = s.L <= at.L
       ? lo + ((s.L - lo) * (brand.L - lo)) / (at.L - lo)
       : brand.L + ((s.L - at.L) * (hi - brand.L)) / (hi - at.L)
-    const C = at.C > 0.005 ? (brand.C * s.C) / at.C : brand.C
+    // Chroma follows the template's profile relative to the anchor, capped so
+    // an anchor on a near-grey end step can't blow the middle up into a
+    // brighter colour than the brand's own.
+    const C = at.C > 0.005 ? brand.C * Math.min(s.C / at.C, MAX_CHROMA_RATIO) : brand.C
     return { step: s.step, hex: oklchToHex({ L, C, H: brand.H }) }
   })
+}
+
+/**
+ * For a colour no step of the ramp can hold: the same hue on the role's usual
+ * step (where its semantic tokens point), at three lightnesses — the nearest
+ * that fits, a third of the way to the step's own, and the step's own. The
+ * Districtly run settled this by hand the same way.
+ */
+export function fitOptions(hex, templateLadder, anchor) {
+  const c = hexToOklch(hex)
+  const Ls = templateLadder.map((s) => s.L)
+  const [lo, hi] = [Math.min(...Ls), Math.max(...Ls)]
+  const dark = c.L <= lo + 0.01
+  const near = dark ? lo + 0.02 : hi - 0.02
+  const usual = templateLadder.find((s) => s.step === String(anchor)) ?? templateLadder[Math.floor(templateLadder.length / 2)]
+  const at = (L) => oklchToHex({ L, C: c.C, H: c.H })
+  return [
+    { hex: at(near), step: usual.step, why: `the nearest that fits, ${dark ? "lightened" : "darkened"} as little as possible; the ${dark ? "darker" : "lighter"} steps crowd together` },
+    { hex: at(near + (usual.L - near) / 3), step: usual.step, why: `a third of the way to the step's own lightness; more room for the ${dark ? "darker" : "lighter"} steps` },
+    { hex: at(usual.L), step: usual.step, why: "the step's own lightness: the ramp keeps the template's shape" },
+  ].filter((o, i, all) => all.findIndex((x) => x.hex === o.hex) === i)
 }
 
 /** The neutral ramp at the template's lightness, tinted toward a hue (chroma ≤ 0.02). */
@@ -147,6 +179,18 @@ const STATUS = ["positive", "cautionary", "negative"]
 const BRAND = { primary: "brand-primary", secondary: "brand-secondary", accent: "brand-accent" }
 const HUE_WORD = /(^|-)(red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose|magenta|plum|lavender|lilac|mauve|maroon|crimson|scarlet|tomato|coral|salmon|peach|gold|golden|mustard|olive|mint|navy|aqua|turquoise|brown|tan|beige|cream|ivory|grey|gray|slate|zinc|stone|charcoal|black|white|silver|ruby|sapphire|jade|cobalt|ochre|sand)(-|$)/i
 
+/**
+ * A colour input: a hex, or { hex, step, from } when the designer places it on
+ * a step other than the role's usual one, or picked it in place of a colour
+ * no step could hold (`from`, the original).
+ */
+function colourInput(path, v, need) {
+  if (typeof v === "string") return { hex: v }
+  need(`${path}.hex`, v?.hex)
+  if (v.step != null && !/^\d+$/.test(String(v.step))) throw new Error(`inputs.${path}.step is "${v.step}"; it's a step number of the ramp`)
+  return { hex: v.hex, step: v.step != null ? String(v.step) : undefined, from: v.from }
+}
+
 export function applyInputs(template, inputs) {
   const tokens = structuredClone(template)
   const notes = []
@@ -163,12 +207,29 @@ export function applyInputs(template, inputs) {
     }
   }
 
+  // One client colour on its ramp: the role's usual step unless the input
+  // names another; a colour no step can hold stops with options (generateRamp).
+  const placeColour = (path, v, ramp, label) => {
+    const { hex, step, from } = colourInput(path, v, need)
+    const usual = anchorStep(template, ramp)
+    const anchor = step ?? usual
+    let steps
+    try { steps = generateRamp(hex, anchor, ladder(template, ramp)) }
+    catch (e) { throw new Error(`inputs.${path} (${ramp}): ${e.message}`) }
+    const origin = from ? `${hex}, chosen in place of ${from}, which no step could hold` : hex
+    replaceRamp(ramp, steps, (s) => s === anchor ? `The client's ${label} colour (${origin}) lands here.` : `Generated from the ${label} colour (${hex}).`)
+    if (from) notes.push(`\`${ramp}\`: ${hex} at step ${anchor} stands in for ${from}, which no step could hold — record it in the System section's client-specific choices.`)
+    if (anchor !== usual) {
+      const on = tokens.color.tokens
+        .filter((t) => typeof t.value === "object" && Object.values(t.value).some((x) => x === `{${ramp}-${usual}}`))
+        .map((t) => `\`${t.name}\``)
+      notes.push(`\`${ramp}\`: ${hex} sits at step ${anchor}, not the usual ${usual}. ${on.length ? `${on.join(", ")} still ${on.length === 1 ? "points" : "point"} at step ${usual}, a generated shade, not ${hex} — check them at review.` : ""}`.trim())
+    }
+  }
+
   // Brand ramps.
   for (const [role, ramp] of Object.entries(BRAND)) {
-    const hex = need(`brand.${role}`, inputs.brand?.[role])
-    const anchor = anchorStep(template, ramp)
-    replaceRamp(ramp, generateRamp(hex, anchor, ladder(template, ramp)), (step) =>
-      step === anchor ? `The client's brand ${role} colour (${hex}) lands here.` : `Generated from the brand ${role} colour (${hex}).`)
+    placeColour(`brand.${role}`, need(`brand.${role}`, inputs.brand?.[role]), ramp, `brand ${role}`)
   }
 
   // Neutral.
@@ -185,8 +246,7 @@ export function applyInputs(template, inputs) {
     for (const s of STATUS) {
       const v = need(`status.${s}`, status[s])
       if (v === "default") { replaceRamp(s, ladder(template, s).map((x) => ({ step: x.step, hex: template.color.tokens.find((t) => t.name === `${s}-${x.step}`).value })), () => `TTT's default ${s} colour.`); continue }
-      const anchor = anchorStep(template, s)
-      replaceRamp(s, generateRamp(v, anchor, ladder(template, s)), (step) => step === anchor ? `The client's ${s} colour (${v}) lands here.` : `Generated from the ${s} colour (${v}).`)
+      placeColour(`status.${s}`, v, s, s)
     }
   } else if (status.mode === "reuse") {
     const map = {}
