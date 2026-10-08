@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// design-system-kit 0.7.0 · profile shadcn · kit file — fix it in the kit, not per client
+// design-system-kit 0.8.0 · profile shadcn · kit file — fix it in the kit, not per client
 /**
  * Build the design system's preview bundle from a repo's component layer.
  *
@@ -25,12 +25,11 @@
  * any dependency bump; the contract's "Kit tooling" section records why each
  * pin is where it is.
  */
-import { build } from "esbuild"
 import {
   readdirSync, readFileSync, writeFileSync, mkdirSync, existsSync, rmSync,
 } from "node:fs"
 import { resolve, join, dirname } from "node:path"
-import { fileURLToPath } from "node:url"
+import { fileURLToPath, pathToFileURL } from "node:url"
 import { createRequire } from "node:module"
 import { execFileSync } from "node:child_process"
 import { installedVersion } from "./ds-validate.mjs"
@@ -39,7 +38,6 @@ import { installedVersion } from "./ds-validate.mjs"
  * Where the dependencies live — always the repo this script is installed in.
  * In normal use that is also where the config lives.
  */
-const TOOL_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..")
 
 /**
  * Where the config and components live. `--repo <path>` points it elsewhere,
@@ -49,7 +47,18 @@ const TOOL_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..")
 const repoFlag = process.argv.indexOf("--repo")
 const REPO = repoFlag !== -1
   ? resolve(process.argv[repoFlag + 1])
-  : TOOL_ROOT
+  : process.cwd()
+
+/**
+ * Where the toolchain (esbuild, Tailwind's CLI, React) is installed: the app
+ * itself, normally. `--tools <path>` points elsewhere — the fixture, which has
+ * no node_modules of its own, builds with the kit's or the app's. The script
+ * runs from the plugin, so nothing is resolved from its own folder.
+ */
+const toolsFlag = process.argv.indexOf("--tools")
+const TOOL_ROOT = toolsFlag !== -1 ? resolve(process.argv[toolsFlag + 1]) : REPO
+const toolRequire = createRequire(join(TOOL_ROOT, "package.json"))
+const { build } = await import(pathToFileURL(toolRequire.resolve("esbuild")).href)
 
 /**
  * Toolchain this script is written against.
@@ -170,7 +179,7 @@ function checkPins({ quiet = false } = {}) {
 // Derived from the installed React rather than a hand-kept list: React 19 adds
 // use, useActionState, useOptimistic and useEffectEvent, and a name missing
 // from the shim fails only when a dependency reaches for it.
-const repoRequire = createRequire(join(TOOL_ROOT, "package.json"))
+const repoRequire = toolRequire
 const REACT_EXPORTS = Object.keys(repoRequire("react"))
   .filter((k) => k !== "default")
   .sort()
@@ -412,7 +421,7 @@ async function buildCss(cfg, outDir, files) {
 // ---- main ------------------------------------------------------------------
 
 const argv = process.argv.slice(2).filter((a, i, all) =>
-  a !== "--repo" && all[i - 1] !== "--repo")
+  !["--repo", "--tools"].includes(a) && !["--repo", "--tools"].includes(all[i - 1]))
 const arg = argv[0]
 
 if (arg === "--check") {

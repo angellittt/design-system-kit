@@ -1,6 +1,6 @@
 # Pull — design → code and Figma
 
-design-system-kit 0.7.0
+design-system-kit 0.8.0
 
 Brings the design system's design-owned values to everything built from
 them: the repo (the token snapshot, the generated token file and assets — one
@@ -61,7 +61,7 @@ On a new branch from an up-to-date `main` (`ds-sync/pull-<YYYY-MM-DD>`):
 3. Regenerate the token file:
 
    ```bash
-   node scripts/ds-tokens.mjs
+   node $KIT/ds-tokens.mjs
    ```
 
 4. Copy changed assets to where the repo keeps them (fonts: the folder the
@@ -90,7 +90,7 @@ git diff -U0 -- <tokensOut> | grep '^[-+]' | grep -v '^[-+][-+]' | grep -v 'Snap
 ## 5. Check contrast
 
 ```bash
-npm run ds:contrast
+node $KIT/ds-contrast.mjs
 ```
 
 - Passing, or misses listed under `contrast.intentional` with a reason → go on.
@@ -102,7 +102,7 @@ npm run ds:contrast
 ## 6. Validate, test, build
 
 ```bash
-npm run ds:validate      # against the System snapshot you just wrote
+node $KIT/ds-validate.mjs      # against the System snapshot you just wrote
 npm run typecheck
 npm test
 npm run build:safe      # or npm run build when no dev server is running
@@ -159,8 +159,8 @@ Build it on the pull branch — or on `main` if step 4 found nothing to change
 in code, since an earlier pull may have left the bundle behind:
 
 ```bash
-node scripts/ds-build-bundle.mjs --check          # toolchain pins; stop if they don't match
-node scripts/ds-build-bundle.mjs <out>/components
+node $KIT/ds-build-bundle.mjs --check          # toolchain pins; stop if they don't match
+node $KIT/ds-build-bundle.mjs <out>/components
 ```
 
 This is safe to publish before the PR merges, unlike publish-back's bundle:

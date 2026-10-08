@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// design-system-kit 0.7.0 · profile shadcn · kit file — fix it in the kit, not per client
+// design-system-kit 0.8.0 · profile shadcn · kit file — fix it in the kit, not per client
 /**
  * Pack React and ReactDOM as classic-script globals for a design system's
  * `components/lib/`.
@@ -18,14 +18,20 @@
  * Writes <out-dir>/react.js, <out-dir>/react-dom.js and prints the
  * `libraries` entries to put in the design system's index.
  */
-import { build } from "esbuild"
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs"
 import { resolve, join, dirname } from "node:path"
-import { fileURLToPath } from "node:url"
+import { fileURLToPath, pathToFileURL } from "node:url"
+import { createRequire } from "node:module"
 import { installedVersion } from "./ds-validate.mjs"
 
-const REPO = resolve(dirname(fileURLToPath(import.meta.url)), "..")
-const OUT = resolve(process.argv[2] ?? join(REPO, "dist/ds-lib"))
+// The app's folder: --repo, else the current directory. React and esbuild are
+// the app's own — the script runs from the plugin and resolves nothing locally.
+const args = process.argv.slice(2)
+const repoAt = args.indexOf("--repo")
+const REPO = resolve(repoAt === -1 ? process.cwd() : args[repoAt + 1])
+const positional = args.filter((a, i) => a !== "--repo" && args[i - 1] !== "--repo")
+const OUT = resolve(positional[0] ?? join(REPO, "dist/ds-lib"))
+const { build } = await import(pathToFileURL(createRequire(join(REPO, "package.json")).resolve("esbuild")).href)
 mkdirSync(OUT, { recursive: true })
 
 const versionOf = (p) => {

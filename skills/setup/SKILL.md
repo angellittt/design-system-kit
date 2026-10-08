@@ -5,7 +5,7 @@ description: Set up a TTT design system for a new project — brand inputs to to
 
 # Setup — a new client design system
 
-design-system-kit 0.7.0 · schema `ttt-ds/1`
+design-system-kit 0.8.0 · schema `ttt-ds/1`
 
 Setup turns a client's brand into the four things every TTT project runs on:
 

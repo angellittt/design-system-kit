@@ -1,6 +1,6 @@
 # Generate — tokens, then the design system
 
-design-system-kit 0.7.0
+design-system-kit 0.8.0
 
 Two halves, with the code branch in between (`code.md`): the tokens come
 first because the code needs them; the design system comes after the code
@@ -87,7 +87,7 @@ Read `<out>/tokens-report.md`:
 Check the tokens validate:
 
 ```bash
-node <plugin root>/kit/code/<profile>/scripts/ds-validate.mjs \
+node $KIT/ds-validate.mjs \
   --template <plugin root>/kit/code/<profile>/wiring/design-system.json --tokens <out>/tokens.json
 ```
 
@@ -121,7 +121,7 @@ left; then:
 
 - **`tokens.json`** — replace the filled template copy with the generated
   tokens, then add the "Used by" lists from the branch:
-  `node scripts/ds-styling-maps.mjs --used-by <out>/tokens.json <out>/ds/project/tokens.json`
+  `node $KIT/ds-styling-maps.mjs --used-by <out>/tokens.json <out>/ds/project/tokens.json`
   (run in the client repo, on the Setup branch).
 - **`README.md`** (the brand book) — write every remaining `{{…}}` from the
   inputs: the one-sentence summary, principles and voice (from the
@@ -137,7 +137,7 @@ left; then:
   `default`, any adaptable pre-flight finding the code records (a different
   CSS path, aliases). "None yet" if there are none.
 - **`02-using-in-code.md`** — generated, not filled:
-  `node scripts/ds-styling-maps.mjs --using-in-code <out>/ds/project/02-using-in-code.md`
+  `node $KIT/ds-styling-maps.mjs --using-in-code <out>/ds/project/02-using-in-code.md`
   in the branch.
 - **`03-changelog.md`** — keep the template's first entry ("Design system
   created from TTT kit …"), with the PR link once the PR exists (step 9) and
@@ -167,7 +167,7 @@ is checked with the other previews (light and dark, zero errors).
   ones under "Kit extensions"; remove the others' lines (and any "No preview
   yet" note about them). Chosen ones are previewed from the kit's code.
 - **Styling map** — regenerate from the branch
-  (`node scripts/ds-styling-maps.mjs --all > <out>/maps.md`) and replace each
+  (`node $KIT/ds-styling-maps.mjs --all > <out>/maps.md`) and replace each
   README's `**Styling map** — generated from …` block (up to the
   `**Contract**` line) verbatim, so chosen extensions appear.
 - **Preview** — `preview.html` as the template has it, `{{NAMESPACE}}`
@@ -176,10 +176,10 @@ is checked with the other previews (light and dark, zero errors).
 **Preview bundle**, built from the branch with the kit's scripts:
 
 ```bash
-node scripts/ds-build-bundle.mjs --check
-node scripts/ds-build-bundle.mjs <out>/ds/project/components
-node scripts/ds-pack-react.mjs <out>/ds/project/components/lib
-node scripts/ds-types.mjs <out>/ds/project/components/index.d.ts
+node $KIT/ds-build-bundle.mjs --check
+node $KIT/ds-build-bundle.mjs <out>/ds/project/components
+node $KIT/ds-pack-react.mjs <out>/ds/project/components/lib
+node $KIT/ds-types.mjs <out>/ds/project/components/index.d.ts
 ```
 
 **Check every preview** against that bundle before publishing, as Sync's
@@ -224,8 +224,8 @@ design system's `project/01-system.md` to `.ttt/system.md` (`systemIn`) byte
 for byte — CI checks the app against it (`ds-drift.test.mjs`). Then:
 
 ```bash
-npm run ds:validate        # reads .ttt/system.md
-npm run ds:contrast
+node $KIT/ds-validate.mjs        # reads .ttt/system.md
+node $KIT/ds-contrast.mjs
 npm test                   # includes the drift test
 ```
 

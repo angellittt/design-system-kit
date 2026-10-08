@@ -1,7 +1,9 @@
-// design-system-kit 0.7.0 · profile shadcn · wiring (Vite): ESLint blocks
+// design-system-kit 0.8.0 · profile shadcn · wiring (Vite): ESLint blocks
 //
-// Setup wraps the app's own flat config entries with `withDesignSystem(…)`
-// and never edits the repo's rules:
+// For a JavaScript config: Setup PASTES this into the app's eslint.config.mjs
+// (a TypeScript config gets eslint.design-system.ts instead) — no separate file
+// in the repo since kit 0.8.0 — and wraps the app's own entries, never editing
+// the repo's rules:
 //
 //   export default defineConfig(withDesignSystem([...repoEntries]))
 //
@@ -34,8 +36,8 @@ const designSystem = [
     files: ["src/components/ui/**"],
     linterOptions: { reportUnusedDisableDirectives: "off" },
   },
-  // Kit scripts, and this file, are linted in the kit, not per client.
-  { ignores: ["scripts/**", "eslint.design-system.mjs"] },
+  // The kit files a repo carries for its CI check are linted in the kit.
+  { ignores: ["scripts/ds-validate.mjs", "scripts/ds-drift.test.mjs"] },
 ]
 
 /**
@@ -49,13 +51,13 @@ const designSystem = [
  * named.
  */
 export function styleRulesOff(entries) {
-  const plugins = {}
-  for (const e of entries) Object.assign(plugins, e?.plugins ?? {})
+  // Maps rather than object lookups, so a repo's security rules don't flag it.
+  const plugins = new Map()
+  for (const e of entries) for (const [name, plugin] of Object.entries(e?.plugins ?? {})) plugins.set(name, new Map(Object.entries(plugin?.rules ?? {})))
   const metaType = (id) => {
     const slash = id.lastIndexOf("/")
     if (slash === -1) return builtinRules.get(id)?.meta?.type
-    const plugin = plugins[id.slice(0, slash)]
-    return plugin?.rules?.[id.slice(slash + 1)]?.meta?.type
+    return plugins.get(id.slice(0, slash))?.get(id.slice(slash + 1))?.meta?.type
   }
   const on = new Set()
   for (const e of entries) {
@@ -65,14 +67,13 @@ export function styleRulesOff(entries) {
       else on.add(id)
     }
   }
-  const off = {}
-  for (const id of on) {
+  const style = [...on].filter((id) => {
     const plugin = id.includes("/") ? id.slice(0, id.lastIndexOf("/")) : null
-    if (plugin && ALWAYS_ON.has(plugin)) continue
+    if (plugin && ALWAYS_ON.has(plugin)) return false
     const type = metaType(id)
-    if (type === "layout" || type === "suggestion") off[id] = "off"
-  }
-  return { files: VENDORED, rules: off }
+    return type === "layout" || type === "suggestion"
+  })
+  return { files: VENDORED, rules: Object.fromEntries(style.map((id) => [id, "off"])) }
 }
 
 /** The repo's entries, then the kit's blocks, then its style rules off for vendored files. */

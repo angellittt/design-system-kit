@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// design-system-kit 0.7.0 · profile shadcn · kit file — fix it in the kit, not per client
+// design-system-kit 0.8.0 · profile shadcn · kit file — fix it in the kit, not per client
 /**
  * Fixture test for ds-build-bundle.mjs.
  *
@@ -30,7 +30,9 @@ const check = (name, ok, detail = "") => {
 
 console.log(`building fixture -> ${out}`)
 try {
-  execFileSync(process.execPath, [BUILDER, out, "--repo", FIXTURE], { stdio: "inherit" })
+  // The fixture has no node_modules: it builds with the toolchain installed
+  // where this runs from (the kit's CI folder), or DS_TOOLS.
+  execFileSync(process.execPath, [BUILDER, out, "--repo", FIXTURE, "--tools", process.env.DS_TOOLS ?? process.cwd()], { stdio: "inherit" })
 } catch {
   console.error("\nfixture build failed")
   process.exit(1)

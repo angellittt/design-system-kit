@@ -1,16 +1,7 @@
 {
-  "//": "design-system-kit 0.7.0 · profile shadcn · wiring: merged into the app's package.json by Setup, together with wiring/<framework>/package.fragment.json. Existing entries are never changed; missing ones are added at these versions. `dependencies` covers what the kit's components import beyond shadcn init's own (sonner for Sonner, react-day-picker and date-fns for Calendar and DatePicker, next-themes for theme switching).",
+  "//": "design-system-kit 0.8.0 · profile shadcn · wiring: merged into the app's package.json by Setup, together with wiring/<framework>/package.fragment.json. Existing entries are never changed; missing ones are added at these versions. Since kit 0.8.0 the kit's tools run from the plugin, so the repo carries one script (ds:validate, its CI check). `dependencies` covers what the kit's components import beyond shadcn init's own; `esbuild` and `@tailwindcss/cli` stay because the plugin's bundle builder loads them from the app.",
   "scripts": {
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "ds:tokens": "node scripts/ds-tokens.mjs",
-    "ds:validate": "node scripts/ds-validate.mjs",
-    "ds:contrast": "node scripts/ds-contrast.mjs",
-    "ds:pack-react": "node scripts/ds-pack-react.mjs",
-    "ds:build-bundle": "node scripts/ds-build-bundle.mjs",
-    "ds:styling-maps": "node scripts/ds-styling-maps.mjs",
-    "ds:types": "node scripts/ds-types.mjs",
-    "ds:fixture": "node scripts/__fixtures__/run.mjs"
+    "ds:validate": "node scripts/ds-validate.mjs"
   },
   "dependencies": {
     "date-fns": "^4.4.0",

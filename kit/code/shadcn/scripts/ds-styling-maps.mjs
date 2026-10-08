@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// design-system-kit 0.7.0 · profile shadcn · kit file — fix it in the kit, not per client
+// design-system-kit 0.8.0 · profile shadcn · kit file — fix it in the kit, not per client
 /**
  * ds-styling-maps.mjs — the styling map in every implemented component's
  * README, generated from that component's code.
@@ -30,7 +30,9 @@ import { fileURLToPath } from "node:url"
 import { createRequire } from "node:module"
 
 const REPO = process.cwd()
-const TOOL_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..")
+// Packages (typescript, the icon library) are the app's: the script runs from
+// the plugin, in the app's folder.
+const TOOL_ROOT = REPO
 const require_ = createRequire(join(TOOL_ROOT, "package.json"))
 const ts = require_("typescript")
 
