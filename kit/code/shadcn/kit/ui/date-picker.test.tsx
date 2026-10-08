@@ -1,4 +1,4 @@
-// design-system-kit 0.10.1 · profile shadcn · kit extension test
+// design-system-kit 0.10.2 · profile shadcn · kit extension test
 import { describe, expect, it, vi } from "vitest"
 import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
@@ -369,5 +369,19 @@ describe("layout, as in shadcn's examples", () => {
       />
     )
     expect(screen.getByRole("button", { name: "01/20/2026 – 02/18/2026" })).toBeInTheDocument()
+  })
+})
+
+describe("strings", () => {
+  it("keeps a default when an override is undefined, and uses one that is set", () => {
+    const { unmount } = render(
+      <DatePicker typed={false} value={undefined} onChange={vi.fn()} locale={enUS} strings={{ placeholder: undefined }} />
+    )
+    expect(screen.getByRole("button", { name: "Pick a date" })).toBeInTheDocument()
+    unmount()
+    render(
+      <DatePicker typed={false} value={undefined} onChange={vi.fn()} locale={enUS} strings={{ placeholder: "Choose a hearing date" }} />
+    )
+    expect(screen.getByRole("button", { name: "Choose a hearing date" })).toBeInTheDocument()
   })
 })

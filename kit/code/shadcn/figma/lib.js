@@ -1,4 +1,4 @@
-// design-system-kit 0.10.1 · profile shadcn · figma: builder library — fix it in the kit, not per client
+// design-system-kit 0.10.2 · profile shadcn · figma: builder library — fix it in the kit, not per client
 /**
  * Prepend this file to every `use_figma` script that builds library pages
  * (Setup's Figma step, publish-back's component changes). It assumes the file
