@@ -19,7 +19,7 @@ Combobox picks one or more options from a long list by typing to filter it.
 
 **Combobox lives inside an Input Group.** `ComboboxInput` renders its own `InputGroup`, so the frame, focus and invalid state are the Input Group's; put icons or buttons in `InputGroupAddon` inside it rather than wrapping the combobox in another frame.
 
-Multi-select with `multiple`, showing the picks as `ComboboxChips` / `ComboboxChip` around a `ComboboxChipsInput`. Errors via `aria-invalid` on the input. The search field is Field exception 3 — the combobox as a whole goes in a Field. Use Select instead for short lists nobody needs to search.
+Multi-select with `multiple`, showing the picks as `ComboboxChips` / `ComboboxChip` around a `ComboboxChipsInput`. Anchor the list to the chips, not the input: `const anchor = useComboboxAnchor()`, then `<ComboboxChips ref={anchor}>` and `<ComboboxContent anchor={anchor}>` — without it the list sizes to the space left after the chips and narrows with every pick. Errors via `aria-invalid` on the input. The search field is Field exception 3 — the combobox as a whole goes in a Field. Use Select instead for short lists nobody needs to search.
 
 **Styling map** — generated from `src/components/ui/combobox.tsx` on 2026-10-07. Values come from the code; a token change regenerates the token file, not this table.
 

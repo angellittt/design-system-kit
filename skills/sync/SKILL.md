@@ -5,7 +5,7 @@ description: Sync a TTT design system with code or Figma. Use when the user want
 
 # Sync — design system ⇄ code ⇄ Figma
 
-design-system-kit 0.8.0 · schema `ttt-ds/1`
+design-system-kit 0.8.1 · schema `ttt-ds/1`
 
 Two directions, one skill:
 

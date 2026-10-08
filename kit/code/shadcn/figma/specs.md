@@ -1,6 +1,6 @@
 # Figma component specs — profile shadcn (base-nova)
 
-design-system-kit 0.8.0 · profile shadcn
+design-system-kit 0.8.1 · profile shadcn
 
 How each baseline component is built in a client's Figma library. Measurements
 are base-nova's (the stock files in `kit/code/shadcn/stock/ui/`); colours,
@@ -45,7 +45,7 @@ rings) are what the code uses and can be read back, not values to choose.
 | **InputGroup** | Input frame + leading 16px icon in label-alternative, gap 8 | State default · focus | — | — |
 | **Textarea** | 280 wide, min-h 64 (space-16), p 8/10, radius-sm, line-strong | State default · focus | — | — |
 | **Combobox** | InputGroup-like trigger with chevron-down; chips are fill-alternative, radius-sm, p 2/6, caption-1 + 12px x icon | State closed · open (focus ring) · chips (multiple) | — | open trigger + popup list (background-elevated, line-normal, radius-lg, Shadow/md, p 4; items radius-inset p 6/8, highlighted fill-alternative, selected primary-text + check) |
-| **DatePicker** | Input with typed value in the client's `dateFormat` and a 24px calendar button (calendar icon) | State default · error | — | the Field with the format as its description, and **Calendar** |
+| **DatePicker** | Input with typed value in the client's `dateFormat` and a 24px ghost calendar button (calendar icon) inside it at the end | State default · error | — | the Field with the format as its description, and **Calendar** |
 | Calendar *(part)* | v-stack p 8 gap 8, background-normal, line-normal, radius-lg, Shadow/md; caption row (chevrons + "Month YYYY", label-1); weekday row in the client's **week start** (caption-1, label-alternative); 32×32 day cells radius-md; today fill-alternative; selected primary-normal / on-primary; outside days label-alternative | — | — | the selected month for a real date |
 | **Checkbox** | h-row gap 8: 16×16 box radius 4 (line-strong; checked primary-normal + 14px check on-primary; indeterminate minus) + body-2 label | State unchecked · checked · indeterminate · error · disabled | Label, Show label | a labelled group of three |
 | RadioGroup/Item *(part)* | 16px circle (line-strong; checked primary-normal + 6px on-primary dot) + body-2 label | State unchecked · checked · disabled | Label | — |
@@ -76,8 +76,8 @@ rings) are what the code uses and can be read back, not values to choose.
 | **Accordion** | v-stack of Accordion/Item instances, one open | — | — | — |
 | **Separator** | 1px line-normal: 240×1 / 1×24 | Orientation horizontal · vertical | — | — |
 | **Skeleton** | fill-alternative, radius-md, 200×16 | — | — | a circle (resized instance) and two text lines |
-| Sidebar/Item *(part)* | 240×32, radius-md, p 8, gap 8: 16px icon (named "Icon", swap per item), body-2 label (active label-1), count badge (caption-1); hover and active background-elevated | State default · hover · active | Label, Count, Show badge | — |
-| **Sidebar** | 256×600 v-stack, background-alternative, 1px line-normal right edge: header (logo mark + name), groups (caption-2 label, Sidebar/Item instances), spacer, footer (Avatar sm + name) | — | — | — |
+| Sidebar/Item *(part)* | 240×32, radius-md, p 8, gap 8: 16px icon (named "Icon", swap per item), body-2 label (active label-1), count badge (caption-1); hover fill-normal, active fill-strong | State default · hover · active | Label, Count, Show badge | — |
+| **Sidebar** | 256×600 v-stack, background-alternative, 1px line-normal right edge: header (logo mark + name), groups (caption-2 label, Sidebar/Item instances 4px apart), spacer, footer (Avatar sm + name) | — | — | — |
 | Table/Row *(part)* | h-row of fixed-width cells (p 8); header cells 40 tall, label-1; body body-2 with a status Badge; 1px line-normal bottom; hover and selected fill-alternative; footer fill-alternative, label-1 | Type header · body · footer × State default · hover · selected | — | — |
 | **Table** | v-stack of Table/Row instances in a line-normal, radius-lg, clipped frame + caption (body-2 label-alternative) | — | — | real records |
 | **Empty** | v-stack centred, dashed line-normal border, radius-xl, p 24, gap 16: optional 32px fill-alternative icon tile (radius-lg), title label-1, description body-2 label-alternative (centred, 300 wide), an outline Button | Variant default · icon | Title, Description | — |

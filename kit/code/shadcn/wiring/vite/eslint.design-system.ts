@@ -1,4 +1,4 @@
-// design-system-kit 0.8.0 · profile shadcn · wiring (Vite): ESLint, for a TypeScript config
+// design-system-kit 0.8.1 · profile shadcn · wiring (Vite): ESLint, for a TypeScript config
 //
 // Setup PASTES this into the app's eslint.config.ts (no separate file), below
 // its imports, and wraps the repo's entries:

@@ -1,4 +1,4 @@
-// design-system-kit 0.8.0 · profile shadcn · kit extension (replaces the stock file when chosen)
+// design-system-kit 0.8.1 · profile shadcn · kit extension (replaces the stock file when chosen)
 "use client"
 
 import * as React from "react"
@@ -9,7 +9,13 @@ import type { DateRange } from "react-day-picker"
 
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
-import { Input } from "@/components/ui/input"
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+  InputGroupText,
+} from "@/components/ui/input-group"
 import {
   Popover,
   PopoverContent,
@@ -19,12 +25,17 @@ import { dateFormat as appDateFormat, locale as appLocale } from "@/lib/locale"
 import { cn } from "cn"
 
 /**
- * Date Picker — a calendar in a popover, with an optional typed input.
+ * Date Picker — a calendar in a popover, typed into or picked from a button.
  *
- * Kit file, whole (no registry item exists): shadcn's documented
- * composition of stock Popover + Calendar + an outline icon Button, in
- * single and range modes. Uses STOCK Popover; width and padding are set with
- * `className` on PopoverContent.
+ * Kit file, whole (no registry item exists): shadcn's two documented
+ * compositions, in single and range modes, from STOCK Popover, Calendar,
+ * Input Group and Button:
+ * - typed (default): the "Input" example — an Input Group with the calendar
+ *   button inside it at the end; ArrowDown in the input opens the calendar.
+ * - `typed={false}`: the "Basic" / "Range" examples — an outline Button
+ *   showing the value (or a placeholder) that opens the calendar.
+ * Picking a single date closes the calendar, as in the examples; a range
+ * stays open until the person closes it.
  *
  * Baseline (in this file because it has no stock file):
  * - `defaultMonth` follows the typed or selected value (the documented
@@ -34,7 +45,7 @@ import { cn } from "cn"
  *   locale's own pattern; otherwise the pattern comes from the locale.
  *
  * Kit extension (candidate, profile capability "Typed date entry"):
- * typed `Input`s with two-way sync, `patternFor` / `hintFor` / `parseTyped`
+ * typed inputs with two-way sync, `patternFor` / `hintFor` / `parseTyped`
  * with overflow rejection, `aria-invalid`, `onValidationChange`, the range
  * end-before-start rule, the `typed` opt-out and `strings` overrides.
  */
@@ -102,6 +113,9 @@ export type DatePickerStrings = {
   openLabel: string
   startLabel: string
   endLabel: string
+  /** The button's text with no value, when `typed` is false. */
+  placeholder: string
+  rangePlaceholder: string
 }
 
 const defaultStrings: DatePickerStrings = {
@@ -110,6 +124,8 @@ const defaultStrings: DatePickerStrings = {
   openLabel: "Open calendar",
   startLabel: "Start date",
   endLabel: "End date",
+  placeholder: "Pick a date",
+  rangePlaceholder: "Pick a date range",
 }
 
 type Common = {
@@ -119,7 +135,10 @@ type Common = {
    * client's `dateFormat` setting; empty means "use the locale's pattern".
    */
   dateFormat?: string
-  /** Hides the typed input, leaving the calendar button alone. */
+  /**
+   * False swaps the typed input for a button that shows the value and opens
+   * the calendar: picking only, as in shadcn's Basic example.
+   */
   typed?: boolean
   disabled?: boolean
   id?: string
@@ -143,30 +162,80 @@ type RangeProps = Common & {
 
 export type DatePickerProps = SingleProps | RangeProps
 
-function CalendarButton({
-  label,
-  disabled,
-  children,
-}: {
-  label: string
-  disabled?: boolean
-  children: React.ReactNode
-}) {
+/** The calendar's popover, positioned as in shadcn's examples. */
+function CalendarContent({ typed, children }: { typed: boolean; children: React.ReactNode }) {
+  return typed ? (
+    // Lines the calendar up with the end of the field, not the button.
+    <PopoverContent align="end" alignOffset={-8} sideOffset={10} className="w-auto overflow-hidden p-0">
+      {children}
+    </PopoverContent>
+  ) : (
+    <PopoverContent align="start" className="w-auto overflow-hidden p-0">
+      {children}
+    </PopoverContent>
+  )
+}
+
+/** The calendar button inside the field. */
+function FieldTrigger({ label, disabled }: { label: string; disabled?: boolean }) {
   return (
-    <Popover>
+    <InputGroupAddon align="inline-end">
       <PopoverTrigger
         render={
-          <Button variant="outline" size="icon" aria-label={label} disabled={disabled} />
+          <InputGroupButton
+            data-slot="date-picker-trigger"
+            variant="ghost"
+            size="icon-xs"
+            aria-label={label}
+            disabled={disabled}
+          />
         }
       >
         <CalendarIcon />
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-auto p-2">
-        {children}
-      </PopoverContent>
-    </Popover>
+    </InputGroupAddon>
   )
 }
+
+/** The picking-only trigger: an outline button showing the value. */
+function ButtonTrigger({
+  id,
+  text,
+  placeholder,
+  disabled,
+}: {
+  id?: string
+  text: string
+  placeholder: string
+  disabled?: boolean
+}) {
+  return (
+    <PopoverTrigger
+      render={
+        <Button
+          id={id}
+          data-slot="date-picker-trigger"
+          data-empty={!text}
+          variant="outline"
+          disabled={disabled}
+          className="w-full justify-start text-left font-normal data-[empty=true]:text-muted-foreground"
+        />
+      }
+    >
+      <CalendarIcon />
+      {text || placeholder}
+    </PopoverTrigger>
+  )
+}
+
+/** ArrowDown in a typed input opens the calendar, as in shadcn's example. */
+const openOnArrowDown =
+  (setOpen: (open: boolean) => void) => (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "ArrowDown") {
+      e.preventDefault()
+      setOpen(true)
+    }
+  }
 
 export function DatePicker(props: DatePickerProps) {
   const {
@@ -186,44 +255,22 @@ export function DatePicker(props: DatePickerProps) {
     (d: Date | undefined) => (d ? formatDate(d, pattern, { locale }) : ""),
     [pattern, locale]
   )
-
-  // ---- single ---------------------------------------------------------------
-  if (props.mode !== "range") {
-    return (
-      <SingleDatePicker
-        {...props}
-        id={id}
-        className={className}
-        locale={locale}
-        dateFormat={dateFormat}
-        typed={typed}
-        disabled={disabled}
-        strings={strings}
-        pattern={pattern}
-        hint={hint}
-        fmt={fmt}
-        onValidationChange={onValidationChange}
-      />
-    )
+  const shared = {
+    id,
+    className,
+    locale,
+    dateFormat,
+    typed,
+    disabled,
+    strings,
+    pattern,
+    hint,
+    fmt,
+    onValidationChange,
   }
 
-  // ---- range ----------------------------------------------------------------
-  return (
-    <RangeDatePicker
-      {...props}
-      id={id}
-      className={className}
-      locale={locale}
-      dateFormat={dateFormat}
-      typed={typed}
-      disabled={disabled}
-      strings={strings}
-      pattern={pattern}
-      hint={hint}
-      fmt={fmt}
-      onValidationChange={onValidationChange}
-    />
-  )
+  if (props.mode !== "range") return <SingleDatePicker {...props} {...shared} />
+  return <RangeDatePicker {...props} {...shared} />
 }
 
 /** Typed text, its validation message, and the value it was typed against. */
@@ -260,6 +307,7 @@ function SingleDatePicker({
   id,
   className,
 }: SingleProps & Shared) {
+  const [open, setOpen] = React.useState(false)
   // What the person typed, kept only while `value` is still the one it was
   // typed against: when `value` changes (a pick, or the caller setting it),
   // the input shows the new value in the same render. No effect, so no frame
@@ -289,31 +337,37 @@ function SingleDatePicker({
     onChange(parsed)
   }
 
-  // Picking updates the input (through `value`) and clears any typed error.
+  // Picking updates the input (through `value`), clears any typed error and
+  // closes the calendar.
   const pick = (date: Date | undefined) => {
     setDraft(null)
     onValidationChange?.(null)
     onChange(date)
+    setOpen(false)
   }
 
   return (
-    <div
-      data-slot="date-picker"
-      data-mode="single"
-      className={cn("flex items-start gap-2", className)}
-    >
-      {typed && (
-        <Input
-          id={id}
-          data-slot="date-picker-input"
-          value={text}
-          disabled={disabled}
-          placeholder={hint}
-          aria-invalid={!!error}
-          onChange={(e) => commit(e.target.value)}
-        />
-      )}
-      <CalendarButton label={strings.openLabel} disabled={disabled}>
+    <Popover open={open} onOpenChange={setOpen}>
+      <div data-slot="date-picker" data-mode="single" className={cn("w-full", className)}>
+        {typed ? (
+          <InputGroup>
+            <InputGroupInput
+              id={id}
+              data-part="date-picker-input"
+              value={text}
+              disabled={disabled}
+              placeholder={hint}
+              aria-invalid={!!error}
+              onChange={(e) => commit(e.target.value)}
+              onKeyDown={openOnArrowDown(setOpen)}
+            />
+            <FieldTrigger label={strings.openLabel} disabled={disabled} />
+          </InputGroup>
+        ) : (
+          <ButtonTrigger id={id} text={fmt(value)} placeholder={strings.placeholder} disabled={disabled} />
+        )}
+      </div>
+      <CalendarContent typed={typed}>
         <Calendar
           mode="single"
           locale={locale}
@@ -324,8 +378,8 @@ function SingleDatePicker({
           onSelect={pick}
           autoFocus
         />
-      </CalendarButton>
-    </div>
+      </CalendarContent>
+    </Popover>
   )
 }
 
@@ -343,6 +397,7 @@ function RangeDatePicker({
   id,
   className,
 }: RangeProps & Shared) {
+  const [open, setOpen] = React.useState(false)
   // As in single mode: the typed text applies only while `value` is the
   // range it was typed against.
   const [draft, setDraft] = React.useState<Draft<{ start: string; end: string }> | null>(null)
@@ -377,44 +432,51 @@ function RangeDatePicker({
     onChange(from || to ? { from: from ?? undefined, to: to ?? undefined } : undefined)
   }
 
+  // A range stays open: the person picks both ends, then closes it.
   const pick = (range: DateRange | undefined) => {
     setDraft(null)
     onValidationChange?.(null)
     onChange(range)
   }
 
+  const shown = value?.from ? [fmt(value.from), fmt(value.to)].filter(Boolean).join(" – ") : ""
+
   return (
-    <div
-      data-slot="date-picker"
-      data-mode="range"
-      className={cn("flex items-start gap-2", className)}
-    >
-      {typed && (
-        <>
-          <Input
-            id={id}
-            data-slot="date-picker-input"
-            data-part="start"
-            value={startText}
-            disabled={disabled}
-            placeholder={hint}
-            aria-label={strings.startLabel}
-            aria-invalid={!!error}
-            onChange={(e) => commit("from", e.target.value)}
-          />
-          <Input
-            data-slot="date-picker-input"
-            data-part="end"
-            value={endText}
-            disabled={disabled}
-            placeholder={hint}
-            aria-label={strings.endLabel}
-            aria-invalid={!!error}
-            onChange={(e) => commit("to", e.target.value)}
-          />
-        </>
-      )}
-      <CalendarButton label={strings.openLabel} disabled={disabled}>
+    <Popover open={open} onOpenChange={setOpen}>
+      <div data-slot="date-picker" data-mode="range" className={cn("w-full", className)}>
+        {typed ? (
+          <InputGroup>
+            <InputGroupInput
+              id={id}
+              data-part="date-picker-input"
+              data-end="start"
+              value={startText}
+              disabled={disabled}
+              placeholder={hint}
+              aria-label={strings.startLabel}
+              aria-invalid={!!error}
+              onChange={(e) => commit("from", e.target.value)}
+              onKeyDown={openOnArrowDown(setOpen)}
+            />
+            <InputGroupText aria-hidden>–</InputGroupText>
+            <InputGroupInput
+              data-part="date-picker-input"
+              data-end="end"
+              value={endText}
+              disabled={disabled}
+              placeholder={hint}
+              aria-label={strings.endLabel}
+              aria-invalid={!!error}
+              onChange={(e) => commit("to", e.target.value)}
+              onKeyDown={openOnArrowDown(setOpen)}
+            />
+            <FieldTrigger label={strings.openLabel} disabled={disabled} />
+          </InputGroup>
+        ) : (
+          <ButtonTrigger id={id} text={shown} placeholder={strings.rangePlaceholder} disabled={disabled} />
+        )}
+      </div>
+      <CalendarContent typed={typed}>
         <Calendar
           mode="range"
           locale={locale}
@@ -424,7 +486,7 @@ function RangeDatePicker({
           numberOfMonths={2}
           autoFocus
         />
-      </CalendarButton>
-    </div>
+      </CalendarContent>
+    </Popover>
   )
 }

@@ -1,6 +1,6 @@
 {
   "name": "design-system-kit",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "description": "TTT's design system kit: the ttt-ds/1 contract, library profiles, the starting design system template, the vendored code (stock components, kit extensions, scripts, wiring, harness), and the Setup (/ds-setup) and Sync (/ds-sync pull | publish) skills.",
   "author": {
     "name": "TTT Studios"

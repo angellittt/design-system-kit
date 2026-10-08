@@ -1,4 +1,4 @@
-// design-system-kit 0.8.0 · profile shadcn · kit extension test
+// design-system-kit 0.8.1 · profile shadcn · kit extension test
 import { describe, expect, it, vi } from "vitest"
 import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
@@ -313,5 +313,61 @@ describe("range date picker", () => {
     await user.type(start, "03/14/2026")
     await user.type(end, "03/14/2026")
     expect(onValidationChange.mock.calls.at(-1)?.[0]).toBeNull()
+  })
+})
+
+describe("layout, as in shadcn's examples", () => {
+  it("puts the calendar button inside the typed field", () => {
+    render(<DatePicker value={undefined} onChange={() => {}} locale={enUS} />)
+    const group = screen.getByRole("textbox").closest("[data-slot=input-group]")
+    expect(group).not.toBeNull()
+    expect(group).toContainElement(screen.getByRole("button", { name: "Open calendar" }))
+  })
+
+  it("opens the calendar on ArrowDown in the input", async () => {
+    const user = userEvent.setup()
+    render(<DatePicker value={new Date(2026, 2, 14)} onChange={() => {}} locale={enUS} />)
+    await user.click(screen.getByRole("textbox"))
+    await user.keyboard("{ArrowDown}")
+    expect(await screen.findByText("March 2026")).toBeInTheDocument()
+  })
+
+  it("closes once a single date is picked", async () => {
+    const user = userEvent.setup()
+    render(<DatePicker value={new Date(2026, 2, 14)} onChange={() => {}} locale={enUS} />)
+    const trigger = screen.getByRole("button", { name: "Open calendar" })
+    await user.click(trigger)
+    await user.click(await screen.findByRole("button", { name: /March 20(th)?, 2026/ }))
+    expect(trigger).toHaveAttribute("aria-expanded", "false")
+  })
+
+  it("picks only, from a button showing the value, when typed is false", async () => {
+    const user = userEvent.setup()
+    const onChange = vi.fn()
+    const { rerender } = render(
+      <DatePicker typed={false} value={undefined} onChange={onChange} locale={enUS} />
+    )
+    expect(screen.queryByRole("textbox")).toBeNull()
+    const trigger = screen.getByRole("button", { name: "Pick a date" })
+    await user.click(trigger)
+    await user.click(await screen.findByRole("button", { name: / 15(th)?, \d{4}/ }))
+    expect(onChange).toHaveBeenCalledTimes(1)
+    rerender(
+      <DatePicker typed={false} value={new Date(2026, 2, 14)} onChange={onChange} locale={enUS} />
+    )
+    expect(screen.getByRole("button", { name: "03/14/2026" })).toBeInTheDocument()
+  })
+
+  it("shows a range on its button when typed is false", () => {
+    render(
+      <DatePicker
+        mode="range"
+        typed={false}
+        value={{ from: new Date(2026, 0, 20), to: new Date(2026, 1, 18) }}
+        onChange={() => {}}
+        locale={enUS}
+      />
+    )
+    expect(screen.getByRole("button", { name: "01/20/2026 – 02/18/2026" })).toBeInTheDocument()
   })
 })

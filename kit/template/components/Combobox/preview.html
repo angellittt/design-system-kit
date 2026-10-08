@@ -25,6 +25,7 @@ var I = {
 ReactDOM.createRoot(document.getElementById('root')).render(h(function Demo(){
   var people = ['Ada Lovelace','Grace Hopper','Jean Bartik','Katherine Johnson','Margaret Hamilton','Radia Perlman'];
   var one = React.useState('Grace Hopper'), many = React.useState(['Ada Lovelace','Radia Perlman']);
+  var anchor = J.useComboboxAnchor();
   return h('div',{className:'col',style:{maxWidth:380}},
     h(J.Field,null, h(J.FieldLabel,{htmlFor:'as'},'Assignee'),
       h(J.Combobox,{items:people,value:one[0],onValueChange:one[1]},
@@ -33,9 +34,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(h(function Demo(){
           h(J.ComboboxList,null, function(p){ return h(J.ComboboxItem,{key:p,value:p},p) })))),
     h(J.Field,null, h(J.FieldLabel,null,'Reviewers'),
       h(J.Combobox,{items:people,multiple:true,value:many[0],onValueChange:many[1]},
-        h(J.ComboboxChips,null, many[0].map(function(p){ return h(J.ComboboxChip,{key:p,value:p},p) }),
+        h(J.ComboboxChips,{ref:anchor}, many[0].map(function(p){ return h(J.ComboboxChip,{key:p,value:p},p) }),
           h(J.ComboboxChipsInput,{placeholder: many[0].length ? '' : 'Add a reviewer'})),
-        h(J.ComboboxContent,null, h(J.ComboboxEmpty,null,'No people found.'),
+        h(J.ComboboxContent,{anchor:anchor}, h(J.ComboboxEmpty,null,'No people found.'),
           h(J.ComboboxList,null, function(p){ return h(J.ComboboxItem,{key:p,value:p},p) })))));
 }));
 </script>

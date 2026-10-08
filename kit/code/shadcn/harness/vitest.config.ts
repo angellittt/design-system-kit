@@ -1,4 +1,4 @@
-// design-system-kit 0.8.0 · profile shadcn · harness: vitest
+// design-system-kit 0.8.1 · profile shadcn · harness: vitest
 import { defineConfig } from "vitest/config"
 import { resolve } from "node:path"
 

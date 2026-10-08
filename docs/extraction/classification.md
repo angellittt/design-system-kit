@@ -57,7 +57,7 @@ Every difference between Jelly (`angellittt/design-team-demo` @ `38601d3`) and s
 | Alert | `urgent` prop; `role="alert"` only when urgent | kit extension | Profile: Urgent-only interruption (candidate) |
 | Alert | `AlertDismiss` (ghost icon Button, overridable `aria-label`, emits `onDismiss`, never hides itself) | kit extension | Profile: Dismiss button (candidate). Its `hover:bg-black/5` is client (breaks the guardrail); kit uses a token |
 | Field | FieldError renders `<CircleAlert aria-hidden>` before the message | kit extension | Profile: Error icon (candidate) |
-| DatePicker | Typed entry: `patternFor`/`hintFor`, `parseTyped` with overflow rejection, typed `Input`s with two-way sync, `aria-invalid`, `onValidationChange`, range end-before-start rule, `typed` opt-out, `strings` overrides | kit extension | Profile: Typed date entry (candidate) |
+| DatePicker | Typed entry: `patternFor`/`hintFor`, `parseTyped` with overflow rejection, typed inputs with two-way sync, `aria-invalid`, `onValidationChange`, range end-before-start rule, `typed={false}` (stock's button trigger), `strings` overrides | kit extension | Profile: Typed date entry (candidate) |
 | DatePicker | `PopoverContent width="auto" showArrow={false}` | client | Depends on Jelly-only Popover props; kit uses `className` |
 | Badge | `variant="pop"` and neutral+pop compound | client | Declared Jelly client extension |
 | Card | `variant="pop"` and its interactive compound | client | Declared Jelly client extension |
