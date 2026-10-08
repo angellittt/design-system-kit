@@ -1,9 +1,9 @@
 # Report — how every Setup run ends
 
-design-system-kit 0.4.0
+design-system-kit 0.4.1
 
 The skill writes the report itself (common.md §10). It goes in the chat and,
-once there is a PR, as the PR body (with `code.md` §6's three lists before
+once there is a PR, as the PR body (with `code.md` §7's lists before
 the headings). A run that stopped still reports: say where and why under
 Gaps, and "none" for what didn't happen.
 

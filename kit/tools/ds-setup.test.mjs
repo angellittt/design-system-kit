@@ -1,4 +1,4 @@
-// design-system-kit 0.4.0 · Setup tool tests — node --test kit/tools/
+// design-system-kit 0.4.1 · Setup tool tests — node --test kit/tools/
 import { test } from "node:test"
 import assert from "node:assert/strict"
 import { readFileSync, mkdtempSync, writeFileSync, mkdirSync } from "node:fs"

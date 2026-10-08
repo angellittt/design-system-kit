@@ -1,6 +1,6 @@
 # Review — the gate before Figma
 
-design-system-kit 0.4.0
+design-system-kit 0.4.1
 
 The designer reviews the design system in claude.ai before anything is built
 from it in Figma. This is a hard stop: Setup's turn ends here.
