@@ -1,0 +1,27 @@
+# Tags every kit release. A release is the merge to main that brings a new
+# version in .claude-plugin/plugin.json; it is tagged v<version> at that merge,
+# once. The tag is the kit as clients copied it at that version — the base an
+# upgrade reconciles a client's (possibly customized) files against.
+name: release
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: tag the plugin version
+        run: |
+          v=$(node -p 'require("./.claude-plugin/plugin.json").version')
+          if git rev-parse -q --verify "refs/tags/v$v" >/dev/null; then
+            echo "v$v is already tagged at $(git rev-list -n 1 "v$v")"
+            exit 0
+          fi
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            tag -a "v$v" -m "design-system-kit $v" "$GITHUB_SHA"
+          git push origin "v$v"
