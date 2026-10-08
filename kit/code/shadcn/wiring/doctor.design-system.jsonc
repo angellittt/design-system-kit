@@ -1,4 +1,4 @@
-// design-system-kit 0.8.1 · profile shadcn · wiring: React Doctor overrides
+// design-system-kit 0.9.0 · profile shadcn · wiring: React Doctor overrides
 //
 // For repos that run React Doctor (TTT's starter does, on every PR). Setup
 // adds these objects to the app's doctor.config.json "ignore.overrides" list
@@ -14,8 +14,9 @@
 //   its calendar on open on purpose. shadcn's own markup (a role on <nav>, a
 //   role on the breadcrumb's current page, index keys on a static error list)
 //   stays as shadcn ships it, so stock files stay comparable to stock.
-// - cva variant helpers and DatePicker's documented helpers (patternFor,
-//   hintFor, parseTyped) are exported beside the component by design.
+// - cva variant helpers and the documented helpers of DatePicker (patternFor,
+//   hintFor, parseTyped) and DataTable (useDataTable, dataTableSelectColumn)
+//   are exported beside the component by design.
 // - Kit tests assert on elements they just rendered.
 // - Kit scripts are checked in the kit, not per client.
 // Every other rule still runs on these files: the scan stays on for anything

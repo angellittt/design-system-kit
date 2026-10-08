@@ -1,6 +1,6 @@
 # Figma library — only after approval
 
-design-system-kit 0.8.1
+design-system-kit 0.9.0
 
 The Figma library is built from the **approved** design system — the live
 one you re-read after approval (`review.md` §3), never your local copy.
@@ -110,7 +110,8 @@ For each section of `specs.md`, in page order:
    and props, ending `Status: validated · Source: <source>` from the
    README's contract block.
 7. Only the **chosen** kit extensions appear; a chosen extension adds the
-   variants or props its README lists.
+   variants or props its README lists. A whole-component extension
+   (DataTable) gets a section only when chosen.
 
 **Check each section against its styling map** (README): every token the
 map names for a state you built is bound somewhere in that state. A row with

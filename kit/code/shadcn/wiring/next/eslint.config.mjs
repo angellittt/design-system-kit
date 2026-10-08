@@ -1,4 +1,4 @@
-// design-system-kit 0.8.1 · profile shadcn · wiring: ESLint flat config
+// design-system-kit 0.9.0 · profile shadcn · wiring: ESLint flat config
 //
 // Run unattended with `eslint .` (`next lint` is deprecated). Setup keeps the
 // repo's own config and adds the accessibility block below if the repo

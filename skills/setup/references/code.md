@@ -1,6 +1,6 @@
 # Code — the branch, then the PR
 
-design-system-kit 0.8.1
+design-system-kit 0.9.0
 
 Setup step 5 builds the code branch; step 9 opens its PR. Paths are the
 app's folder; commands use the repo's package manager (common.md, "The app
@@ -66,8 +66,9 @@ Everything here goes in the PR's **Dev setup done by Setup** list (§7).
 Use the repo's aliases (`components.json` → `aliases`; pre-flight recorded
 any that differ from the profile's). For each file the inventory needs —
 `stock/ui/*` for every baseline component, `stock/hooks/*`, `stock/lib/*`, and
-`kit/ui/<name>.tsx` (with its `<name>.test.tsx`) for every chosen kit
-extension and for DatePicker:
+`kit/ui/<name>.tsx` for every chosen kit extension and for DatePicker (the
+kit's tests stay in the kit). A chosen DataTable brings `kit/ui/table.tsx`
+too, whether or not a Table extension was chosen (it uses `TableSortButton`):
 
 | The repo's file | What to do |
 |---|---|
@@ -190,6 +191,9 @@ there, whatever its version. Install each added package at its **tested
 max** for the framework (`$KIT/tested-range.json`), e.g. `pnpm add
 sonner@2.0.8` in the app's folder —
 pre-flight already flagged any existing one outside the range.
+`@tanstack/react-table` is added only when DataTable is chosen; it has no
+tested range yet, so install `8.21.3`, the version the kit's CI tests
+DataTable on, and say so in the PR.
 
 For the PR, record **why** each added package is there: search the files
 this step installed for its imports (`grep -rl "from \"sonner\"" …`) and

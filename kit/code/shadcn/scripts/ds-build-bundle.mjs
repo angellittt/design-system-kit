@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// design-system-kit 0.8.1 · profile shadcn · kit file — fix it in the kit, not per client
+// design-system-kit 0.9.0 · profile shadcn · kit file — fix it in the kit, not per client
 /**
  * Build the design system's preview bundle from a repo's component layer.
  *
