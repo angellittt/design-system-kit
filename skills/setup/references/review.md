@@ -14,6 +14,9 @@ message with:
 - what to look at: the brand book's colour table, the previews in light and
   dark, the token adjustments Setup made for contrast, the shared grounds and
   raw-value tokens from `tokens-report.md`, the kit extensions included;
+- what is **provisional** (the System section's line) — the designer is
+  approving the structure and the decided inputs; the provisional ones change
+  later with `/ds-sync restyle`, without another review gate here;
 - that they can edit it in claude.ai while reviewing — Setup will pick their
   edits up;
 - exactly what to say to continue: **"approved"** (or edits first, then

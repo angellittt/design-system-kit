@@ -46,7 +46,7 @@ It ends with one PR in the client repo and a report.
 |---|---|---|
 | 1 | Prerequisites — or stop and say which is missing | `references/preflight.md` §1 |
 | 2 | Pre-flight: ready / adaptable / missing setup / blocked — blocked stops; missing setup is added with a yes | `references/preflight.md` §2 |
-| 3 | Ask for every input; never guess one | `references/inputs.md` |
+| 3 | Ask for every input — decided or provisional; never guess one | `references/inputs.md` |
 | 4 | Generate tokens; contrast must pass | `references/generate.md` Part A |
 | 5 | Build the code branch | `references/code.md` |
 | 6 | Create the design system | `references/generate.md` Part B |
@@ -58,6 +58,7 @@ It ends with one PR in the client repo and a report.
 
 - Go past a **blocked** pre-flight or a **failed contrast check**.
 - **Guess an input** — a missing answer is a question, not a default.
+  "Provisional · default" is an answer the person gives; it is never assumed.
 - Generate **Figma before the designer approves** the design system.
 - **Overwrite a modified stock file**, or **upgrade or downgrade an existing
   package**.

@@ -15,4 +15,6 @@ How {{CLIENT_NAME}} is set up. The rules every TTT design system follows live in
 
 **{{CLIENT_NAME}}-specific choices** — client extensions, client-added ramps and decisions that differ from the profile, one line each. None yet.
 
+**Provisional** — inputs still standing in for the client's own, one line each, with where they came from; `/ds-sync restyle` replaces them. None.
+
 **Open deviations** — none.

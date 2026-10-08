@@ -77,6 +77,21 @@ test("every missing input is named, never guessed", () => {
   assert.throws(() => applyInputs(template, inputs({ radius: "round" })), /sharp, default, soft/)
 })
 
+test("a provisional brand colour keeps the template's placeholder ramp, and only when it's listed as provisional", () => {
+  const brand = { primary: "default", secondary: "#0f9d8a", accent: "#f5a524" }
+  assert.throws(() => applyInputs(template, inputs({ brand })), /only a provisional input can be/)
+  const { tokens } = applyInputs(template, inputs({ brand, provisional: { "brand.primary": "default" } }))
+  for (const t of template.color.tokens.filter((x) => x.name.startsWith("brand-primary-"))) assert.equal(value(tokens, t.name), t.value)
+  assert.equal(anchorStep(tokens, "brand-primary"), "50")
+  assert.match(tokens.color.tokens.find((t) => t.name === "brand-primary-50").usage, /^Primitive brand-primary step 50\. Provisional:/)
+})
+
+test("lock-now inputs can't be provisional, and a provisional kind is default or extracted", () => {
+  for (const key of ["client", "settings", "status.mode", "extensions"]) assert.throws(() => applyInputs(template, inputs({ provisional: { [key]: "default" } })), /can't be provisional/)
+  assert.throws(() => applyInputs(template, inputs({ provisional: { radius: "maybe" } })), /"default" or "extracted: <source>"/)
+  assert.doesNotThrow(() => applyInputs(template, inputs({ provisional: { "brand.primary": "extracted: Volunteer handbook p. 2", fonts: "default" } })))
+})
+
 test("status reuse removes the status ramps and re-aliases everything that used them", () => {
   const { tokens } = applyInputs(template, inputs({ status: { mode: "reuse", positive: "brand-secondary", cautionary: "brand-accent", negative: "brand-primary" } }))
   assert.equal(tokens.color.tokens.some((t) => /^(positive|cautionary|negative)-\d+$/.test(t.name)), false)

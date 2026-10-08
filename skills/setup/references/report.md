@@ -22,7 +22,8 @@ that are empty — never drop a heading.
 
 **What changed**
 - Prerequisites and pre-flight: each finding as ready / adaptable / blocked.
-- The confirmed inputs (from `inputs.json`), in one list.
+- The confirmed inputs (from `inputs.json`), in one list, each marked
+  decided or provisional (default, or extracted with its source).
 - Tokens: the ramps generated (brand hex and the step it landed on), the
   contrast result (pairs × themes, failing, intentional).
 - The branch: components installed (stock, kit extensions), stock files left
@@ -54,6 +55,8 @@ that are empty — never drop a heading.
 - Every input outstanding, every stop and its reason.
 - Every brand-book section that kept a "TTT default" passage for lack of
   guidelines.
+- Every **provisional** input, and that `/ds-sync restyle` replaces it; any
+  direction not taken, with its values and sources.
 - The shared grounds and raw-value semantic tokens from the token report.
 - Every `ds:validate` warning.
 - Every decision the contract or profile didn't cover.
