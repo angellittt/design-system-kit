@@ -1,6 +1,6 @@
 # Figma — tokens (pull and publish), components (publish)
 
-design-system-kit 0.4.1
+design-system-kit 0.5.0
 
 Figma is a read-only consumer of the design system: it is regenerated from
 the design system, never edited to taste. The Figma file is the one in the
@@ -110,9 +110,15 @@ Compare the design system (after publish) with the file, and list:
 
 Then build or change them:
 
-- Build each one **from the generated styling map**: every row whose value is
-  a token becomes a binding to that token's variable — fills, strokes, radius,
-  gap, padding. "Fixed in code" values are set literally.
+- Build or change each one **to the profile's spec**
+  (`kit/code/<profile>/figma/specs.md`) with the kit's builder
+  (`kit/code/<profile>/figma/lib.js`, prepended to the `use_figma` script),
+  in the page's section layout (Setup's `figma-library.md` §0, §3): the set,
+  its properties and its "In use" example. The **styling map** is the check,
+  not the blueprint: every token it names for a state the set shows must be
+  bound there — a binding change in the map is a change here. A component the
+  spec doesn't cover yet (a client extension, a new kit part) is built in the
+  same pattern and listed in Gaps so the spec gains it.
 - Names follow the contract: the component set is the design-system folder
   name (`Button`); parts that are their own components are
   `<Component>/<Part>` (`DropdownMenu/Item`); a size or style that is one
@@ -138,6 +144,10 @@ Then build or change them:
   `Property=Value` names, then confirm the set is valid: every variant has
   every property, and no two variants share a combination.
 - Text edits need the node's fonts loaded first; colours are 0–1, not 0–255.
+- **Set a paint's opacity after binding its variable**, and run `syncTints()`
+  on composed examples: instances lose a main component's tinted fill.
+- **A TEXT property sets the same text on every variant** — only for text all
+  variants share. **Instances can't take appended children.**
 
 # Both
 

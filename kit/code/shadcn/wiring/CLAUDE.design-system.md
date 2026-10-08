@@ -1,4 +1,4 @@
-<!-- design-system-kit 0.4.1 · profile shadcn · wiring: CLAUDE.md design-system section.
+<!-- design-system-kit 0.5.0 · profile shadcn · wiring: CLAUDE.md design-system section.
      Setup appends this to the repo's CLAUDE.md and fills every {{…}}; Sync keeps it
      current. Commands are written for npm: Setup rewrites them for the repo's package
      manager (pnpm run …, yarn …). Agreed component rules from accepted proposals go under
@@ -20,7 +20,7 @@ preview, fix the port — don't adjust the CSS to taste.
   `project/components/`.
 - **Tracker** {{TRACKER_URL}}
 - **Connection** `.ttt/design-system.json` (links, schema, profile, kit
-  version, paths, settings, `lastSynced`).
+  version, paths, `lastSynced`).
 
 ## Usage rules
 
@@ -87,21 +87,26 @@ Custom UI uses **only** the Tailwind names from the mapping:
 
 `eslint .` runs the accessibility rules (jsx-a11y) on every file.
 
-## Client settings
+## Locale defaults
 
-Locale, week start and date format are **not tokens**. They live in
-`.ttt/design-system.json` under `settings` ({{CLIENT_NAME}}: `{{LOCALE}}`,
-weeks start {{WEEK_START}}, {{DATE_FORMAT_DESCRIPTION}}) and are read in
-exactly one place, `@/lib/ds-settings`:
+Locale, week start and date format are **not tokens**: they're product
+decisions, and the app owns them in `@/lib/locale` ({{CLIENT_NAME}}:
+`{{LOCALE}}`, weeks start {{WEEK_START}}, {{DATE_FORMAT_DESCRIPTION}}).
+Change them there, in a PR, like any other code.
 
 ```ts
-import { dsLocale, dsWeekStartsOn, dsDateFormat } from "@/lib/ds-settings"
+import { locale, localeTag, weekStartsOn, dateFormat } from "@/lib/locale"
 ```
 
-`DatePicker` and `Calendar` default to those; pass `locale` or `weekStartsOn`
-to override one instance. **Don't import a date-fns locale in a component.**
-A new locale goes in the `LOCALES` registry in `ds-settings.ts` — importing
-them all would put every locale in the bundle.
+`DatePicker` and `Calendar` default to those; pass `locale`, `weekStartsOn`
+or `dateFormat` to override one instance (a user's preference, a second
+language). **Don't import a date-fns locale in a component** — import only the
+locale you use, in `locale.ts`; importing them all would put every locale in
+the bundle. Keep the exports plain literals: the kit's scripts read them.
+
+The design system's System section records the same decision.
+`npm run ds:validate -- --system <01-system.md>` warns when the two differ;
+fix whichever side is out of date.
 
 ## Component rules
 

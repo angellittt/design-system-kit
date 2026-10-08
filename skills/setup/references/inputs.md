@@ -1,6 +1,6 @@
 # Inputs — ask for every one, guess none
 
-design-system-kit 0.4.1
+design-system-kit 0.5.0
 
 Everything Setup generates comes from these answers. **Never fill one in
 yourself** — not from the repo, the client's website, a logo's colours or "a
@@ -24,7 +24,7 @@ read the answers back as a single summary and get a "yes" before generating.
 | 6 | **Brand guidelines** | a file or link, or "none" | The source for the brand book's principles, voice, logo usage and icon rules. With "none", ask for 3–5 principles and a line on voice; sections with no answer keep the template's "TTT default" passage, and the report lists them. |
 | 7 | **Locale** | BCP 47 tag, e.g. `en-US`, `fr-CA` | `ds-validate` checks it. |
 | 8 | **Week start** | Sunday … Saturday | Always stated, never derived from the locale. |
-| 9 | **Date format** | e.g. `DD/MM/YYYY`, or "the locale's" | `""` in config when the locale's own pattern is wanted. |
+| 9 | **Date format** | the typed-entry pattern: day, month and year, numeric, one separator — e.g. `DD/MM/YYYY`, `YYYY-MM-DD` — or "the locale's" | It is what DatePicker parses, not how dates are displayed: a display style such as "14 Nov 2026" is a voice rule for the brand book. `""` when the locale's own pattern is wanted. Locale, week start and date format seed the app's `locale.ts` and the System section's Client settings line. |
 | 10 | **Radius character** | `sharp` (½ the template's radii), `default`, `soft` (1½×), or exact px per radius token | `radius-full` stays a pill; `radius-inset` follows `radius-lg` minus `space-1`. |
 | 11 | **Motion character** | `calm` (no overshoot), `default`, `playful` (more overshoot) | Changes `ease-expressive`; durations stay. Reduced motion still removes scale and spring. |
 | 12 | **Status colours** | `separate` (default): positive, cautionary, negative each as `#rrggbb` or `default` (TTT's green, amber, red) — or `reuse`: map each status to a brand ramp (`brand-primary`, `brand-secondary`, `brand-accent`) | Reuse removes the separate status ramps. Separate keeps each its own hue — safer when a brand colour is red or green but means something else. |

@@ -1,4 +1,4 @@
-# TTT design system kit · ttt-ds/1 · kit 0.4.1
+# TTT design system kit · ttt-ds/1 · kit 0.5.0
 
 The starting point for every client design system, bundled into TTT's four skills: **Setup** (design system + Figma + code branch, ending in a PR), **Sync** (pull → PR, publish-back), **Components** (check → propose → accept) and **Drift audit**. Extracted from Jelly, the worked example; the classification of what came over and why is in `docs/extraction/classification.md` at the repo root.
 
@@ -67,16 +67,19 @@ In a monorepo, "the client repo" below means the app's folder (e.g. `apps/web`):
 | `scripts/` | `ds-tokens`, `ds-validate`, `ds-contrast`, `ds-pack-react`, `ds-build-bundle`, `ds-styling-maps`, `ds-types` (see the profile's Kit tooling), with `contrast-pairs.json` and `tested-range.json` | `scripts/` |
 | `wiring/theme-block.css`, `wiring/focus.css` | The theme block that replaces shadcn's theme variables, and the single `:focus-visible` rule | merged into the global CSS (`components.json` → `tailwind.css`) |
 | `wiring/theme-provider.tsx` | next-themes on `data-theme` (works on Vite too) | `<aliases.components>/theme-provider.tsx`, wrapped around the root layout (Next.js) or the root render in `main.tsx` (Vite) |
-| `wiring/ds-settings.ts` | The one reader of client settings; Setup adds the client's locale to `LOCALES` | `<aliases.lib>/ds-settings.ts` |
+| `wiring/locale.ts` | Seed for the app's locale defaults (locale, week start, date format). App-owned once copied: Setup fills it from the inputs; devs edit it | `<aliases.lib>/locale.ts` |
 | `wiring/next/eslint.config.mjs` | Next.js: flat config with the jsx-a11y rules | `eslint.config.mjs` (or its a11y block added to the repo's) |
 | `wiring/vite/eslint.design-system.mjs`, `wiring/vite/oxlint.design-system.jsonc` | Vite: blocks scoped to the component folder and `scripts/`, spread into the repo's ESLint config and added to `.oxlintrc.json` overrides | the app's own lint configs |
 | `wiring/vite/fonts.css` | Vite: `@font-face` and the `--font-*` variables (no `next/font`) | beside the token file, imported after it |
-| `wiring/design-system.json` | The repo config template, settings and `kitVersion` included | `.ttt/design-system.json` |
+| `wiring/design-system.json` | The repo config template, `kitVersion` included | `.ttt/design-system.json` |
 | `wiring/CLAUDE.design-system.md` | The design-system section of `CLAUDE.md`, with the "Replaced by stock" table | appended to `CLAUDE.md` |
 | `wiring/package.fragment.json`, `wiring/<framework>/package.fragment.json` | Scripts and dependencies the above need — shared, then the framework's | merged into the app's `package.json` (missing entries only) |
 | `harness/vitest.config.ts`, `harness/test/setup.ts` | Vitest + jsdom + Testing Library | `vitest.config.ts`, `src/test/setup.ts` |
 | `harness/scripts-tests/` | Tests for `ds-validate` and `ds-contrast` (node environment) | `scripts/__tests__/` |
 | `harness/fixture/` | The bundle-builder fixture: a deliberately different repo shape (namespace `Acme`, `~` alias, `lib/ui`) | `scripts/__fixtures__/` (its `run.mjs` finds the builder at `../ds-build-bundle.mjs`) |
+| `figma/specs.md` | How each baseline component is constructed in Figma: measurements, tokens, parts, variants and states, properties, the "In use" example | read by Setup's and Sync's Figma steps; not copied |
+| `figma/lib.js` | The Figma builder library, prepended to every `use_figma` script that builds library pages | not copied |
+| `figma/icons.mjs` | Prints the icon geometry from the app's installed icon package for the Utilities page | run from the kit against the app; not copied |
 
 On Next.js, `build:safe` also needs `distDir: process.env.NEXT_DIST_DIR || ".next"` in `next.config`. On Vite it is plain `vite build`.
 
@@ -91,6 +94,13 @@ Placeholders to fill: `{{CLIENT_NAME}}`, `{{NAMESPACE}}`, `{{N_IMPLEMENTED}}`, `
 Reads the system's contract (schema and profile first), generates the theme file and installs components as the profile describes, writes the repo guardrails, and moves each component from `validated` to `implemented` once it's in the codebase.
 
 ## Changes
+
+**0.5.0** (2026-10-08) — profile `shadcn` 1.4
+- **Figma libraries are constructed, not generated.** Setup's Figma step builds every component to `kit/code/shadcn/figma/specs.md` with the kit's builder (`figma/lib.js`): the page order and section layout of the reference library (root frame per page, a section per component with description, set and an "In use" example), State axes, component properties, `<Component>/<Part>` sets composed as instances, content in the client's voice, and icons from the app's own package (`figma/icons.mjs`) on a Utilities page. The styling maps become the check, not the blueprint. The read-back adds zero unbound paints, zero unstyled text, and a screenshot review per section. Sync's publish-back follows the same spec and builder. Learned on the Districtly run: the first, map-generated library was unusable.
+- **Locale defaults move to the app.** Locale, week start and date format are product decisions the app owns: `wiring/locale.ts` seeds `<aliases.lib>/locale.ts` (plain literals: `localeTag`, `locale`, `weekStartsOn`, `dateFormat`), which Calendar and DatePicker default to and props override. `wiring/ds-settings.ts` is gone and `.ttt/design-system.json` no longer has `settings` (the app no longer bundles the repo config). The System section still records the decision; `ds-validate` checks the module and, with `--system`, warns when code and the System section differ. Setup's date-format input is the numeric typed-entry pattern.
+- Contract: Client settings and Config validation updated to match.
+
+**Upgrading a 0.4.x repo** (its own PR, never a side effect of Sync): copy the 0.5.0 scripts, `calendar.tsx`, `date-picker.tsx` and its test; write `<aliases.lib>/locale.ts` from `wiring/locale.ts` with the values in `.ttt/design-system.json` → `settings`; delete `<aliases.lib>/ds-settings.ts` and `settings`; replace `CLAUDE.md`'s Client settings section with the 0.5.0 Locale defaults section; set `kitVersion` to 0.5.0. `ds-validate` warns on a leftover `settings` key until it's removed.
 
 **0.4.1** (2026-10-08)
 - Setup adds the missing dev setup itself. Pre-flight has a fourth outcome, **missing setup**: Tailwind v4, the `@/*` alias in `tsconfig.json` or `shadcn init` simply absent. Setup lists what it would add, asks once, and on a yes does them first on its branch (Tailwind with the framework's plugin and the CSS import, the alias, then `shadcn@4.21.1 init`), one commit each, then re-checks versions. The PR lists them under "Dev setup done by Setup". Anything that would change what's there — Tailwind v3, a `tailwind.config`, another shadcn style — is still blocked.

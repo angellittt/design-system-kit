@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// design-system-kit 0.4.1 · Setup tool — runs from the kit, never copied into a client repo
+// design-system-kit 0.5.0 · Setup tool — runs from the kit, never copied into a client repo
 /**
  * ds-setup.mjs — the two mechanical parts of Setup's "generate" step.
  *
