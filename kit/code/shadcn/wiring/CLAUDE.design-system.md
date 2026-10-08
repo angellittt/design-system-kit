@@ -1,4 +1,4 @@
-<!-- design-system-kit 0.6.0 · profile shadcn · wiring: CLAUDE.md design-system section.
+<!-- design-system-kit 0.6.1 · profile shadcn · wiring: CLAUDE.md design-system section.
      Setup appends this to the repo's CLAUDE.md and fills every {{…}}; Sync keeps it
      current. Commands are written for npm: Setup rewrites them for the repo's package
      manager (pnpm run …, yarn …). Agreed component rules from accepted proposals go under
@@ -104,9 +104,12 @@ language). **Don't import a date-fns locale in a component** — import only the
 locale you use, in `locale.ts`; importing them all would put every locale in
 the bundle. Keep the exports plain literals: the kit's scripts read them.
 
-The design system's System section records the same decision.
-`npm run ds:validate -- --system <01-system.md>` warns when the two differ;
-fix whichever side is out of date.
+The design system's System section records the same decision, and the repo
+keeps a snapshot of it in `.ttt/system.md` (Sync's pull refreshes it; never
+edit it by hand). When the two differ, `npm run ds:validate` warns and the
+tests fail (`scripts/__tests__/ds-drift.test.mjs`): fix whichever side is out
+of date — the code in a PR, or the design system's System section and then
+`/ds-sync pull` to refresh the snapshot.
 
 ## Component rules
 

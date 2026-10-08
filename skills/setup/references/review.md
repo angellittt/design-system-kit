@@ -1,6 +1,6 @@
 # Review — the gate before Figma
 
-design-system-kit 0.6.0
+design-system-kit 0.6.1
 
 The designer reviews the design system in claude.ai before anything is built
 from it in Figma. This is a hard stop: Setup's turn ends here.
@@ -38,8 +38,9 @@ component README — and compare with what Setup published:
 | Changed in claude.ai | What to do |
 |---|---|
 | Nothing (`lastChange` is Setup's own) | Go on. |
-| **Tokens** — a value, alias, new or removed token | Snapshot the live `tokens.json` into the branch's `.ttt/tokens.json` byte for byte, regenerate the token file, and re-run `ds:contrast`, `ds:validate -- --system <live 01-system.md>`, typecheck, tests, build. A contrast miss now is a stop (the designer changed it; show them the pair) — never fixed in code. Commit. Then rebuild what the design system gets from the token file — `bundle.css`, the "Used by" lists, `02-using-in-code.md` — and publish whatever differs (Sync's `publish.md` §2 and §6 rules). |
-| Brand book, System, Changelog prose | Keep theirs. Nothing to do in code. |
+| **Tokens** — a value, alias, new or removed token | Snapshot the live `tokens.json` into the branch's `.ttt/tokens.json` byte for byte, regenerate the token file, and re-run `ds:contrast`, `ds:validate`, typecheck, tests, build. A contrast miss now is a stop (the designer changed it; show them the pair) — never fixed in code. Commit. Then rebuild what the design system gets from the token file — `bundle.css`, the "Used by" lists, `02-using-in-code.md` — and publish whatever differs (Sync's `publish.md` §2 and §6 rules). |
+| **System section** | Keep theirs, and snapshot the live `01-system.md` into `.ttt/system.md` byte for byte. If its Client settings line changed, the app's `locale.ts` follows it (design's decision at review); then `ds:validate` and the tests, and commit. |
+| Brand book, Changelog prose | Keep theirs. Nothing to do in code. |
 | A component README or preview | Keep theirs, but a changed styling map, status or API is a component proposal, not a review edit (contract, Ownership): list it in the report for the Components skill. |
 
 Record what changed between your publish and approval — it goes in the

@@ -1,6 +1,6 @@
 # Pre-flight — can Setup run here?
 
-design-system-kit 0.6.0
+design-system-kit 0.6.1
 
 Two checks before Setup asks for a single input. Both are cheap, and both stop
 the run if they fail: everything after them writes things (a branch, a design

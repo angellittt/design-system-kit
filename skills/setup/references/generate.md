@@ -1,6 +1,6 @@
 # Generate — tokens, then the design system
 
-design-system-kit 0.6.0
+design-system-kit 0.6.1
 
 Two halves, with the code branch in between (`code.md`): the tokens come
 first because the code needs them; the design system comes after the code
@@ -199,14 +199,17 @@ approach, and don't go on to review.
 
 ## 5. Validate it
 
-In the branch, with the published System section:
+In the branch, snapshot the published System section first: write the
+design system's `project/01-system.md` to `.ttt/system.md` (`systemIn`) byte
+for byte — CI checks the app against it (`ds-drift.test.mjs`). Then:
 
 ```bash
-npm run ds:validate -- --system <out>/ds/project/01-system.md
+npm run ds:validate        # reads .ttt/system.md
 npm run ds:contrast
+npm test                   # includes the drift test
 ```
 
-Both must pass (no errors; the only contrast miss is `label-disable`). Save
+All must pass (no errors and no drift; the only contrast miss is `label-disable`). Save
 the design system's URL in `.ttt/design-system.json` → `designSystem` if the
 code step left a placeholder there, and commit it.
 

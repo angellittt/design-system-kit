@@ -1,5 +1,5 @@
 {
-  "//": "design-system-kit 0.6.0 · profile shadcn · wiring: merged into the app's package.json by Setup, together with wiring/<framework>/package.fragment.json. Existing entries are never changed; missing ones are added at these versions. `dependencies` covers what the kit's components import beyond shadcn init's own (sonner for Sonner, react-day-picker and date-fns for Calendar and DatePicker, next-themes for theme switching).",
+  "//": "design-system-kit 0.6.1 · profile shadcn · wiring: merged into the app's package.json by Setup, together with wiring/<framework>/package.fragment.json. Existing entries are never changed; missing ones are added at these versions. `dependencies` covers what the kit's components import beyond shadcn init's own (sonner for Sonner, react-day-picker and date-fns for Calendar and DatePicker, next-themes for theme switching).",
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",

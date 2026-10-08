@@ -1,5 +1,5 @@
 {
-  "//": "design-system-kit 0.6.0 · profile shadcn · wiring (Next.js): merged into package.json after ../package.fragment.json; missing entries only. `build:safe` builds into .next-build so it can run beside a dev server.",
+  "//": "design-system-kit 0.6.1 · profile shadcn · wiring (Next.js): merged into package.json after ../package.fragment.json; missing entries only. `build:safe` builds into .next-build so it can run beside a dev server.",
   "scripts": {
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",

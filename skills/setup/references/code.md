@@ -1,6 +1,6 @@
 # Code — the branch, then the PR
 
-design-system-kit 0.6.0
+design-system-kit 0.6.1
 
 Setup step 5 builds the code branch; step 9 opens its PR. Paths are the
 app's folder; commands use the repo's package manager (common.md, "The app
@@ -97,7 +97,7 @@ From `kit/code/<profile>/`, into the places the README table gives:
 - **Scripts** — `scripts/*` → the repo's `scripts/`, unchanged (they are kit
   files; every one names the kit version).
 - **Repo config** — `wiring/design-system.json` → `.ttt/design-system.json`,
-  filled: `tracker`, `lastSynced` (system clock), `namespace`,
+  filled (with `systemIn`: `.ttt/system.md`): `tracker`, `lastSynced` (system clock), `namespace`,
   `tokensOut` and any adaptable path, `kitVersion` = the plugin's version.
   `designSystem` gets the link once the design system exists
   (`generate.md` §5) — until then `ds:validate` isn't run.

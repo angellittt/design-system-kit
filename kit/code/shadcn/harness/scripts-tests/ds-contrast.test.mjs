@@ -1,5 +1,5 @@
 // @vitest-environment node
-// design-system-kit 0.6.0 · profile shadcn · harness: ds-contrast tests
+// design-system-kit 0.6.1 · profile shadcn · harness: ds-contrast tests
 import { describe, expect, it } from "vitest"
 import { spawnSync } from "node:child_process"
 import { join, dirname } from "node:path"

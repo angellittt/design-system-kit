@@ -1,6 +1,6 @@
 # Inputs — ask for every one, guess none
 
-design-system-kit 0.6.0
+design-system-kit 0.6.1
 
 Everything Setup generates comes from these answers. **Never fill one in
 yourself** — not from the repo, the client's website, a logo's colours or "a
@@ -27,9 +27,35 @@ read the answers back as a single summary and get a "yes" before generating.
 | 9 | **Date format** | the typed-entry pattern: day, month and year, numeric, one separator — e.g. `DD/MM/YYYY`, `YYYY-MM-DD` — or "the locale's" | It is what DatePicker parses, not how dates are displayed: a display style such as "14 Nov 2026" is a voice rule for the brand book. `""` when the locale's own pattern is wanted. Locale, week start and date format seed the app's `locale.ts` and the System section's Client settings line. |
 | 10 | **Radius character** | `sharp` (½ the template's radii), `default`, `soft` (1½×), or exact px per radius token | `radius-full` stays a pill; `radius-inset` follows `radius-lg` minus `space-1`. |
 | 11 | **Motion character** | `calm` (no overshoot), `default`, `playful` (more overshoot) | Changes `ease-expressive`; durations stay. Reduced motion still removes scale and spring. |
-| 12 | **Status colours** | `separate` (default): positive, cautionary, negative each as `#rrggbb` (or `{ "hex", "step" }`, as for brand colours) or `default` (TTT's green, amber, red) — or `reuse`: map each status to a brand ramp (`brand-primary`, `brand-secondary`, `brand-accent`) | Reuse removes the separate status ramps. Separate keeps each its own hue — safer when a brand colour is red or green but means something else. |
+| 12 | **Status colours** (ask what each means — below) | `separate` (default): positive, cautionary, negative each as `#rrggbb` (or `{ "hex", "step" }`, as for brand colours) or `default` (TTT's green, amber, red) — or `reuse`: map each status to a brand ramp (`brand-primary`, `brand-secondary`, `brand-accent`) | Reuse removes the separate status ramps. Separate keeps each its own hue — safer when a brand colour is red or green but means something else. |
 | 13 | **Kit extensions** | opt-in, from the profile's catalog | See below. Default is none: stock is preferred (contract, Component layers). |
 | 14 | **Client-added ramps** | for each: a role name, `#rrggbb`, the step it lands on (default 50), and why no standard ramp can supply it | Usually "none". Named by role (`data`, not `plum`) — the token tool refuses a hue name. Each one is recorded in the System section. |
+
+## Status colours — ask what each one means
+
+A status ramp isn't a palette slot: components hard-wire what it means.
+
+| Status | What it colours |
+|---|---|
+| `negative` | every error and every destructive action: invalid fields (Input, Textarea, Select, Combobox, Checkbox, RadioGroup, Switch, Field's error text), the destructive Button and DropdownMenu item, destructive Badge and Alert |
+| `cautionary` | warnings: Alert and Badge `tone="cautionary"` (Semantic colour extension) |
+| `positive` | success and confirmation: Alert and Badge `tone="positive"` (Semantic colour extension) |
+
+So before a brand colour goes on a status ramp — proposed from a brand pack,
+or offered by the person — ask what it **means** in the brand, quoting the
+row above: "Coral would colour every error and every Delete button. Is that
+what coral means for you?" A brand often reserves a colour for something
+else: attention or highlights, a category, a campaign. On Districtly, coral
+marked "attention moments" (hearing dates, comment windows), not errors.
+
+- It means the status → put it on the ramp.
+- It means something else → keep that status's default (or another colour
+  that does mean it), and give the meaning a home of its own: a client-added
+  ramp named for the role (row 14, e.g. `attention`), or the accent. Say in
+  the brand book what the colour is for, so nobody "fixes" it back later.
+
+Ask per colour; one colour can be right for one status and wrong for
+another. Record the answer's reason in the brand book's colour section.
 
 ## Offering kit extensions
 
