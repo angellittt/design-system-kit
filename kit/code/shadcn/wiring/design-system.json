@@ -4,7 +4,7 @@
   "schema": "ttt-ds/1",
   "profile": "shadcn",
   "framework": "{{FRAMEWORK}}",
-  "kitVersion": "0.5.1",
+  "kitVersion": "0.5.2",
   "tokensIn": ".ttt/tokens.json",
   "tokensOut": "src/styles/ds-tokens.css",
   "lastSynced": "{{NOW_ISO}}",
