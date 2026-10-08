@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// design-system-kit 0.6.1 · profile shadcn · kit file — fix it in the kit, not per client
+// design-system-kit 0.7.0 · profile shadcn · kit file — fix it in the kit, not per client
 /**
  * ds-styling-maps.mjs — the styling map in every implemented component's
  * README, generated from that component's code.
@@ -135,6 +135,14 @@ function resolveVar(name, seen = new Set()) {
   return null
 }
 
+/** `destructive/10` → 10, `black/[0.5]` → 50; null without an opacity modifier. */
+function alphaOf(value) {
+  const m = /\/(\d+(?:\.\d+)?|\[(\d*\.?\d+)(%?)\])$/.exec(value)
+  if (!m) return null
+  if (m[2] == null) return Number(m[1])
+  return m[3] ? Number(m[2]) : Math.round(Number(m[2]) * 1000) / 10
+}
+
 /** A Tailwind colour name (`card`, `label-alternative`) → its semantic token. */
 function colorToken(name) {
   if (!name) return null
@@ -247,22 +255,29 @@ function classify(raw) {
   const arbitrary = (v) => /^[[(].*[\])]$/.test(v)
   const valueToken = (v) =>
     arbitrary(v) ? tokenInArbitrary(v.slice(1, -1)) : colorToken(v)
+  // A colour's opacity modifier (`destructive/10`, `black/[0.5]`) is kept: it
+  // is part of the value, and Figma sets it as the bound paint's opacity.
+  const withAlpha = (row) => {
+    if (!row?.token) return row
+    const a = alphaOf(tail)
+    return a == null ? row : { ...row, alpha: a }
+  }
 
   switch (head) {
     case "bg": {
       const token = valueToken(tail)
-      return token ? { attribute: "background", token } : null
+      return token ? withAlpha({ attribute: "background", token }) : null
     }
     case "text": {
       // `text-sm`, `text-[15px]`, `text-sm/relaxed` are type; a colour is text.
       const token = valueToken(tail)
-      if (token) return { attribute: "text", token }
+      if (token) return withAlpha({ attribute: "text", token })
       return { attribute: "type", fixed: raw }
     }
     case "border": {
       if (tail === "") return null // bare `border` is a 1px default, not a value
       const token = valueToken(tail)
-      if (token) return { attribute: "border colour", token }
+      if (token) return withAlpha({ attribute: "border colour", token })
       // A width: `border-2`, `border-0`, `border-[1.5px]`.
       if (/^(\d+|\[[^\]]+\])$/.test(tail))
         return { attribute: "border width", fixed: raw }
@@ -279,7 +294,7 @@ function classify(raw) {
     case "ring":
     case "outline": {
       const token = valueToken(tail)
-      return token ? { attribute: "ring", token } : null
+      return token ? withAlpha({ attribute: "ring", token }) : null
     }
     case "shadow": {
       const token = resolveVar(`shadow-${tail}`) ?? valueToken(tail)
@@ -662,7 +677,7 @@ function rowsFor(component, files) {
       const stateText = stateParts.length ? stateParts.join(" · ") : "—"
 
       const value = result.token
-        ? `\`${result.token}\``
+        ? `\`${result.token}\`${result.alpha != null ? ` · ${result.alpha}%` : ""}`
         : result.derived ?? `${result.fixed} — fixed in code`
       const key = `${part}\u0000${stateText}\u0000${result.attribute}\u0000${value}`
       if (!rows.has(key))
@@ -730,7 +745,7 @@ function usedBy() {
   const map = new Map()
   for (const c of allComponents()) {
     for (const row of rowsFor(c, filesFor(c))) {
-      const m = /^`([^`]+)`$/.exec(row.value)
+      const m = /^`([^`]+)`(?: · [\d.]+%)?$/.exec(row.value)
       if (!m || !SEMANTIC.has(m[1])) continue
       if (!map.has(m[1])) map.set(m[1], new Set())
       map.get(m[1]).add(c)

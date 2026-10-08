@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// design-system-kit 0.6.1 · Setup tool — runs from the kit, never copied into a client repo
+// design-system-kit 0.7.0 · Setup tool — runs from the kit, never copied into a client repo
 /**
  * ds-setup.mjs — the two mechanical parts of Setup's "generate" step.
  *
@@ -106,13 +106,45 @@ const MAX_CHROMA_RATIO = 1.25
  * steps keep the template ladder's lightness spacing and chroma profile,
  * stretched so the ends stay where the template has them.
  */
+/**
+ * How much a ramp anchored at `anchor` compresses each side of the template
+ * ladder: 1 keeps the template's spacing, 0.25 squeezes that side into a
+ * quarter of its room. The smaller side is returned.
+ */
+export function squeeze(hex, anchor, templateLadder) {
+  const L = hexToOklch(hex).L
+  const at = templateLadder.find((s) => s.step === String(anchor))
+  const Ls = templateLadder.map((s) => s.L)
+  const [lo, hi] = [Math.min(...Ls), Math.max(...Ls)]
+  const below = at.L - lo > 1e-6 ? (L - lo) / (at.L - lo) : 1
+  const above = hi - at.L > 1e-6 ? (hi - L) / (hi - at.L) : 1
+  return Math.min(below, above)
+}
+
+/** The step whose template lightness is closest to the colour's. */
+export function nearestStep(hex, templateLadder) {
+  const L = hexToOklch(hex).L
+  return templateLadder.reduce((a, b) => (Math.abs(b.L - L) < Math.abs(a.L - L) ? b : a)).step
+}
+
+/** Below this, a side of the ramp is squeezed to under half its room and the colour moves. */
+export const SQUEEZE_LIMIT = 0.5
+/** Lightness so close to black or white that no ramp can be built around it. */
+const EXTREME = { dark: 0.08, light: 0.99 }
+
 export function generateRamp(hex, anchor, templateLadder) {
   const brand = hexToOklch(hex)
   const at = templateLadder.find((s) => s.step === String(anchor))
   if (!at) throw new Error(`step ${anchor} isn't in the ramp (${templateLadder.map((s) => s.step).join(", ")})`)
   const Ls = templateLadder.map((s) => s.L)
-  const [lo, hi] = [Math.min(...Ls), Math.max(...Ls)]
-  if (brand.L <= lo + 0.01 || brand.L >= hi - 0.01) {
+  let [lo, hi] = [Math.min(...Ls), Math.max(...Ls)]
+  // A colour darker than the darkest step (or lighter than the lightest) can
+  // still anchor that end step: the end stretches to it and the other steps
+  // respace evenly. Anywhere else, or next to black or white, it can't.
+  const darkest = templateLadder.find((s) => s.L === lo).step, lightest = templateLadder.find((s) => s.L === hi).step
+  if (brand.L <= lo + 0.01 && at.step === darkest && brand.L >= EXTREME.dark) lo = brand.L
+  else if (brand.L >= hi - 0.01 && at.step === lightest && brand.L <= EXTREME.light) hi = brand.L
+  else if (brand.L <= lo + 0.01 || brand.L >= hi - 0.01) {
     const dark = brand.L <= lo + 0.01
     const options = fitOptions(hex, templateLadder, anchor)
       .map((o, i) => `  ${"abc"[i]}) ${o.hex} at step ${o.step} — ${o.why}`).join("\n")
@@ -207,12 +239,21 @@ export function applyInputs(template, inputs) {
     }
   }
 
-  // One client colour on its ramp: the role's usual step unless the input
-  // names another; a colour no step can hold stops with options (generateRamp).
+  // One client colour on its ramp: the step the input names; otherwise the
+  // role's usual step, unless the colour would squeeze one side of the ramp
+  // there (a dark navy on a mid step) — then the step its lightness matches,
+  // stretching an end step if it's darker or lighter than the whole ladder.
+  // The semantic tokens that were the colour itself (on the usual step) follow
+  // it. A colour no step can hold stops with options (generateRamp).
   const placeColour = (path, v, ramp, label) => {
     const { hex, step, from } = colourInput(path, v, need)
     const usual = anchorStep(template, ramp)
-    const anchor = step ?? usual
+    const lad = ladder(template, ramp)
+    let anchor = step ?? usual
+    if (!step && squeeze(hex, usual, lad) < SQUEEZE_LIMIT) {
+      anchor = nearestStep(hex, lad)
+      notes.push(`\`${ramp}\`: ${hex} would squeeze the ramp at step ${usual} (its ${hexToOklch(hex).L < lad.find((x) => x.step === usual).L ? "darker" : "lighter"} steps into ${Math.max(0, Math.round(squeeze(hex, usual, lad) * 100))}% of their room), so it sits at step ${anchor}, the step its lightness matches.`)
+    }
     let steps
     try { steps = generateRamp(hex, anchor, ladder(template, ramp)) }
     catch (e) { throw new Error(`inputs.${path} (${ramp}): ${e.message}`) }
@@ -220,10 +261,13 @@ export function applyInputs(template, inputs) {
     replaceRamp(ramp, steps, (s) => s === anchor ? `The client's ${label} colour (${origin}) lands here.` : `Generated from the ${label} colour (${hex}).`)
     if (from) notes.push(`\`${ramp}\`: ${hex} at step ${anchor} stands in for ${from}, which no step could hold — record it in the System section's client-specific choices.`)
     if (anchor !== usual) {
-      const on = tokens.color.tokens
-        .filter((t) => typeof t.value === "object" && Object.values(t.value).some((x) => x === `{${ramp}-${usual}}`))
-        .map((t) => `\`${t.name}\``)
-      notes.push(`\`${ramp}\`: ${hex} sits at step ${anchor}, not the usual ${usual}. ${on.length ? `${on.join(", ")} still ${on.length === 1 ? "points" : "point"} at step ${usual}, a generated shade, not ${hex} — check them at review.` : ""}`.trim())
+      // The tokens that were the colour itself follow it to its step.
+      const moved = []
+      for (const t of tokens.color.tokens) {
+        if (typeof t.value !== "object") continue
+        for (const theme of Object.keys(t.value)) if (t.value[theme] === `{${ramp}-${usual}}`) { t.value[theme] = `{${ramp}-${anchor}}`; moved.push(`${t.name} (${theme})`) }
+      }
+      notes.push(`\`${ramp}\`: ${hex} sits at step ${anchor}, not the usual ${usual}. ${moved.length ? `Moved with it: ${moved.map((m) => `\`${m}\``).join(", ")}.` : ""} The ramp's other semantic tokens keep their steps; check its hover and text shades at review.`.trim())
     }
   }
 

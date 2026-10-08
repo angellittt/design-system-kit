@@ -1,6 +1,6 @@
 # Code — the branch, then the PR
 
-design-system-kit 0.6.1
+design-system-kit 0.7.0
 
 Setup step 5 builds the code branch; step 9 opens its PR. Paths are the
 app's folder; commands use the repo's package manager (common.md, "The app
@@ -130,8 +130,14 @@ From `kit/code/<profile>/`, into the places the README table gives:
 - **Lint** — never change the repo's own rules; add the kit's scoped blocks.
   - Next.js: `wiring/next/eslint.config.mjs`, or its jsx-a11y block added to
     the repo's flat config.
-  - Vite: spread `wiring/vite/eslint.design-system.mjs` into the repo's flat
-    config after its own entries — when that config is TypeScript
+  - Vite: wrap the repo's flat config entries with `withDesignSystem(…)` from
+    `wiring/vite/eslint.design-system.mjs` — `export default
+    defineConfig(withDesignSystem([...the repo's entries]))`. It appends the
+    kit's blocks and switches the repo's **style** rules (ESLint's own
+    `layout` and `suggestion` types — `prefer-arrow-functions`,
+    `import-x/order`) off for the vendored files only, so stock files stay as
+    shadcn ships them instead of collecting hundreds of warnings; correctness,
+    security, hooks and accessibility rules stay on. When that config is TypeScript
     (`eslint.config.ts`), copy `wiring/vite/eslint.design-system.d.mts` beside
     the `.mjs` too, or the import fails the typecheck; if the repo runs oxlint, add
     `wiring/vite/oxlint.design-system.jsonc`'s object to `.oxlintrc.json`

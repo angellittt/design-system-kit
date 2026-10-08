@@ -1,6 +1,6 @@
 # Figma — tokens (pull and publish), components (publish)
 
-design-system-kit 0.6.1
+design-system-kit 0.7.0
 
 Figma is a read-only consumer of the design system: it is regenerated from
 the design system, never edited to taste. The Figma file is the one in the
@@ -116,7 +116,9 @@ Then build or change them:
   in the page's section layout (Setup's `figma-library.md` §0, §3): the set,
   its properties and its "In use" example. The **styling map** is the check,
   not the blueprint: every token it names for a state the set shows must be
-  bound there — a binding change in the map is a change here. A component the
+  bound there — a binding change in the map is a change here. A row with an
+  opacity (`` `status-negative` · 10% ``) is bound with that paint opacity,
+  and the read-back compares both. A component the
   spec doesn't cover yet (a client extension, a new kit part) is built in the
   same pattern and listed in Gaps so the spec gains it.
 - Names follow the contract: the component set is the design-system folder

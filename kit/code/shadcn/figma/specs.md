@@ -1,6 +1,6 @@
 # Figma component specs — profile shadcn (base-nova)
 
-design-system-kit 0.6.1 · profile shadcn
+design-system-kit 0.7.0 · profile shadcn
 
 How each baseline component is built in a client's Figma library. Measurements
 are base-nova's (the stock files in `kit/code/shadcn/stock/ui/`); colours,
@@ -24,7 +24,10 @@ titles on the library pages).
 **Focus** is drawn as a 2px `focus-ring` stroke (outside) on buttons, or a
 `focus-ring` border plus `ring(node, "focus-ring", 0.5)` on fields; errors use
 `status-negative` with `ring(…, 0.2)`; disabled is opacity 0.5 unless the map
-says otherwise.
+says otherwise. **Tints come from the map**: a row `` `token` · N% `` is the
+variable bound with paint opacity N/100 (`paint(token, N / 100)`), so the
+percentages in this spec (Badge's 10% destructive tint, the 20%/40% error
+rings) are what the code uses and can be read back, not values to choose.
 
 ## Actions
 
