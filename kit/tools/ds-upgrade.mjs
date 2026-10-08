@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// design-system-kit 0.10.0 · Upgrade tool — runs from the kit, never copied into a client repo
+// design-system-kit 0.10.1 · Upgrade tool — runs from the kit, never copied into a client repo
 /**
  * ds-upgrade.mjs — the mechanical part of Upgrade: reconcile every kit file a
  * repo carries with a newer kit, keeping what the client changed.
@@ -46,6 +46,14 @@
  * part of the reconcile. Sections merged into other files (the theme block
  * in the global CSS, the CLAUDE.md section, package.json) aren't whole files
  * and are left to the changelog's upgrade steps.
+ *
+ * --add <name,…> adds components the repo doesn't have (kit file names, e.g.
+ * toggle-group,data-table), with what they import from the component folder:
+ * a missing file comes too (stock, unless only the kit extension exports the
+ * imported names); a stock file that lacks an imported name is swapped for
+ * the kit extension when the repo's copy is unmodified, and blocks the
+ * component when it's customized. npm packages the added files import and
+ * the app doesn't declare are listed, not installed.
  *
  * Without --write nothing in the app changes. Always writes <out>/plan.json
  * and <out>/plan.md (default <out>: ./.ds-upgrade), with every customization
@@ -205,7 +213,7 @@ const byVersion = (a, b) => {
 // Reconcile
 // ---------------------------------------------------------------------------
 
-export async function reconcile({ app, kitSrc, to, write = false }) {
+export async function reconcile({ app, kitSrc, to, add = [], write = false }) {
   app = resolve(app)
   const target = kitTree(kitSrc, to)
   if (!target) throw new Error(`no tag v${to} in ${kitSrc} — fetch the kit's tags (git fetch --tags)`)
@@ -289,10 +297,117 @@ export async function reconcile({ app, kitSrc, to, write = false }) {
     .filter((p) => /\/(stock\/ui|kit\/ui)\/[^/]+\.tsx$/.test(p) && !p.endsWith(".test.tsx") && !seen.has(p))
     .filter((p) => !files.some((f) => basename(f.file) === basename(p)))
 
+  const adding = add.length ? await plan_add({ app, kitSrc, to, target, files, fmt, names: add }) : { added: [], blocked: [], packages: [] }
+
   if (write) {
     for (const f of files) if (f.changed) writeFileSync(join(app, f.file), f.result)
+    for (const a of adding.added) writeFileSync(join(app, a.file), a.result)
   }
-  return { app, from: [...new Set(files.map((f) => f.from))].sort(byVersion), to, formatter: fmt.name, files, available }
+  return { app, from: [...new Set(files.map((f) => f.from))].sort(byVersion), to, formatter: fmt.name, files, available, ...adding }
+}
+
+// ---------------------------------------------------------------------------
+// Adding components the repo doesn't have
+// ---------------------------------------------------------------------------
+
+/** Every name a module exports (functions, consts, types, and `export { … }` lists). */
+function exportsOf(text) {
+  const names = new Set()
+  for (const m of text.matchAll(/export\s+(?:declare\s+)?(?:async\s+)?(?:function|const|let|class|type|interface)\s+(\w+)/g)) names.add(m[1])
+  for (const m of text.matchAll(/export\s+(?:type\s+)?\{([^}]*)\}/g))
+    for (const part of m[1].split(",")) {
+      const name = part.replace(/^\s*type\s+/, "").split(/\s+as\s+/).pop().trim()
+      if (name) names.add(name)
+    }
+  return names
+}
+
+/** `{ file, names }` for each `import { … } from "@/components/ui/<file>"`. */
+function uiImportsOf(text) {
+  return [...text.matchAll(/import\s+(?:type\s+)?\{([^}]*)\}\s*from\s*["']@\/components\/ui\/([\w-]+)["']/g)].map((m) => ({
+    file: m[2],
+    names: m[1].split(",").map((n) => n.replace(/^\s*type\s+/, "").split(/\s+as\s+/)[0].trim()).filter(Boolean),
+  }))
+}
+
+/** npm packages a module imports (bare specifiers, scoped ones by scope/name). */
+function packagesOf(text) {
+  const pkgs = new Set()
+  for (const m of text.matchAll(/(?:from|import)\s*["']([^"'.\/@][^"']*|@[^"'\/]+\/[^"']+)["']/g)) {
+    const spec = m[1]
+    if (spec.startsWith("@/")) continue
+    pkgs.add(spec.startsWith("@") ? spec.split("/").slice(0, 2).join("/") : spec.split("/")[0])
+  }
+  return pkgs
+}
+
+/**
+ * Plan adding `names` (kit file names: "toggle-group", "data-table"). Each
+ * brings what it imports from the component folder: a missing file is added
+ * (stock, unless only the kit extension exports what's imported); a stock
+ * file the repo has that lacks an imported name is swapped for the kit
+ * extension — only when the repo's copy is the kit's, unmodified. A
+ * customized one blocks the component rather than being overwritten. Each
+ * requested name is all-or-nothing.
+ */
+async function plan_add({ app, kitSrc, to, target, files, fmt, names }) {
+  const stockFile = files.find((f) => /\/stock\/ui\//.test(f.kitPath ?? ""))
+  if (!stockFile) throw new Error("no stock component found in the app — can't tell where its component folder is")
+  const uiDir = dirname(stockFile.file)
+  const root = stockFile.kitPath.replace(/\/stock\/ui\/.*$/, "")
+  const inRepo = new Map(files.filter((f) => dirname(f.file) === uiDir).map((f) => [basename(f.file, ".tsx"), f]))
+  const kitText = (variant, name) => (target.includes(`${root}/${variant}/${name}.tsx`) ? kitFile(kitSrc, to, `${root}/${variant}/${name}.tsx`) : null)
+
+  const added = [], blocked = []
+  const planned = new Map()
+  for (const asked of names) {
+    const actions = new Map()
+    let why = null
+    const visit = (name, by, need) => {
+      if (why) return
+      const have = actions.get(name) ?? planned.get(name)
+      const current = have?.text ?? (inRepo.has(name) ? readFileSync(join(app, inRepo.get(name).file), "utf8") : null)
+      const missing = (text) => need.filter((n) => !exportsOf(text).has(n))
+      if (current != null && missing(current).length === 0) return
+      const stock = kitText("stock/ui", name), ext = kitText("kit/ui", name)
+      const pick = [stock, ext].find((t) => t != null && missing(t).length === 0)
+      if (pick == null) {
+        why = `${by} imports ${need.join(", ")} from ${name}, and no kit file of ${name} exports ${need.length > 1 ? "them" : "it"}`
+        return
+      }
+      const variant = pick === stock ? "stock/ui" : "kit/ui"
+      if (current != null && !have) {
+        const entry = inRepo.get(name)
+        if (!["stamp", "replace"].includes(entry.outcome)) {
+          why = `${by} needs ${name}'s kit extension (${missing(current).join(", ")}); the repo's ${name}.tsx is customized (${entry.outcome}), so it isn't replaced`
+          return
+        }
+      }
+      actions.set(name, { name, variant, text: pick, reason: by === asked && name === asked ? "asked" : `needed by ${by}`, replaces: current != null })
+      for (const dep of uiImportsOf(pick)) visit(dep.file, name, dep.names)
+    }
+    visit(asked, asked, [])
+    if (!actions.size && !why && inRepo.has(asked)) why = `${asked} is already in the repo`
+    if (why) blocked.push({ name: asked, why })
+    else for (const [n, a] of actions) planned.set(n, a)
+  }
+
+  for (const a of planned.values()) {
+    const file = join(uiDir, `${a.name}.tsx`)
+    added.push({
+      name: a.name,
+      file,
+      kitPath: `${root}/${a.variant}/${a.name}.tsx`,
+      reason: a.reason,
+      replaces: a.replaces,
+      result: await fmt.format(a.text, join(app, file)),
+    })
+  }
+
+  const pkg = JSON.parse(readFileSync(join(app, "package.json"), "utf8"))
+  const declared = new Set(Object.keys({ ...pkg.dependencies, ...pkg.devDependencies, ...pkg.peerDependencies }))
+  const packages = [...new Set(added.flatMap((a) => [...packagesOf(a.result)]))].filter((p) => !declared.has(p)).sort()
+  return { added, blocked, packages }
 }
 
 // ---------------------------------------------------------------------------
@@ -319,6 +434,13 @@ export function planMarkdown(plan) {
     lines.push("", "**Available in the kit, not in this repo** (adding one is a choice, not part of the upgrade):", "")
     for (const p of plan.available) lines.push(`- \`${p.replace(/^kit\/code\/[^/]+\//, "")}\``)
   }
+  if (plan.added?.length || plan.blocked?.length) {
+    lines.push("", "## Components added", "")
+    for (const a of plan.added)
+      lines.push(`- \`${a.file}\` — ${a.kitPath.replace(/^kit\/code\/[^/]+\//, "")}, ${a.reason}${a.replaces ? " (replaces the repo's unmodified stock file)" : ""}`)
+    for (const b of plan.blocked) lines.push(`- **${b.name} not added**: ${b.why}`)
+    if (plan.packages.length) lines.push("", `Packages to add: ${plan.packages.map((p) => `\`${p}\``).join(", ")}`)
+  }
   const custom = plan.files.filter((f) => f.customization)
   if (custom.length) {
     lines.push("", "## What the client changed", "", "Each customized file against the kit file it started from.", "")
@@ -336,7 +458,7 @@ function writeOut(out, plan) {
     writeFileSync(`${dest}.conflict`, f.conflicted)
     writeFileSync(`${dest}.kit`, f.theirs)
   }
-  const slim = { ...plan, files: plan.files.map(({ result, conflicted, theirs, ...f }) => f) }
+  const slim = { ...plan, files: plan.files.map(({ result, conflicted, theirs, ...f }) => f), added: plan.added.map(({ result, ...a }) => a) }
   writeFileSync(join(out, "plan.json"), JSON.stringify(slim, null, 2) + "\n")
   writeFileSync(join(out, "plan.md"), planMarkdown(plan))
 }
@@ -349,14 +471,16 @@ async function main() {
   }
   const kitSrc = opt("kit-src"), to = opt("to")
   if (!kitSrc || !to) {
-    console.error("usage: ds-upgrade.mjs --kit-src <kit clone> --to <version> [--app <dir>] [--out <dir>] [--write]")
+    console.error("usage: ds-upgrade.mjs --kit-src <kit clone> --to <version> [--add <name,…>] [--app <dir>] [--out <dir>] [--write]")
     process.exit(2)
   }
   const app = resolve(opt("app") ?? ".")
   const out = resolve(opt("out") ?? join(app, ".ds-upgrade"))
-  const plan = await reconcile({ app, kitSrc: resolve(kitSrc), to, write: args.includes("--write") })
+  const add = (opt("add") ?? "").split(",").map((n) => n.trim()).filter(Boolean)
+  const plan = await reconcile({ app, kitSrc: resolve(kitSrc), to, add, write: args.includes("--write") })
   writeOut(out, plan)
   process.stdout.write(planMarkdown(plan).split("\n## What the client changed")[0])
+  if (plan.blocked.length) process.exitCode = 1
   console.log(`\n${args.includes("--write") ? "wrote the app's files" : "dry run — nothing in the app changed"}; plan in ${relative(process.cwd(), out) || "."}/plan.md`)
   if (plan.files.some((f) => f.outcome === "conflict")) process.exitCode = 1
 }

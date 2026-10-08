@@ -1,6 +1,6 @@
 # Report — how every Upgrade run ends
 
-design-system-kit 0.10.0
+design-system-kit 0.10.1
 
 The skill writes the report itself (common.md §10). It goes in the chat and,
 when there is a PR, as the PR body. A run that stopped still reports: say
@@ -26,6 +26,9 @@ that are empty — never drop a heading.
 - **Needs a dev** (its own sub-heading when not empty): every conflict, as
   the conflicted merge and the kit's file, with what the kit changed there;
   every undocumented customization, with its diff against the kit.
+- **Components added** (step 5b): each one asked for, what came with it
+  (files, a stock file swapped for its kit extension, packages at their
+  versions), and the offer's other components, not taken.
 - Each changelog step applied in step 6, by version.
 - Checks: `ds:validate`, typecheck, lint, tests, build, formatter — results.
 - The branch and PR, and whether it's a draft (open conflicts).
@@ -45,8 +48,9 @@ that are empty — never drop a heading.
 
 **Gaps**
 - Every `unknown`, `removed` and conflicted file; every undocumented
-  customization; components available but not installed; every version
+  customization; components offered and not taken, and any that couldn't be
+  added (a file they need is customized); every version
   mismatch common.md §2 found; warnings from `ds:validate`; failures that
   were already on `main`; and the manual steps left — always "`/ds-sync
-  publish` after the merge (System section Versions row, changed components'
-  pages, Figma)".
+  publish` after the merge (System section Versions row, changed and added
+  components' pages, Figma)".

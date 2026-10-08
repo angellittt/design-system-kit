@@ -1,4 +1,4 @@
-# TTT design system kit · ttt-ds/1 · kit 0.10.0
+# TTT design system kit · ttt-ds/1 · kit 0.10.1
 
 The starting point for every client design system, bundled into TTT's four skills: **Setup** (design system + Figma + code branch, ending in a PR), **Sync** (pull → PR, publish-back), **Components** (check → propose → accept) and **Drift audit**. Extracted from Jelly, the worked example; the classification of what came over and why is in `docs/extraction/classification.md` at the repo root.
 
@@ -46,7 +46,7 @@ If another plugin also defines `/ds-sync` or `/ds-setup`, use the namespaced for
 | `skills/setup/` | The Setup skill: `SKILL.md`, and the steps in `references/` (`preflight.md`, `inputs.md`, `generate.md`, `code.md`, `review.md`, `figma-library.md`, `report.md`) |
 | `commands/ds-setup.md` | `/ds-setup` |
 | `kit/tools/ds-setup.mjs` | Setup's tool, run from the kit (never copied into a repo): `tokens` generates the ramps from the brand inputs and fits contrast; `fill` fills the template's placeholders. Tests: `node --test kit/tools/ds-setup.test.mjs` |
-| `kit/tools/ds-upgrade.mjs` | Upgrade's tool, run from the kit: reconciles every kit file a repo carries with the installed version — against the kit file it started from (the release tag of its own stamp), through the repo's formatter — as stamp, replace, keep, merge or conflict. Tests: `node --test kit/tools/ds-upgrade.test.mjs` |
+| `kit/tools/ds-upgrade.mjs` | Upgrade's tool, run from the kit: reconciles every kit file a repo carries with the installed version — against the kit file it started from (the release tag of its own stamp), through the repo's formatter — as stamp, replace, keep, merge or conflict; `--add <names>` adds components the repo doesn't have, with what they need. Tests: `node --test kit/tools/ds-upgrade.test.mjs` |
 | `skills/upgrade/` | The Upgrade skill: `SKILL.md`, and `references/upgrade.md` and `report.md` |
 | `commands/ds-upgrade.md` | `/ds-upgrade` |
 | `skills/sync/` | The Sync skill: `SKILL.md`, and the steps in `references/` (`pull.md`, `publish.md`, `figma.md`, `report.md`) |
@@ -107,6 +107,13 @@ Placeholders to fill: `{{CLIENT_NAME}}`, `{{NAMESPACE}}`, `{{N_IMPLEMENTED}}`, `
 Reads the system's contract (schema and profile first), generates the theme file and installs components as the profile describes, writes the repo guardrails, and moves each component from `validated` to `implemented` once it's in the codebase.
 
 ## Changes
+
+**0.10.1** (2026-10-08) — Upgrade offers new components
+- **The offer** (`references/upgrade.md` step 5b): after the dry run, the components the kit has and the repo doesn't are offered once, in one message — what each is for, *candidate* where the profile says so, and what it brings — the way Setup offers kit extensions. Nothing is added unless named. 0.10.0 only listed them in the report, and nothing said how to ask for one.
+- **Adding to a repo already on the kit's version**: `/ds-upgrade` no longer stops at "nothing to do" when components are available; it offers them and opens a `ds-add/<date>` PR for those taken. (A Components skill remains the long-term home.)
+- **`ds-upgrade.mjs --add <names>`**: adds components with what they import from the component folder — a missing file comes too (ToggleGroup brings Toggle); a stock file that lacks an imported name is swapped for its kit extension when the repo's copy is unmodified (DataTable swaps stock Table for the kit's, for `TableSortButton`) and blocks the component when it's customized; npm packages the added files import and the app doesn't declare are listed for the skill to install. Each requested component is all-or-nothing. Four new tests (11).
+
+**Upgrading a 0.10.0 repo**: nothing but the stamp.
 
 **0.10.0** (2026-10-08) — the Upgrade skill
 - **`/ds-upgrade`** (`skills/upgrade/`): catches a repo up to the installed kit as its own PR. Versions first (nothing to do, or stop when the repo is newer or the schema/profile differ), then the changelog's steps from the repo's `kitVersion` on, split into file steps (the reconcile does them), other steps (tokens, config keys, call sites, packages — done in version order) and design-system steps (`/ds-sync publish` after the merge).

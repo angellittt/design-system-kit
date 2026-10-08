@@ -1,5 +1,5 @@
 {
-  "//": "design-system-kit 0.10.0 · the kit's own CI. Not a client file: it installs the toolchain the kit's tests run on (the Vite tested range's versions), and assemble.mjs lays the kit out as an app would have it.",
+  "//": "design-system-kit 0.10.1 · the kit's own CI. Not a client file: it installs the toolchain the kit's tests run on (the Vite tested range's versions), and assemble.mjs lays the kit out as an app would have it.",
   "name": "design-system-kit-ci",
   "private": true,
   "type": "module",
