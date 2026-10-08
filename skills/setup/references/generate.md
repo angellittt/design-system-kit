@@ -1,6 +1,6 @@
 # Generate — tokens, then the design system
 
-design-system-kit 0.8.1
+design-system-kit 0.9.0
 
 Two halves, with the code branch in between (`code.md`): the tokens come
 first because the code needs them; the design system comes after the code
@@ -166,6 +166,8 @@ is checked with the other previews (light and dark, zero errors).
 - **Kit extensions** — in the README's contract block, keep only the chosen
   ones under "Kit extensions"; remove the others' lines (and any "No preview
   yet" note about them). Chosen ones are previewed from the kit's code.
+  A whole-component extension (DataTable) that wasn't chosen has no stock
+  fallback: delete its folder from `components/`.
 - **Styling map** — regenerate from the branch
   (`node $KIT/ds-styling-maps.mjs --all > <out>/maps.md`) and replace each
   README's `**Styling map** — generated from …` block (up to the

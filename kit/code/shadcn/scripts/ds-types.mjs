@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// design-system-kit 0.8.1 · profile shadcn · kit file — fix it in the kit, not per client
+// design-system-kit 0.9.0 · profile shadcn · kit file — fix it in the kit, not per client
 /**
  * ds-types.mjs — `components/index.d.ts` for the design system, generated from
  * the repo's own `components/ui` exports.
@@ -303,6 +303,11 @@ function signatureEntry(name, node, sf, cvas) {
   return {
     kind: "function",
     name,
+    // Generic parts (DataTable's `<TData>`) keep their type parameters, or
+    // `TanStackTable<TData>` would name a type nothing declares.
+    typeParams: node.typeParameters
+      ? `<${node.typeParameters.map((t) => t.getText(sf)).join(", ")}>`
+      : "",
     params,
     returns: returnTypeOf(node, sf),
     variants: first ? variantsFor(flatten(first, sf), cvas) : null,
@@ -359,7 +364,7 @@ function render(files) {
             )
         }
         out.push(
-          `export declare function ${e.name}(${e.params.join(", ")}): ${e.returns};`
+          `export declare function ${e.name}${e.typeParams}(${e.params.join(", ")}): ${e.returns};`
         )
       } else if (e.kind === "cva") {
         for (const a of e.axes)

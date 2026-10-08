@@ -1,4 +1,4 @@
-// design-system-kit 0.8.1 · profile shadcn · wiring (Vite): oxlint override
+// design-system-kit 0.9.0 · profile shadcn · wiring (Vite): oxlint override
 //
 // For repos that lint with oxlint. Setup adds this object to the app's
 // .oxlintrc.json "overrides" list (create the list if there isn't one); it
@@ -9,8 +9,9 @@
 //   through props the linter can't see (prefer-tag-over-role, the two
 //   interaction rules, label-has-associated-control), and DatePicker focuses
 //   its input when the calendar opens on purpose (no-autofocus).
-// - cva variant helpers are exported beside the component by design
-//   (only-export-components); use-mobile is stock (set-state-in-effect).
+// - cva variant helpers, and DatePicker's and DataTable's documented helpers,
+//   are exported beside the component by design (only-export-components);
+//   use-mobile is stock (set-state-in-effect).
 // - Kit tests assert on elements they just rendered (no-non-null-assertion).
 // - Kit scripts are linted in the kit, not per client.
 {

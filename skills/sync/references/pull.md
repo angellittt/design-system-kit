@@ -1,6 +1,6 @@
 # Pull — design → code and Figma
 
-design-system-kit 0.8.1
+design-system-kit 0.9.0
 
 Brings the design system's design-owned values to everything built from
 them: the repo (the token snapshot, the generated token file and assets — one

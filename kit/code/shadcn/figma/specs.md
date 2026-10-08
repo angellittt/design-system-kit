@@ -1,6 +1,6 @@
 # Figma component specs — profile shadcn (base-nova)
 
-design-system-kit 0.8.1 · profile shadcn
+design-system-kit 0.9.0 · profile shadcn
 
 How each baseline component is built in a client's Figma library. Measurements
 are base-nova's (the stock files in `kit/code/shadcn/stock/ui/`); colours,
@@ -35,6 +35,9 @@ rings) are what the code uses and can be read back, not values to choose.
 |---|---|---|---|---|
 | **Button** | h-row, centred. xs 24 (px 8, gap 4, radius-sm, caption-1, icon 12) · sm 28 (px 10, gap 4, radius-sm, caption-1, icon 14) · default 32 (px 10, gap 6, radius-md, label-1, icon 16) · lg 36 (as default). Icon sizes square: icon-xs 24, icon-sm 28 (radius-sm), icon 32, icon-lg 36 (radius-md). | Variant default (primary-normal / on-primary, hover primary-strong) · secondary (fill-normal / label-normal, hover fill-strong) · outline (background-normal + line-normal border, hover fill-alternative) · ghost (hover fill-alternative) · destructive (status-negative fill at 10%, 20% hover; status-negative text) · link (primary-text; hover underline). State default · hover · focus · disabled on Size=default; other sizes default only; icon sizes for default · outline · ghost. | Label (text), Leading icon (boolean; an Icon instance named "Leading icon", swap per use) | One of each variant with real labels, two with swapped icons |
 | **Spinner** | 16×16 component holding `Icon/loader-circle`, label-normal | — | — | A loading button: disabled Button, Leading icon on, swapped to loader-circle |
+| **Toggle** | h-row, centred, gap 4, label-1, icon 16. sm 28 (min-w 28, px 10, radius-sm, caption-1, icon 14) · default 32 (min-w 32, px 10, radius-md) · lg 36 (min-w 36, px 10, radius-md). Icon-only: square at each size. | Variant default (transparent) · outline (1px line-strong border) × State off · hover (fill-alternative, label-normal) · on (fill-alternative) · focus · disabled, on Size=default; other sizes off · on | Label (text), Show label, Leading icon (boolean; Icon instance named "Leading icon") | A formatting row (bold, italic, underline; one on) and an outline "starred only" filter with an icon |
+| **ToggleGroup** | h-row of Toggle instances with the group's Variant and Size; gap 8 (`spacing` 2), or joined at `spacing` 0: gap 0, inner corners square, outline items share one line-strong border (no left border after the first), outer corners radius-md (sm radius-sm) | Spacing default · joined × Orientation horizontal · vertical | — | A joined outline view switcher (list / grid, one on) and a spaced formatting group (two on) |
+| **ButtonGroup** | h-row of Button instances, gap 0: inner corners square, outline buttons share one border (no left border after the first), outer corners radius-md. ButtonGroup/Text *(part)*: fill-alternative, 1px line-normal, radius-md, p 0/10, label-1. Separator between borderless buttons: 1px line-strong, 1px inset top and bottom | Orientation horizontal · vertical | — | A split button (outline "send" + a chevron-down icon button), a pager pair beside a two-button group (8 apart), and a URL prefix (Text + Input) |
 
 ## Forms
 
@@ -83,6 +86,7 @@ rings) are what the code uses and can be read back, not values to choose.
 | **Empty** | v-stack centred, dashed line-normal border, radius-xl, p 24, gap 16: optional 32px fill-alternative icon tile (radius-lg), title label-1, description body-2 label-alternative (centred, 300 wide), an outline Button | Variant default · icon | Title, Description | — |
 | **Breadcrumb** | h-row gap 6: body-2 links label-alternative, 14px chevron-right separators, an ellipsis icon, current page label-normal | — | — | — |
 | **Pagination** | h-row gap space-0.5: ghost "Previous" (chevron-left) and "Next" Buttons, 32×32 page frames (current one outlined: background-normal + line-normal), an ellipsis | — | — | — |
+| **DataTable** | v-stack gap 12: toolbar (Input 240 wide with a filter placeholder; an outline sm "Columns" Button with a 16px columns icon, at the end), a Table built from Table/Row instances with a checkbox column (16px Checkbox, cell p 0 8) and a sortable header (label-1 + 14px chevron-up at full opacity on the sorted column, rotated 180° for descending), then the pager row: body-2 label-alternative count ("1 of 7 row(s) selected") at the start; at the end, gap 24: "Rows per page" label-1 + a sm Select, "Page 1 of 2" label-1, and a ButtonGroup of four outline icon-sm Buttons (chevrons-left, chevron-left, chevron-right, chevrons-right; the first two disabled) | — | — | Real records, one row selected (selected fill), one column sorted ascending, numbers right-aligned, status as a Badge |
 
 ## Overlays & Feedback
 

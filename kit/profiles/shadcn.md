@@ -1,6 +1,8 @@
 # Part 2 — Library profile: shadcn
 
-**Profile** `shadcn` 1.8 · **Platform** web · **Frameworks** Next.js, Vite · **For schema** `ttt-ds/1`
+**Profile** `shadcn` 1.9 · **Platform** web · **Frameworks** Next.js, Vite · **For schema** `ttt-ds/1`
+
+**1.9** (kit 0.9.0) — Three stock components join the baseline: Toggle, ToggleGroup and ButtonGroup (38 in all). DataTable is a new kit extension (candidate) — shadcn's data-table guide as parts on `@tanstack/react-table` v8, using Table's kit file for the sortable header. ToggleGroup passes `orientation` to Base UI, so a vertical group moves with up/down.
 
 **1.8** (kit 0.8.1) — DatePicker follows shadcn's own examples: typed, the calendar button sits inside the field (an Input Group, as in the "Input" example); `typed={false}` is the "Basic" / "Range" button trigger showing the value, no longer a lone icon button. Sidebar: `sidebar-accent` maps to `fill-normal` (hover); the current item takes `fill-strong`; items are 4px apart.
 
@@ -75,7 +77,7 @@ Every other package resolved to one version per run, so most ranges are a single
 | eslint | 10.0.3 | 10.0.3 | The repo's own config; accessibility rules came from oxlint's jsx-a11y plugin |
 | jsdom | 28.1.0 | 28.1.0 | Test environment |
 
-`@tanstack/react-table` (^8, stay on v8 — v9 drops `useReactTable`) is a reference version only: no kit component uses it, so no acceptance run exercises it.
+`@tanstack/react-table` (^8, stay on v8 — v9 drops `useReactTable`) is used only by the DataTable kit extension, and is installed only when a project chooses it. The kit's CI runs DataTable's tests on 8.21.3, but no acceptance run has used it yet, so it isn't in the tested range.
 
 A client project's own versions are what it has **installed**, which win over any range; pre-flight compares the two. The scripts read them for any package manager and for an app inside a workspace: an npm `package-lock.json` in the app's folder or above it, otherwise the installed package under `node_modules` in the app's folder or any folder above it (pnpm, Yarn without Plug'n'Play, devDependencies hoisted to a monorepo root).
 
@@ -295,14 +297,17 @@ reaches neither bundle.
 | Dismiss button *(candidate)* | Alert | close slot; component emits `onDismiss`, the app remembers dismissal |
 | Urgent-only interruption *(candidate)* | Alert | `urgent` prop; only urgent alerts use `role="alert"` |
 | Error icon *(candidate)* | Field | `FieldError` always renders the alert icon, so errors never rely on colour alone |
+| Data table *(candidate)* | DataTable | The whole component (kit file `data-table.tsx`): `useDataTable`, `DataTable`, `DataTableColumnHeader`, `DataTablePagination`, `DataTableViewOptions`, `dataTableSelectColumn`. Brings Table's kit file with it for `TableSortButton` |
 
 ## Baseline inventory
 
-One design-system component per stock file in `kit/code/shadcn/stock/ui/`, named by code export — 34 in all, each with a README and preview in `kit/template/components/`:
+One design-system component per stock file in `kit/code/shadcn/stock/ui/`, named by code export — 37 in all, each with a README and preview in `kit/template/components/`:
 
-Accordion, Alert, AlertDialog, Avatar, Badge, Breadcrumb, Button, Card, Checkbox, Combobox, DatePicker (with Calendar), Dialog, DropdownMenu, Empty, Field, Input (with Label), InputGroup, Pagination, Popover, Progress, RadioGroup, Select, Separator, Sheet, Sidebar, Skeleton, Slider, Sonner, Spinner, Switch, Table, Tabs, Textarea, Tooltip.
+Accordion, Alert, AlertDialog, Avatar, Badge, Breadcrumb, Button, ButtonGroup, Card, Checkbox, Combobox, DatePicker (with Calendar), Dialog, DropdownMenu, Empty, Field, Input (with Label), InputGroup, Pagination, Popover, Progress, RadioGroup, Select, Separator, Sheet, Sidebar, Skeleton, Slider, Sonner, Spinner, Switch, Table, Tabs, Textarea, Toggle, ToggleGroup, Tooltip.
 
 Two stock files are documented under another component, by the naming rule (a composition takes its main part's name; a TTT wrapper's name wins): `label.tsx` under Input, and `calendar.tsx` under DatePicker — whose shell is the kit file `kit/ui/date-picker.tsx`, so a project that doesn't take it has Calendar alone. `sheet`, `separator` and `skeleton` come with Sidebar and are documented for direct use.
+
+DataTable is outside the baseline: a kit extension with no stock file of its own. Its README and preview sit in `kit/template/components/` with the others, and Setup drops them when the project doesn't choose it.
 
 ## Figma
 
