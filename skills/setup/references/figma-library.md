@@ -1,6 +1,6 @@
 # Figma library — only after approval
 
-design-system-kit 0.6.1
+design-system-kit 0.7.0
 
 The Figma library is built from the **approved** design system — the live
 one you re-read after approval (`review.md` §3), never your local copy.
@@ -112,7 +112,11 @@ For each section of `specs.md`, in page order:
    variants or props its README lists.
 
 **Check each section against its styling map** (README): every token the
-map names for a state you built is bound somewhere in that state. A map row
+map names for a state you built is bound somewhere in that state. A row with
+an opacity — `` `status-negative` · 10% `` — is that variable bound to the
+paint with the paint's opacity at 0.1 (`paint("status-negative", 0.1)` in
+`lib.js`), never a hand-picked tint and never a literal colour; the read-back
+checks the opacity as well as the variable. A map row
 for a state Figma can't show (hover-only on a part, `has-*`, `[&_svg]`) is
 fine to skip; a token the spec and the map disagree on is a deviation
 (common.md §7), not a choice.

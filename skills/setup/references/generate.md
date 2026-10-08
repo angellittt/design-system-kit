@@ -1,6 +1,6 @@
 # Generate — tokens, then the design system
 
-design-system-kit 0.6.1
+design-system-kit 0.7.0
 
 Two halves, with the code branch in between (`code.md`): the tokens come
 first because the code needs them; the design system comes after the code
@@ -21,15 +21,26 @@ node <plugin root>/kit/tools/ds-setup.mjs tokens \
 The tool starts from `kit/template/tokens.json` and applies the inputs:
 
 - **Brand ramps** (`brand-primary`, `brand-secondary`, `brand-accent`): each
-  generated from its hex in OKLCH. The hex lands **exactly** on the step the
-  template documents ("…where the client's brand … colour lands"); the other
-  steps keep the template ladder's lightness spacing and chroma profile, with
-  the brand hue. An input of `{ "hex", "step" }` puts the hex on that step
-  instead (the designer's call, never yours); the report's Notes list the
-  semantic tokens still pointing at the usual step. Status colours work the
-  same way.
-- **A colour no step can hold** — darker or lighter than the whole ramp, like
-  a navy text ink offered as a brand colour — stops the tool with three
+  generated from its hex in OKLCH. The hex lands **exactly** on a step; the
+  other steps keep the template ladder's lightness spacing and chroma
+  profile, with the brand hue. Which step:
+  - the step the template documents ("…where the client's brand … colour
+    lands") — unless that would **squeeze** one side of the ramp into under
+    half its room (a dark navy on step 50 crams steps 10–50 into a sliver of
+    lightness, too close to tell apart);
+  - then the step its **lightness matches** — and if it's darker than the
+    darkest step (or lighter than the lightest), that end step stretches to
+    it and the rest respace evenly, so a deep ink like `#14213D` is used as
+    given, not swapped for a stand-in;
+  - or the step an input of `{ "hex", "step" }` names (the designer's call,
+    never yours).
+
+  When the colour lands off its usual step, the tokens that **were** the
+  colour (those on the usual step — `secondary-normal`) move with it; the
+  Notes say so, and say to check the ramp's hover and text shades at review.
+  Status colours work the same way.
+- **A colour no step can hold** — near-black or near-white, or pinned by the
+  designer to a step it can't sit on — stops the tool with three
   same-hue options on the role's usual step: the nearest that fits, a third of
   the way to the step's own lightness, and the step's own. Show the designer
   each with its ramp (`generateRamp`), plus the other ways out: a different
@@ -103,8 +114,10 @@ prerequisites: `CLIENT_NAME`, `NAMESPACE`, `PROFILE`, `PROFILE_VERSION`,
 until step 8 — "pending"), `LOCALE`, `WEEK_START` (the day's name),
 `DATE_FORMAT`, `REACT_VERSION` (the repo's installed React), `NOW_ISO` and
 `NOW_SHORT_DATE` (system clock, common.md §5), `TYPE_CLASS_PREFIX`,
-`TOKENS_OUT`, `N_IMPLEMENTED` (0) and `N_VALIDATED` (the number of
-components). The tool lists every placeholder it left; then:
+`TOKENS_OUT`, `N_IMPLEMENTED` (0), `N_VALIDATED` (the number of
+components), and the cover's three: `COVER_TAGLINE`, `COVER_MOTIF` and
+`COVER_MOTIF_REASON` (inputs row 15). The tool lists every placeholder it
+left; then:
 
 - **`tokens.json`** — replace the filled template copy with the generated
   tokens, then add the "Used by" lists from the branch:
@@ -133,6 +146,13 @@ components). The tool lists every placeholder it left; then:
   `docs.sections` to `["project/01-system.md", "project/02-using-in-code.md",
   "project/03-changelog.md"]` and `lastChange` to `by` = owner, `at` = system
   clock, `via` = "Claude Code", `note` = "Created by Setup".
+
+**Cover** — `components/Cover/preview.html`, which the Design System type
+shows first, comes from the template filled like everything else: the name,
+the tagline and the motif, with every colour, radius and space a token from
+the bundle — nothing drawn by hand. If the client has a logo, replace the
+name's `<h1>` with the `<img class="logo">` the template's comment shows. It
+is checked with the other previews (light and dark, zero errors).
 
 **Components** — for each component in the profile's baseline inventory:
 

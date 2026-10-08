@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// design-system-kit 0.6.1 · profile shadcn · kit file — fix it in the kit, not per client
+// design-system-kit 0.7.0 · profile shadcn · kit file — fix it in the kit, not per client
 /**
  * ds-validate.mjs — the contract's config validation.
  *
@@ -37,7 +37,7 @@ import { fileURLToPath } from "node:url"
 import { SHADCN_MAP, ALIAS_COLORS } from "./ds-tokens.mjs"
 
 /** The kit these scripts belong to. A repo may not claim a newer one. */
-export const KIT_VERSION = "0.6.1"
+export const KIT_VERSION = "0.7.0"
 const SCHEMA = "ttt-ds/1"
 const PROFILE = "shadcn"
 

@@ -61,7 +61,7 @@ A prototype is a pattern only if it uses nothing but core components and tokens.
 
 ## Styling maps and previews
 
-- **Styling map** — every `implemented` component's README has a table generated from its code by publish-back, with columns **Part · State or variant · Attribute · Token** (e.g. `thumb · checked · background · thumb-normal`). Values not traced to a token are listed as "fixed in code". Each token's usage text ends with a "Used by" list.
+- **Styling map** — every `implemented` component's README has a table generated from its code by publish-back, with columns **Part · State or variant · Attribute · Token** (e.g. `thumb · checked · background · thumb-normal`). Values not traced to a token are listed as "fixed in code". A colour with an opacity modifier keeps it beside the token (`` `status-negative` · 10% ``); Figma binds that variable at that paint opacity. Each token's usage text ends with a "Used by" list.
 - **Previews** — render components exactly as the code ships them. A preview is never changed to work around a code problem; if it breaks, it shows the breakage and a deviation is logged.
 
 ## Status

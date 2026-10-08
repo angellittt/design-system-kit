@@ -1,5 +1,5 @@
 // @vitest-environment node
-// design-system-kit 0.6.1 · profile shadcn · harness: the repo against its design system
+// design-system-kit 0.7.0 · profile shadcn · harness: the repo against its design system
 //
 // Runs ds-validate on this repo in its own test run, so CI catches what a
 // person would otherwise only see by running ds:validate: config errors, and

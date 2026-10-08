@@ -1,6 +1,8 @@
 # Part 2 — Library profile: shadcn
 
-**Profile** `shadcn` 1.5 · **Platform** web · **Frameworks** Next.js, Vite · **For schema** `ttt-ds/1`
+**Profile** `shadcn` 1.6 · **Platform** web · **Frameworks** Next.js, Vite · **For schema** `ttt-ds/1`
+
+**1.6** (kit 0.7.0) — Styling maps keep a colour's opacity modifier beside its token (`` `status-negative` · 10% ``), and Figma binds that variable at that paint opacity. On Vite, `withDesignSystem()` switches the repo's style rules (ESLint `layout`/`suggestion` types) off for vendored files only.
 
 **1.5** (kit 0.5.1) — DatePicker syncs from `value` without an effect; `wiring/doctor.design-system.jsonc` scopes React Doctor like the lint blocks. Kit 0.5.2 adds `wiring/vite/eslint.design-system.d.mts` and keeps formatters off the kit-owned paths.
 
