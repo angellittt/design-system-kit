@@ -100,7 +100,7 @@ A client project's own versions are what it has **installed**, which win over an
 
 ## Dev setup checklist
 
-What the dev's own app setup must include before the designer runs Setup:
+What the dev's own app setup must include before the designer runs Setup. Three items are optional up front: if Tailwind v4, the `@/*` alias in `tsconfig.json` or `shadcn init` is simply **absent**, Setup adds it on its branch — after asking, and listed in the PR for a dev to review. Anything already there that differs (Tailwind v3, a `tailwind.config`, another shadcn style) is still a blocker:
 
 - **Next.js** with the App Router, **or Vite** with `@vitejs/plugin-react` — TypeScript and Tailwind v4 either way (`@tailwindcss/postcss` on Next.js, `@tailwindcss/vite` on Vite), versions within this profile's tested range for that framework.
 - `shadcn init` run with the Config values above (style, base colour, CSS variables, icon library, aliases): `npx shadcn@4.21.1 init --preset nova --base base` — on Vite, after the "Vite specifics" above.
@@ -112,7 +112,7 @@ What the dev's own app setup must include before the designer runs Setup:
 
 ## Pre-flight
 
-Setup's first step reads the repo and reports **ready**, **adaptable** (e.g. different aliases or CSS path — Setup uses the repo's values and records them) or **blocked** (e.g. Tailwind v3, no shadcn init, or substantial existing custom UI). Missing packages that selected components need are added at their tested max; existing packages are never upgraded or downgraded. Modified stock components are never overwritten; differences are listed in the PR.
+Setup's first step reads the repo and reports **ready**, **adaptable** (e.g. different aliases or CSS path — Setup uses the repo's values and records them), **missing setup** (Tailwind v4, the `tsconfig.json` alias or `shadcn init` simply absent — Setup adds them on its branch once the person agrees) or **blocked** (e.g. Tailwind v3, a `components.json` with another style, or substantial existing custom UI). Missing packages that selected components need are added at their tested max; existing packages are never upgraded or downgraded. Modified stock components are never overwritten; differences are listed in the PR.
 
 **Framework, app and package manager** — pre-flight reads the framework from the app's `package.json` (`next` or `vite` as a dependency; both or neither is **blocked**), the app's folder (the repo root, or the workspace package the person names — e.g. `apps/web`), and the package manager from the lockfile beside the workspace root (`package-lock.json` npm, `pnpm-lock.yaml` pnpm, `yarn.lock` Yarn; Yarn Plug'n'Play is **blocked** — the scripts read `node_modules`). Every command Setup and Sync run uses that package manager, in the app's folder (`pnpm add …` there, not `npm install`).
 

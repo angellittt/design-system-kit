@@ -5,7 +5,7 @@ description: Set up a TTT design system for a new project — brand inputs to to
 
 # Setup — a new client design system
 
-design-system-kit 0.4.0 · schema `ttt-ds/1`
+design-system-kit 0.4.1 · schema `ttt-ds/1`
 
 Setup turns a client's brand into the four things every TTT project runs on:
 
@@ -45,14 +45,14 @@ It ends with one PR in the client repo and a report.
 | # | Step | Reference |
 |---|---|---|
 | 1 | Prerequisites — or stop and say which is missing | `references/preflight.md` §1 |
-| 2 | Pre-flight: ready / adaptable / blocked — blocked stops | `references/preflight.md` §2 |
+| 2 | Pre-flight: ready / adaptable / missing setup / blocked — blocked stops; missing setup is added with a yes | `references/preflight.md` §2 |
 | 3 | Ask for every input; never guess one | `references/inputs.md` |
 | 4 | Generate tokens; contrast must pass | `references/generate.md` Part A |
 | 5 | Build the code branch | `references/code.md` |
 | 6 | Create the design system | `references/generate.md` Part B |
 | 7 | Review gate: stop until the designer approves | `references/review.md` |
 | 8 | Figma library | `references/figma-library.md` |
-| 9 | PR and report | `references/code.md` §6, `references/report.md` |
+| 9 | PR and report | `references/code.md` §7, `references/report.md` |
 
 ## Never
 

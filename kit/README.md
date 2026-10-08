@@ -1,4 +1,4 @@
-# TTT design system kit · ttt-ds/1 · kit 0.4.0
+# TTT design system kit · ttt-ds/1 · kit 0.4.1
 
 The starting point for every client design system, bundled into TTT's four skills: **Setup** (design system + Figma + code branch, ending in a PR), **Sync** (pull → PR, publish-back), **Components** (check → propose → accept) and **Drift audit**. Extracted from Jelly, the worked example; the classification of what came over and why is in `docs/extraction/classification.md` at the repo root.
 
@@ -91,6 +91,9 @@ Placeholders to fill: `{{CLIENT_NAME}}`, `{{NAMESPACE}}`, `{{N_IMPLEMENTED}}`, `
 Reads the system's contract (schema and profile first), generates the theme file and installs components as the profile describes, writes the repo guardrails, and moves each component from `validated` to `implemented` once it's in the codebase.
 
 ## Changes
+
+**0.4.1** (2026-10-08)
+- Setup adds the missing dev setup itself. Pre-flight has a fourth outcome, **missing setup**: Tailwind v4, the `@/*` alias in `tsconfig.json` or `shadcn init` simply absent. Setup lists what it would add, asks once, and on a yes does them first on its branch (Tailwind with the framework's plugin and the CSS import, the alias, then `shadcn@4.21.1 init`), one commit each, then re-checks versions. The PR lists them under "Dev setup done by Setup". Anything that would change what's there — Tailwind v3, a `tailwind.config`, another shadcn style — is still blocked.
 
 **0.4.0** (2026-10-08) — profile `shadcn` 1.3
 - **Vite** joins Next.js as a supported framework of the shadcn profile, proven by an acceptance run on TTT's full-stack starter (pnpm + Turborepo, `apps/web` on Vite 7, ESLint 10, Vitest 4, oxlint). Components, kit extensions, scripts and the token mapping are shared; the framework sets the tested range, the dev checklist, pre-flight and the wiring. The repo config gains `framework` (`"next"` | `"vite"`; absent means `"next"`).

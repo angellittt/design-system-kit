@@ -1,6 +1,6 @@
 # Code — the branch, then the PR
 
-design-system-kit 0.4.0
+design-system-kit 0.4.1
 
 Setup step 5 builds the code branch; step 9 opens its PR. Paths are the
 app's folder; commands use the repo's package manager (common.md, "The app
@@ -17,11 +17,51 @@ you go; every commit message ends with the session's attribution.
 **Only design-system paths change**: the component folder, `scripts/`, the
 wiring files, `.ttt/`, the token file, `CLAUDE.md`'s design-system section,
 `package.json` and its lockfile, the test harness, the lint configs (Vite:
-the scoped blocks), `next.config` (`distDir`, Next.js only) and the font
-files. Nothing else in the app is touched; if something else
+the scoped blocks), `next.config` (`distDir`, Next.js only), the font
+files — and, only when pre-flight found them missing and the person agreed,
+the dev setup in §2 (`vite.config` or `postcss.config.mjs`, the entry CSS's
+Tailwind import, `tsconfig.json`'s alias, `components.json`). Nothing else in the app is touched; if something else
 would have to change, list it in the report instead.
 
-## 2. Components — never overwrite a modified stock file
+## 2. Dev setup — only what pre-flight found missing, only with a yes
+
+Skip this section unless pre-flight reported **missing setup** and the person
+agreed to it (`preflight.md`, "Missing setup → ask once"). Do only the pieces
+it listed, in this order, each as its own commit ("Dev setup: …") so the dev
+can review them apart from the design system. Each one only **adds**; if any
+step would have to change something that exists, stop and report it as a
+blocker instead.
+
+1. **Tailwind v4**, at the framework's tested max:
+   - Vite: add `tailwindcss` and `@tailwindcss/vite`; in `vite.config`,
+     import `tailwindcss from "@tailwindcss/vite"` and add `tailwindcss()` to
+     `plugins`; put `@import "tailwindcss";` as the first line of the entry
+     CSS (the file `main.tsx` imports; create `src/index.css` and import it
+     only if there is none).
+   - Next.js: add `tailwindcss` and `@tailwindcss/postcss`; write
+     `postcss.config.mjs` (`plugins: { "@tailwindcss/postcss": {} }`) if
+     there is none; `@import "tailwindcss";` first in the global CSS.
+2. **The `@/*` alias in `tsconfig.json`** — `compilerOptions.paths` `{"@/*":
+   ["./src/*"]}` (with `baseUrl: "."`), matching what `tsconfig.app.json`
+   already has; keep `files` and `references` as they are. On Vite, confirm
+   something resolves it at build time (`vite-tsconfig-paths` in
+   `vite.config`, or `resolve.alias`); if nothing does, add `resolve.alias`
+   for `@`.
+3. **`shadcn init`**, in the app's folder, with the repo's package manager:
+   `pnpm dlx shadcn@4.21.1 init --preset nova --base base --yes` (npm: `npx`;
+   Yarn: `yarn dlx`). Check `components.json` afterwards: style `base-nova`,
+   base colour `neutral`, CSS variables on, icon library `lucide`, the CSS
+   path where step 1 put the import. The CLI may also add a font package
+   (e.g. `@fontsource-variable/geist`) — leave it and list it.
+
+Then run pre-flight's version check again (`ds-validate --preflight`):
+`shadcn init` installs packages of its own (e.g. `lucide-react`), and they must
+be in the framework's tested range like everything else. A package outside it
+is flagged for the dev, as in pre-flight; a different major is a stop.
+
+Everything here goes in the PR's **Dev setup done by Setup** list (§7).
+
+## 3. Components — never overwrite a modified stock file
 
 Use the repo's aliases (`components.json` → `aliases`; pre-flight recorded
 any that differ from the profile's). For each file the inventory needs —
@@ -50,7 +90,7 @@ If the repo's aliases differ from `@/components/ui`, `@/lib/utils`,
 `@/hooks`, rewrite the kit files' imports to the repo's aliases as you copy
 them, and record that in the report.
 
-## 3. Wiring, scripts, harness
+## 4. Wiring, scripts, harness
 
 From `kit/code/<profile>/`, into the places the README table gives:
 
@@ -111,7 +151,7 @@ From `kit/code/<profile>/`, into the places the README table gives:
 - **`next.config`** (Next.js only) — `distDir: process.env.NEXT_DIST_DIR ||
   ".next"`.
 
-## 4. Packages — add missing, never change existing
+## 5. Packages — add missing, never change existing
 
 Merge `wiring/package.fragment.json`, then `wiring/<framework>/package.fragment.json`,
 into the app's `package.json`: add every script, dependency and dev
@@ -126,7 +166,7 @@ this step installed for its imports (`grep -rl "from \"sonner\"" …`) and
 name the components (or scripts) that need it, e.g. "`react-day-picker@10.0.2`
 — Calendar, DatePicker".
 
-## 5. Check the branch
+## 6. Check the branch
 
 ```bash
 npm run ds:contrast
@@ -144,13 +184,16 @@ repo is a kit bug; say so in Gaps.
 `ds:validate` runs once the design system's link is in the config
 (`generate.md` §5).
 
-## 6. The PR (Setup step 9)
+## 7. The PR (Setup step 9)
 
 After the Figma step (or after it was skipped, with the reason):
 
 1. Make sure the branch is committed and pushed; `git status` is clean.
 2. Open the PR against the default branch. Title: "Design system setup —
-   <client>". The body is the report (`report.md`), plus three lists:
+   <client>". The body is the report (`report.md`), plus these lists:
+   - **Dev setup done by Setup** — only when §2 ran: each piece (Tailwind,
+     the alias, `shadcn init`), the packages and versions it added, and each
+     file it created or edited;
    - **Packages added** — each `package@version` with the components or
      scripts that need it;
    - **Stock files left as they were** — each modified file and how it

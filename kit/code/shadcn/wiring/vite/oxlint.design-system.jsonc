@@ -1,4 +1,4 @@
-// design-system-kit 0.4.0 · profile shadcn · wiring (Vite): oxlint override
+// design-system-kit 0.4.1 · profile shadcn · wiring (Vite): oxlint override
 //
 // For repos that lint with oxlint. Setup adds this object to the app's
 // .oxlintrc.json "overrides" list (create the list if there isn't one); it
