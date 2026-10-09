@@ -1,5 +1,5 @@
 {
-  "//": "design-system-kit 0.11.0 · profile shadcn · wiring (Vite): merged into the app's package.json after ../package.fragment.json; missing entries only. A Vite dev server never writes dist/, so `build:safe` is plain `vite build`; the name stays so every skill runs the same script. Test and lint tooling are the repo's own; the kit's one test in the repo (the drift check, node environment) needs only vitest.",
+  "//": "design-system-kit 0.12.0 · profile shadcn · wiring (Vite): merged into the app's package.json after ../package.fragment.json; missing entries only. A Vite dev server never writes dist/, so `build:safe` is plain `vite build`; the name stays so every skill runs the same script. Test and lint tooling are the repo's own; the kit's one test in the repo (the drift check, node environment) needs only vitest.",
   "scripts": {
     "build:safe": "vite build",
     "typecheck": "tsc -b --noEmit",

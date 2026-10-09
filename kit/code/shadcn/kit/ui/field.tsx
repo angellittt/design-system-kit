@@ -1,4 +1,4 @@
-// design-system-kit 0.11.0 · profile shadcn · kit extension (replaces the stock file when chosen)
+// design-system-kit 0.12.0 · profile shadcn · kit extension (replaces the stock file when chosen)
 "use client"
 
 /**

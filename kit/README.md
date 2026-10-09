@@ -1,4 +1,4 @@
-# TTT design system kit · ttt-ds/1 · kit 0.11.0
+# TTT design system kit · ttt-ds/1 · kit 0.12.0
 
 The starting point for every client design system, bundled into TTT's four skills: **Setup** (design system + Figma + code branch, ending in a PR), **Sync** (pull → PR, publish-back), **Components** (check → propose → accept) and **Drift audit**. Extracted from Jelly, the worked example; the classification of what came over and why is in `docs/extraction/classification.md` at the repo root.
 
@@ -28,6 +28,9 @@ Then, in a new client repo (no `.ttt/design-system.json` yet):
 
 ```
 /ds-setup           # brand inputs → tokens, code branch, Design System, review, Figma library, PR
+/ds-setup dev       # …or split: a dev builds the branch on the kit's default look,
+/ds-setup design    #   the designer brings the brand and owns the design system (read-only repo access),
+/ds-setup finish    #   then a dev brings it onto the branch and opens the PR
 ```
 
 and in a repo that has `.ttt/design-system.json`:
@@ -35,7 +38,6 @@ and in a repo that has `.ttt/design-system.json`:
 ```
 /ds-sync pull       # design → code and Figma: tokens and assets into a PR, token changes to Figma's variables
 /ds-sync publish    # code → design system → Figma
-/ds-sync restyle    # new brand inputs (usually the provisional ones) → design system, then pull
 /ds-sync restyle    # new brand inputs (usually the provisional ones) → design system, then pull
 /ds-upgrade         # catch the repo up to the installed kit, keeping the client's changes
 ```
@@ -45,8 +47,8 @@ If another plugin also defines `/ds-sync` or `/ds-setup`, use the namespaced for
 | Path (plugin root) | What it is |
 |---|---|
 | `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json` | The plugin (`design-system-kit`) and the marketplace (`ttt-design`) |
-| `skills/setup/` | The Setup skill: `SKILL.md`, and the steps in `references/` (`preflight.md`, `inputs.md`, `generate.md`, `code.md`, `review.md`, `figma-library.md`, `report.md`) |
-| `commands/ds-setup.md` | `/ds-setup` |
+| `skills/setup/` | The Setup skill: `SKILL.md`, and the steps in `references/` (`phases.md`, `preflight.md`, `inputs.md`, `generate.md`, `code.md`, `review.md`, `figma-library.md`, `finish.md`, `report.md`) |
+| `commands/ds-setup.md` | `/ds-setup [dev \| design \| finish]` |
 | `kit/tools/ds-setup.mjs` | Setup's tool, run from the kit (never copied into a repo): `tokens` generates the ramps from the brand inputs and fits contrast; `restyle` regenerates only what changed inputs drive on a live design system's tokens (Sync's restyle); `fill` fills the template's placeholders. Tests: `node --test kit/tools/ds-setup.test.mjs` |
 | `kit/tools/ds-upgrade.mjs` | Upgrade's tool, run from the kit: reconciles every kit file a repo carries with the installed version — against the kit file it started from (the release tag of its own stamp), through the repo's formatter — as stamp, replace, keep, merge or conflict; `--add <names>` adds components the repo doesn't have, with what they need. Tests: `node --test kit/tools/ds-upgrade.test.mjs` |
 | `skills/upgrade/` | The Upgrade skill: `SKILL.md`, and `references/upgrade.md` and `report.md` |
@@ -100,7 +102,7 @@ On Next.js, `build:safe` also needs `distDir: process.env.NEXT_DIST_DIR || ".nex
 
 ## How Setup uses it
 
-The Setup skill (`skills/setup/`) is the procedure; in short: prerequisites and pre-flight (`ds-validate --preflight` against the repo's lockfile), every input asked for, tokens generated from the template by `kit/tools/ds-setup.mjs tokens` with contrast fitted and checked, the code branch from `kit/code/<profile>/`, the design system created from the Design System artifact type and filled from this template (`ds-setup.mjs fill`, then the brand book's prose from the inputs), the designer's review, the Figma library, and the PR.
+The Setup skill (`skills/setup/`) is the procedure — in one run, or split between a dev and a designer (`references/phases.md`); in short: prerequisites and pre-flight (`ds-validate --preflight` against the repo's lockfile), every input asked for a round at a time, tokens generated from the template by `kit/tools/ds-setup.mjs tokens` with contrast fitted and checked, the code branch from `kit/code/<profile>/`, the design system created from the Design System artifact type and filled from this template (`ds-setup.mjs fill`, then the brand book's prose from the inputs), the designer's review, the Figma library, and the PR.
 
 Placeholders to fill: `{{CLIENT_NAME}}`, `{{NAMESPACE}}`, `{{N_IMPLEMENTED}}`, `{{N_VALIDATED}}` (the bundle global, in the index, the config and every preview), `{{REACT_VERSION}}`, `{{ONE_SENTENCE_BRAND_SUMMARY}}`, `{{NOW_ISO}}`, `{{OWNER}}`, `{{PROFILE}}`, `{{PLATFORM}}`, `{{KIT_VERSION}}`, the brand book's section placeholders, and those in `kit/code/<profile>/wiring/`.
 
@@ -109,6 +111,16 @@ Placeholders to fill: `{{CLIENT_NAME}}`, `{{NAMESPACE}}`, `{{N_IMPLEMENTED}}`, `
 Reads the system's contract (schema and profile first), generates the theme file and installs components as the profile describes, writes the repo guardrails, and moves each component from `validated` to `implemented` once it's in the codebase.
 
 ## Changes
+
+**0.12.0** (2026-10-09) — Setup asks a round at a time, and splits between dev and design
+- **Rounds, not one message** (`references/inputs.md`, "Rounds"). Setup asked for every prerequisite, approval and input in one long message. Now pre-flight's findings and its "add the missing setup?" question are a round of their own, then a few related questions per round, each waiting for its answer: "Round 2 of 4 — the client". Fixed choices (yes/no gates, radius, motion, status mode) use Claude Code's multiple-choice prompt where the session has one. "Default for the rest" answers every input left that can be provisional, never a lock-now one.
+- **Split Setup** (`references/phases.md`). `/ds-setup dev`: a dev runs pre-flight, answers the lock-now inputs (client, settings, status mode, kit extensions) and builds the branch on the kit's default look — every design input *provisional · default* — then pushes it with `.ttt/setup.json` for the next phases. `/ds-setup design`: the designer, on a read-only checkout of that branch, answers the brand inputs, generates the tokens, creates the design system (so it's theirs, as the contract's ownership table expects), reviews it and builds Figma — never writing to the repo. `/ds-setup finish` (`references/finish.md`): a dev brings the approved design system onto the branch as pull does (snapshots, token file, fonts, `locale.ts` if the review changed it), runs every check and opens the PR — never writing to the design system. `/ds-setup` alone still runs everything in one go.
+- **`"setup": "awaiting-design"`** in `.ttt/design-system.json` marks the branch between the dev phase and the finish. `ds-validate` accepts it without `designSystem` or the System snapshot (and notes it), so the branch's checks pass; it accepts no other value. Sync and Upgrade stop on it (common.md §1). One run sets it too, until the finish.
+- **Tools read tokens from outside the repo**, so the design phase needs only read access: `ds-tokens.mjs --css <file>` writes the token file elsewhere; `ds-build-bundle.mjs --css <file>` styles the bundle with it; `ds-styling-maps.mjs --tokens <json> --css <file>` and `ds-validate.mjs --tokens <json>` read them. Three new validator tests and three fixture checks.
+- **Setup's changelog entry** in a split Setup has no PR link (the finish doesn't publish); the next Sync run finds the PR by its `ds-setup/*` branch and flips `Code pending` (common.md §6).
+- README: the duplicated `/ds-sync restyle` line is gone.
+
+**Upgrading a 0.11.0 repo**: `/ds-upgrade` replaces `scripts/ds-validate.mjs` (the `setup` key, `--tokens`); nothing else but the stamp.
 
 **0.11.0** (2026-10-08) — provisional inputs and restyle: start generic, take on the style later
 - **Setup's inputs can be provisional** (`references/inputs.md`). Design teams often start generic and pass the style once the client approves UI samples, so each answer is *decided*, *provisional · default* (the kit's default, e.g. the template's placeholder brand ramp) or *provisional · extracted* (proposed by Claude from client material the person handed over, with its source, and accepted). Still nothing is guessed: provisional is an answer the person gives.

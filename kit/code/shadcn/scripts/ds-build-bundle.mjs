@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// design-system-kit 0.11.0 · profile shadcn · kit file — fix it in the kit, not per client
+// design-system-kit 0.12.0 · profile shadcn · kit file — fix it in the kit, not per client
 /**
  * Build the design system's preview bundle from a repo's component layer.
  *
@@ -11,6 +11,11 @@
  * ours import @base-ui/react, cva, lucide-react and sonner.
  *
  *   node scripts/ds-build-bundle.mjs <out-dir>     build bundle.js + bundle.css
+ *   node scripts/ds-build-bundle.mjs <out-dir> --css <token file>
+ *                                                  …styled by another token file (one
+ *                                                  ds-tokens.mjs --css wrote outside the
+ *                                                  repo) — Setup's design phase previews
+ *                                                  its tokens without touching the checkout
  *   node scripts/ds-build-bundle.mjs --check       verify the toolchain pins
  *
  * KIT FILE — this runs against any repo on profile `shadcn` 1.2. Everything
@@ -19,7 +24,7 @@
  *   namespace, extra exports  .ttt/design-system.json  (namespace, bundleExtras)
  *   component directory       components.json          (aliases.ui)
  *   path alias                tsconfig.json            (compilerOptions.paths)
- *   token file                .ttt/design-system.json  (tokensOut)
+ *   token file                .ttt/design-system.json  (tokensOut), or --css
  *
  * MAINTENANCE: it is pinned to the toolchain in PINS below. Run --check after
  * any dependency bump; the contract's "Kit tooling" section records why each
@@ -58,6 +63,10 @@ const REPO = repoFlag !== -1
 const toolsFlag = process.argv.indexOf("--tools")
 const TOOL_ROOT = toolsFlag !== -1 ? resolve(process.argv[toolsFlag + 1]) : REPO
 const toolRequire = createRequire(join(TOOL_ROOT, "package.json"))
+
+/** `--css <file>`: the token file to style the bundle with, instead of tokensOut. */
+const cssFlag = process.argv.indexOf("--css")
+const TOKENS_CSS = cssFlag !== -1 ? resolve(process.argv[cssFlag + 1]) : null
 const { build } = await import(pathToFileURL(toolRequire.resolve("esbuild")).href)
 
 /**
@@ -109,6 +118,8 @@ function loadConfig() {
     if (!ds[key]) throw new Error(`.ttt/design-system.json is missing "${key}"`)
   }
 
+  if (TOKENS_CSS && !existsSync(TOKENS_CSS)) throw new Error(`--css: ${TOKENS_CSS} not found — write it with ds-tokens.mjs --css first`)
+
   const components = readJsonc(join(REPO, "components.json"))
   const tsconfig = readJsonc(join(REPO, "tsconfig.json"))
   const paths = tsconfig.compilerOptions?.paths ?? {}
@@ -140,7 +151,7 @@ function loadConfig() {
   return {
     namespace: ds.namespace,
     bundleExtras: ds.bundleExtras ?? {},
-    tokensOut: join(REPO, ds.tokensOut),
+    tokensOut: TOKENS_CSS ?? join(REPO, ds.tokensOut),
     uiDir,
     aliasEntries,
     globalCss: components.tailwind?.css,
@@ -420,8 +431,9 @@ async function buildCss(cfg, outDir, files) {
 
 // ---- main ------------------------------------------------------------------
 
+const VALUE_FLAGS = ["--repo", "--tools", "--css"]
 const argv = process.argv.slice(2).filter((a, i, all) =>
-  !["--repo", "--tools"].includes(a) && !["--repo", "--tools"].includes(all[i - 1]))
+  !VALUE_FLAGS.includes(a) && !VALUE_FLAGS.includes(all[i - 1]))
 const arg = argv[0]
 
 if (arg === "--check") {

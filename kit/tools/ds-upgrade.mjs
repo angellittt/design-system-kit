@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// design-system-kit 0.11.0 · Upgrade tool — runs from the kit, never copied into a client repo
+// design-system-kit 0.12.0 · Upgrade tool — runs from the kit, never copied into a client repo
 /**
  * ds-upgrade.mjs — the mechanical part of Upgrade: reconcile every kit file a
  * repo carries with a newer kit, keeping what the client changed.

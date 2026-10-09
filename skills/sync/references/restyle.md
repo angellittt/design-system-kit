@@ -1,6 +1,6 @@
 # Restyle — new brand inputs on a design system that exists
 
-design-system-kit 0.11.0
+design-system-kit 0.12.0
 
 A project often starts generic and takes on its style once the client
 approves UI samples, and a designer may revise a decided value later. Restyle

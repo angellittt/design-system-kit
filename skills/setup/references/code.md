@@ -1,8 +1,9 @@
 # Code — the branch, then the PR
 
-design-system-kit 0.11.0
+design-system-kit 0.12.0
 
-Setup step 5 builds the code branch; step 9 opens its PR. Paths are the
+Setup step 5 builds the code branch — the dev phase, or one run; step 9 (the
+finish, `finish.md`) opens its PR. Paths are the
 app's folder; commands use the repo's package manager (common.md, "The app
 and its package manager"). Everything comes
 from `kit/code/<profile>/` in the plugin, laid out as `kit/README.md`'s
@@ -103,8 +104,12 @@ From `kit/code/<profile>/`, into the places the README table gives:
 - **Repo config** — `wiring/design-system.json` → `.ttt/design-system.json`,
   filled (with `systemIn`: `.ttt/system.md`): `tracker`, `lastSynced` (system clock), `namespace`,
   `tokensOut` and any adaptable path, `kitVersion` = the plugin's version.
-  `designSystem` gets the link once the design system exists
-  (`generate.md` §5) — until then `ds:validate` isn't run.
+  Add `"setup": "awaiting-design"` and **remove the `designSystem` key**:
+  there is no design system yet. `ds-validate` accepts that pair, so the
+  branch's checks pass; the finish sets the link and removes `setup`
+  (`finish.md`).
+- **`.ttt/setup.json`** — the dev phase only: the handoff for the design
+  phase and the finish (`phases.md`), committed with the rest.
 - **Token snapshot** — `<out>/tokens.json` → `.ttt/tokens.json`, byte for
   byte. Then `node $KIT/ds-tokens.mjs` writes the token file
   (`tokensOut`).
@@ -218,12 +223,12 @@ Every one must pass. A failure is a stop: report the command and its output.
 Don't change a kit file to make it pass — a kit file that fails in a client
 repo is a kit bug; say so in Gaps.
 
-`ds:validate` runs once the design system's link is in the config
-(`generate.md` §5).
+While the config says `awaiting-design`, `ds:validate` passes without the
+design system's link and System snapshot, and notes that it's waiting.
 
 ## 7. The PR (Setup step 9)
 
-After the Figma step (or after it was skipped, with the reason):
+Opened by the finish (`finish.md`), once the design system is on the branch:
 
 1. Make sure the branch is committed and pushed; `git status` is clean.
 2. Open the PR against the default branch. Title: "Design system setup —
@@ -237,7 +242,12 @@ After the Figma step (or after it was skipped, with the reason):
      differs (and any extension not installed because of it);
    - **Adaptable findings** — each difference from the profile Setup used
      (CSS path, aliases, rewritten imports).
-3. Link the PR from the design system's first changelog entry (re-read the
-   live design system first — common.md §3) and publish that edit, index
-   last. `Code pending` stays until the PR merges; the next Sync run flips it
-   once `main` matches (common.md §6).
+
+   In a split Setup these come from `.ttt/setup.json` → `pr`, which the dev
+   phase wrote.
+3. **One run only** — link the PR from the design system's first changelog
+   entry (re-read the live design system first — common.md §3) and publish
+   that edit, index last. In a split Setup the finish doesn't write to the
+   design system: the entry keeps its tracker link, and the next Sync run
+   finds the PR by its `ds-setup/*` branch (common.md §6). Either way
+   `Code pending` stays until the PR merges and `main` matches.

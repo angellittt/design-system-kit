@@ -1,6 +1,6 @@
 # Pre-flight — can Setup run here?
 
-design-system-kit 0.11.0
+design-system-kit 0.12.0
 
 Two checks before Setup asks for a single input. Both are cheap, and both stop
 the run if they fail: everything after them writes things (a branch, a design
@@ -8,20 +8,28 @@ system, a Figma library) that are expensive to undo.
 
 ## 1. Prerequisites — all of them, or stop
 
-Ask, or check, each of these. If any is missing, **stop**: list every missing
-one (not only the first) with what would satisfy it, and end with the report.
+Ask, or check, each of the phase's rows — the **Phase** column; one run
+(`/ds-setup`) takes every row, the finish has its own (`phases.md`). Check
+what can be checked first, then ask the rest as one round. If any is
+missing, **stop**: list every missing one (not only the first) with what
+would satisfy it, and end with the report.
 
-| Prerequisite | How to check | What satisfies it |
-|---|---|---|
-| **A profile** | Ask which UI library the project uses; it must have a file in `kit/profiles/`. Today: `shadcn`. | A profile file exists for it. Another library needs a new profile first — that's kit work, not Setup. |
-| **An app set up per the profile's dev checklist** | Read the profile's "Dev setup checklist" and check the repo against it: framework, `components.json`, the `init` command's values, ESLint. | The repo has the app, on a git branch you can push from (`git remote -v`; not a `tttstudios` remote). |
-| **The app** | In a monorepo (a `pnpm-workspace.yaml`, or `workspaces` in the root `package.json`), ask which workspace package is the app, e.g. `apps/web`. Otherwise the repo root is the app. | One folder with the app's `package.json`. Everything below is checked **in that folder**; git commands run at the git root. |
-| **Package manager** | The lockfile at the workspace root: `package-lock.json` (npm), `pnpm-lock.yaml` (pnpm), `yarn.lock` (Yarn). | One of them. Yarn Plug'n'Play (`.pnp.cjs`) is "missing": the kit's scripts read `node_modules`. Use this manager for every command (common.md). |
-| **No design system yet** | `.ttt/design-system.json` must not exist in the app's folder. | If it exists, the app is set up: use Sync. |
-| **PR access** | `gh auth status`, then `gh repo view <owner>/<repo> --json viewerPermission` — `WRITE`, `MAINTAIN` or `ADMIN`. | The person running Setup can push a branch and open a PR. |
-| **Owner** | Ask: "You'll own this design system — only your account can update it, and you'll review every publish-back. OK?" | An explicit yes. The design system is created under their account (contract, Ownership). |
-| **A ClickUp tracker** | Ask for the project's ClickUp **list** link. | A `https://app.clickup.com/…` list URL. Deviations are logged there (common.md §7). |
-| **A Figma destination** | Ask where the library goes: an existing Figma design file (URL), or the team and project to create one in. Check with the Figma MCP `whoami`: the account needs an **editor** (Full or Dev) seat on that team. | A file URL or team/project, plus an editor seat. A view seat is "missing". |
+| Prerequisite | Phase | How to check | What satisfies it |
+|---|---|---|---|
+| **A profile** | dev | Ask which UI library the project uses; it must have a file in `kit/profiles/`. Today: `shadcn`. | A profile file exists for it. Another library needs a new profile first — that's kit work, not Setup. |
+| **An app set up per the profile's dev checklist** | dev | Read the profile's "Dev setup checklist" and check the repo against it: framework, `components.json`, the `init` command's values, ESLint. | The repo has the app, on a git branch you can push from (`git remote -v`; not a `tttstudios` remote). |
+| **The app** | dev | In a monorepo (a `pnpm-workspace.yaml`, or `workspaces` in the root `package.json`), ask which workspace package is the app, e.g. `apps/web`. Otherwise the repo root is the app. | One folder with the app's `package.json`. Everything below is checked **in that folder**; git commands run at the git root. |
+| **Package manager** | dev, design | The lockfile at the workspace root: `package-lock.json` (npm), `pnpm-lock.yaml` (pnpm), `yarn.lock` (Yarn). | One of them. Yarn Plug'n'Play (`.pnp.cjs`) is "missing": the kit's scripts read `node_modules`. Use this manager for every command (common.md). |
+| **No design system yet** | dev | `.ttt/design-system.json` must not exist in the app's folder. | If it exists, Setup has run here: `phases.md` says what's next. |
+| **PR access** | dev | `gh auth status`, then `gh repo view <owner>/<repo> --json viewerPermission` — `WRITE`, `MAINTAIN` or `ADMIN`. | The person running Setup can push a branch and open a PR. |
+| **Owner** | design | Ask: "You'll own this design system — only your account can update it, and you'll review every publish-back. OK?" | An explicit yes. The design system is created under their account (contract, Ownership). In a split Setup that's the designer, so the dev phase doesn't ask. |
+| **A ClickUp tracker** | dev | Ask for the project's ClickUp **list** link. | A `https://app.clickup.com/…` list URL. Deviations are logged there (common.md §7). |
+| **A Figma destination** | design | Ask where the library goes: an existing Figma design file (URL), or the team and project to create one in. Check with the Figma MCP `whoami`: the account needs an **editor** (Full or Dev) seat on that team. | A file URL or team/project, plus an editor seat. A view seat is "missing". |
+
+In the design phase, "Package manager" means the designer's checkout has its
+packages installed with the repo's manager, and every other repo fact comes
+from `.ttt/setup.json` and the config — the design phase doesn't re-run
+pre-flight. Tracker, repo and app are read from there too.
 
 Record each answer — they fill the System section, the repo config and the
 report. If a row is missing but the repo has an app, still run the
@@ -111,11 +119,12 @@ what was found (file, version, count), and what the dev needs to do — e.g.
 CSS-first config: upgrade before Setup runs." End with the report; nothing
 else has been written.
 
-### Missing setup → ask once
+### Missing setup → ask once, on its own
 
 If there is no blocker but some setup is missing, list exactly what Setup
 would add — the packages with versions, the files it would edit and how —
-and ask **once**, e.g.:
+and ask **once**, as its own round: the pre-flight findings and this one
+question, nothing else (the inputs come after it). E.g.:
 
 > `apps/web` doesn't have Tailwind v4 or shadcn yet. Setup can add them on
 > its branch: `tailwindcss@4.3.3` and `@tailwindcss/vite@4.3.3` (the plugin in

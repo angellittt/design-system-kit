@@ -1,6 +1,6 @@
 # Inputs — ask for every one, guess none
 
-design-system-kit 0.11.0
+design-system-kit 0.12.0
 
 Everything Setup generates comes from these answers. **Never fill one in
 yourself** — not from the repo, the client's website, a logo's colours or "a
@@ -25,10 +25,46 @@ for the final one. It changes later with `/ds-sync restyle`, which regenerates
 what the input drives the same way Setup does. Not every input can wait —
 "Lock now, or provisional", below.
 
-Ask in one message, grouped as below, with the options spelled out and each
-input marked *lock now* or *can be provisional*. Then read the answers back as
-a single summary — each with its kind, and an extracted one with its source —
+Ask a round at a time (below), with the options spelled out and each input
+marked *lock now* or *can be provisional*. Then read the answers back as a
+single summary — each with its kind, and an extracted one with its source —
 and get a "yes" before generating.
+
+## Rounds
+
+A few related questions per message; wait for the answer before the next
+round (the skill's "Asking"). Which rounds depends on the phase
+(`phases.md`): the dev asks for what is final from day one, the designer for
+everything the brand drives.
+
+**Dev phase** — after pre-flight's round and the prerequisites:
+
+| Round | Inputs | Notes |
+|---|---|---|
+| The client | 1 client name (then confirm the namespace), 7 locale, 8 week start, 9 date format | All lock now. |
+| Structure | 12 status **mode**, 13 kit extensions | Status mode: `separate` or `reuse` — a fixed choice. Unsure → `separate`; the colours stay the designer's. Extensions: the catalog as "Offering kit extensions" says. |
+
+Every other input is recorded as *provisional · default* without asking —
+the design phase asks for each. Say so in the summary, so nobody reads the
+default look as a choice.
+
+**Design phase** — after the designer's prerequisites:
+
+| Round | Inputs | Notes |
+|---|---|---|
+| Brand material | 6 brand guidelines, and any other client material | First, because everything after can be proposed from it ("Extracting from the client's resources"). Show the dev's decided inputs here too, read-only. |
+| Colour | 2 brand colours, 3 neutral tint, 12 status colours (the mode is the dev's), 14 client-added ramps | Proposals from the material, if any, one line each. The meaning question for any colour going on a status ramp. |
+| Type and logo | 4 fonts, 5 logo | Files and licences. |
+| Character and cover | 10 radius, 11 motion, 15 cover | Radius and motion are fixed choices; the cover motif can be proposed from the guidelines. |
+
+**One run** (`/ds-setup`): the dev's rounds, then the designer's — with the
+"Brand material" round asking only for material, since the rest is already
+answered.
+
+A round can merge with the next when its answers are already in hand (the
+person sent a brand pack up front), and an extracted proposal can answer
+several rounds at once — but each input is still confirmed, decided or
+provisional, before the summary.
 
 ## The inputs
 
@@ -162,7 +198,9 @@ answer.
 ## Write them down
 
 Save the confirmed answers as `inputs.json` in the scratch folder — the token
-tool reads it (`generate.md` §1) and the report repeats it:
+tool reads it (`generate.md` §1) and the report repeats it. The dev phase
+also saves it as `.ttt/setup.json` → `inputs`, for the design phase
+(`phases.md`):
 
 ```json
 {

@@ -1,6 +1,6 @@
 # Report — how every Setup run ends
 
-design-system-kit 0.11.0
+design-system-kit 0.12.0
 
 The skill writes the report itself (common.md §10). It goes in the chat and,
 once there is a PR, as the PR body (with `code.md` §7's lists before
@@ -17,6 +17,22 @@ that are empty — never drop a heading.
 ## Visible preview differences
 ## Gaps
 ```
+
+## A phase's report
+
+In a split Setup each phase ends with its own report, in the chat, covering
+only what that phase did ("none" under the rest) and ending with the
+handoff `phases.md` gives it, after the headings:
+
+- **dev** — under What changed, everything up to the branch; under Gaps,
+  that every design-owned input is the kit's default until the design phase
+  runs. Then the handoff for the designer.
+- **design** — the inputs, tokens, design system, review and Figma; under
+  Gaps, the repo-side work waiting for the finish. Then the handoff for the
+  dev.
+- **finish** — the PR body: what it brought onto the branch, every check,
+  and the PR; plus the dev and design phases' **What changed** in one line
+  each, with the design system's link.
 
 ## What goes under each
 

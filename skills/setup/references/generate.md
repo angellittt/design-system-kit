@@ -1,6 +1,6 @@
 # Generate — tokens, then the design system
 
-design-system-kit 0.11.0
+design-system-kit 0.12.0
 
 Two halves, with the code branch in between (`code.md`): the tokens come
 first because the code needs them; the design system comes after the code
@@ -8,6 +8,14 @@ because its bundle, previews, styling maps and "Using in code" are built from
 the branch.
 
 Work in a scratch folder (`<out>`), never in the kit's files.
+
+**In the design phase** (`phases.md`) the branch already exists, built on the
+kit's default look, and the repo is read-only: Part A's tokens and the token
+file stay in `<out>`, and every tool in Part B that reads tokens is pointed at
+them with `--tokens <out>/tokens.json` and `--css <out>/ds-tokens.css`
+(written by `ds-tokens.mjs <out>/tokens.json --css <out>/ds-tokens.css`).
+The tools still read the branch's components, config and packages; nothing
+they write lands in the checkout.
 
 # Part A — Tokens (Setup step 4)
 
@@ -94,7 +102,8 @@ node $KIT/ds-validate.mjs \
 Its one expected warning lists the config template's placeholders (the code
 step fills them). Any error → stop.
 
-Then build the code branch (`code.md`) before Part B.
+Then build the code branch (`code.md`) before Part B — in the dev phase and
+in one run. The design phase goes straight to Part B: the branch is there.
 
 # Part B — The design system (Setup step 6)
 
@@ -122,7 +131,8 @@ left; then:
 - **`tokens.json`** — replace the filled template copy with the generated
   tokens, then add the "Used by" lists from the branch:
   `node $KIT/ds-styling-maps.mjs --used-by <out>/tokens.json <out>/ds/project/tokens.json`
-  (run in the client repo, on the Setup branch).
+  (run in the client repo, on the Setup branch; design phase: add
+  `--tokens <out>/tokens.json --css <out>/ds-tokens.css`).
 - **`README.md`** (the brand book) — write every remaining `{{…}}` from the
   inputs: the one-sentence summary, principles and voice (from the
   guidelines, or the person's answers), the colour table (brand names and
@@ -147,7 +157,7 @@ left; then:
   still standing in. "None." if every input is decided.
 - **`02-using-in-code.md`** — generated, not filled:
   `node $KIT/ds-styling-maps.mjs --using-in-code <out>/ds/project/02-using-in-code.md`
-  in the branch.
+  in the branch (design phase: with `--tokens` and `--css`, as above).
 - **`03-changelog.md`** — keep the template's first entry ("Design system
   created from TTT kit …"), with the PR link once the PR exists (step 9) and
   `Code pending · Figma pending`.
@@ -178,7 +188,8 @@ is checked with the other previews (light and dark, zero errors).
   A whole-component extension (DataTable) that wasn't chosen has no stock
   fallback: delete its folder from `components/`.
 - **Styling map** — regenerate from the branch
-  (`node $KIT/ds-styling-maps.mjs --all > <out>/maps.md`) and replace each
+  (`node $KIT/ds-styling-maps.mjs --all > <out>/maps.md`; design phase: with
+  `--tokens` and `--css`) and replace each
   README's `**Styling map** — generated from …` block (up to the
   `**Contract**` line) verbatim, so chosen extensions appear.
 - **Preview** — `preview.html` as the template has it, `{{NAMESPACE}}`
@@ -188,7 +199,7 @@ is checked with the other previews (light and dark, zero errors).
 
 ```bash
 node $KIT/ds-build-bundle.mjs --check
-node $KIT/ds-build-bundle.mjs <out>/ds/project/components
+node $KIT/ds-build-bundle.mjs <out>/ds/project/components   # design phase: --css <out>/ds-tokens.css
 node $KIT/ds-pack-react.mjs <out>/ds/project/components/lib
 node $KIT/ds-types.mjs <out>/ds/project/components/index.d.ts
 ```
@@ -206,7 +217,8 @@ font files under `project/fonts/`, logos in the `Logos` group.
 ## 4. Create it — the first publish
 
 The design system is a claude.ai artifact made from the **Design System
-artifact type**, owned by the person running Setup:
+artifact type**, owned by the person who creates it — the designer, in a
+split Setup:
 
 1. Find the type: `Artifact` with `action: "quickstart"`, `intent: "other"`
    (or `action: "list"`, `scope: "types"`), and take the Design System
@@ -230,7 +242,19 @@ approach, and don't go on to review.
 
 ## 5. Validate it
 
-In the branch, snapshot the published System section first: write the
+**Design phase** — nothing goes in the repo. Validate the tokens and the
+System section you published against the branch's app, from `<out>`:
+
+```bash
+node $KIT/ds-validate.mjs --tokens <out>/tokens.json --system <out>/ds/project/01-system.md
+node $KIT/ds-contrast.mjs --tokens <out>/tokens.json
+```
+
+No errors and no drift; the only contrast miss is `label-disable`. The
+snapshots, the link and the tests are the finish's (`finish.md`). Then the
+review gate.
+
+**One run** — in the branch, snapshot the published System section first: write the
 design system's `project/01-system.md` to `.ttt/system.md` (`systemIn`) byte
 for byte — CI checks the app against it (`ds-drift.test.mjs`). Then:
 

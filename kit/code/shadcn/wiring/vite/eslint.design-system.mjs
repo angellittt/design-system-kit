@@ -1,4 +1,4 @@
-// design-system-kit 0.11.0 · profile shadcn · wiring (Vite): ESLint blocks
+// design-system-kit 0.12.0 · profile shadcn · wiring (Vite): ESLint blocks
 //
 // For a JavaScript config: Setup PASTES this into the app's eslint.config.mjs
 // (a TypeScript config gets eslint.design-system.ts instead) — no separate file

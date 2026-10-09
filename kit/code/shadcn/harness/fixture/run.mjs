@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// design-system-kit 0.11.0 · profile shadcn · kit file — fix it in the kit, not per client
+// design-system-kit 0.12.0 · profile shadcn · kit file — fix it in the kit, not per client
 /**
  * Fixture test for ds-build-bundle.mjs.
  *
@@ -12,7 +12,7 @@
  *   node scripts/__fixtures__/run.mjs
  */
 import { execFileSync } from "node:child_process"
-import { readFileSync, rmSync, mkdtempSync } from "node:fs"
+import { readFileSync, rmSync, mkdtempSync, writeFileSync } from "node:fs"
 import { join, resolve, dirname } from "node:path"
 import { fileURLToPath } from "node:url"
 import { tmpdir } from "node:os"
@@ -70,6 +70,23 @@ check("tests excluded from the bundle", !js.includes("NOT_A_COMPONENT"))
 check("tests excluded from css source detection",
   !css.includes("bg-sentinel-leak") && !css.includes("p-\\[13px\\]"))
 
+// --css styles the bundle with a token file outside the repo (Setup's design
+// phase), and leaves the repo's own token file alone.
+const outCss = mkdtempSync(join(tmpdir(), "ds-fixture-css-"))
+const altTokens = join(outCss, "tokens.css")
+writeFileSync(altTokens, ":root { --brand: #c0ffee; }\n")
+const repoTokens = readFileSync(join(FIXTURE, "styles/tokens.css"), "utf8")
+try {
+  execFileSync(process.execPath, [BUILDER, outCss, "--repo", FIXTURE, "--css", altTokens, "--tools", process.env.DS_TOOLS ?? process.cwd()], { stdio: "inherit" })
+  const alt = readFileSync(join(outCss, "bundle.css"), "utf8")
+  check("--css styles the bundle with the given token file", /--brand:\s*#c0ffee/.test(alt), "no --brand: #c0ffee")
+  check("--css doesn't read the repo's token file", !/--brand:\s*#(3366ff|36f)/.test(alt))
+  check("--css leaves the repo's token file as it was", readFileSync(join(FIXTURE, "styles/tokens.css"), "utf8") === repoTokens)
+} catch {
+  check("--css build", false, "the build failed")
+}
+
 rmSync(out, { recursive: true, force: true })
+rmSync(outCss, { recursive: true, force: true })
 console.log(failures ? `\n${failures} assertion(s) failed` : "\nfixture passed")
 process.exit(failures ? 1 : 0)
