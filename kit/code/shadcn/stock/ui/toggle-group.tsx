@@ -1,4 +1,4 @@
-// design-system-kit 0.11.0 · profile shadcn · stock component (base-nova + baseline only)
+// design-system-kit 0.12.0 · profile shadcn · stock component (base-nova + baseline only)
 /**
  * Stock base-nova (shadcn 4.21.1, 2026-10-08) + TTT baseline:
  * - Radius roles (D1), matching Toggle: root `rounded-lg` -> `rounded-md`, sm `rounded-[min(var(--radius-md),10px)]` -> `rounded-sm`; joined items (`spacing={0}`) round their outer corners `rounded-*-lg` -> `rounded-*-md`.

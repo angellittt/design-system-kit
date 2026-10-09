@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// design-system-kit 0.11.0 · profile shadcn · kit file — fix it in the kit, not per client
+// design-system-kit 0.12.0 · profile shadcn · kit file — fix it in the kit, not per client
 /**
  * ds-validate.mjs — the contract's config validation.
  *
@@ -15,6 +15,10 @@
  *                                             # locale module. A difference is a "drift"
  *                                             # warning; scripts/__tests__/ds-drift.test.mjs
  *                                             # fails the repo's tests on one
+ *   node scripts/ds-validate.mjs --tokens <tokens.json>
+ *                                             # check another token snapshot instead of
+ *                                             # tokensIn (Setup's design phase, whose
+ *                                             # tokens stay outside the checkout)
  *   node scripts/ds-validate.mjs --template <config.json> --tokens <tokens.json>
  *                                             # the kit's own templates ("{{…}}" allowed)
  *
@@ -36,7 +40,7 @@ import { join, resolve, dirname, relative } from "node:path"
 import { fileURLToPath } from "node:url"
 
 /** The kit these scripts belong to. A repo may not claim a newer one. */
-export const KIT_VERSION = "0.11.0"
+export const KIT_VERSION = "0.12.0"
 const SCHEMA = "ttt-ds/1"
 const PROFILE = "shadcn"
 
@@ -234,7 +238,13 @@ const CONFIG_SCHEMA = {
   framework: { required: false, check: (v) => v in FRAMEWORKS ? null : `one of ${Object.keys(FRAMEWORKS).map((f) => `"${f}"`).join(", ")}; leave it out for "next"` },
   contrast: { required: false, check: (v) => isObject(v) ? null : 'an object: { "intentional": [{ "foreground", "background"?, "reason" }] }' },
   usingInCode: { required: false, check: (v) => isObject(v) ? null : 'an object: { "notes": ["…"] }' },
+  // Split Setup: the dev phase has built the branch and the design phase hasn't
+  // created the design system yet. Finish removes it with the link in place.
+  setup: { required: false, check: (v) => v === AWAITING_DESIGN ? null : `"${AWAITING_DESIGN}" while Setup waits on its design phase; /ds-setup finish removes it` },
 }
+
+/** The config's `setup` value between Setup's dev phase and its finish. */
+export const AWAITING_DESIGN = "awaiting-design"
 
 /** The app's locale module: what each value must be, how to fix it. */
 const LOCALE_SCHEMA = {
@@ -281,6 +291,8 @@ const isPlaceholder = (v) => typeof v === "string" && /^\{\{[A-Z_]+\}\}$/.test(v
 function checkConfig(config, err, { placeholders = false } = {}) {
   for (const [key, rule] of Object.entries(CONFIG_SCHEMA)) {
     if (!(key in config)) {
+      // No design system exists yet while Setup waits on its design phase.
+      if (key === "designSystem" && config.setup === AWAITING_DESIGN) continue
       if (rule.required) err(key, "is missing", rule.check(undefined) ?? "add it")
       continue
     }
@@ -309,7 +321,7 @@ function checkConfig(config, err, { placeholders = false } = {}) {
   }
 }
 
-export function validate(repo, { preflight = false, testedRange, system } = {}) {
+export function validate(repo, { preflight = false, testedRange, system, tokens: tokensOverride } = {}) {
   const errors = []
   const warnings = []
   const notes = []
@@ -334,6 +346,8 @@ export function validate(repo, { preflight = false, testedRange, system } = {}) 
   }
 
   checkConfig(config, err)
+  const awaitingDesign = config.setup === AWAITING_DESIGN
+  if (awaitingDesign) notes.push("Setup is waiting on its design phase: no design system or System section yet (/ds-setup design, then /ds-setup finish)")
   if ("settings" in config)
     warn("settings", "is in .ttt/design-system.json; since kit 0.5.0 locale, week start and date format live in the app's locale module", "copy the values into <aliases.lib>/locale.ts (wiring/locale.ts) and remove settings from the config")
 
@@ -358,20 +372,22 @@ export function validate(repo, { preflight = false, testedRange, system } = {}) 
   if (!system && typeof config.systemIn === "string") {
     const p = join(repo, config.systemIn)
     if (existsSync(p)) system = p
+    else if (awaitingDesign) notes.push(`${config.systemIn} not written yet — /ds-setup finish snapshots it`)
     else warn("systemIn", `points at ${config.systemIn}, which doesn't exist`, "run Sync's pull to write the snapshot (Setup writes the first one)")
   }
 
   // ---- token snapshot ----------------------------------------------------------
-  if (typeof config.tokensIn === "string") {
-    const tokensPath = join(repo, config.tokensIn)
-    if (!existsSync(tokensPath)) err("tokensIn", `points at ${config.tokensIn}, which doesn't exist`, "run Sync's pull to write the snapshot")
+  if (tokensOverride || typeof config.tokensIn === "string") {
+    const tokensPath = tokensOverride ?? join(repo, config.tokensIn)
+    const tokensName = tokensOverride ? relative(repo, tokensOverride) : config.tokensIn
+    if (!existsSync(tokensPath)) err(tokensOverride ? "--tokens" : "tokensIn", `points at ${tokensName}, which doesn't exist`, tokensOverride ? "check the path" : "run Sync's pull to write the snapshot")
     else {
       let tokens
       try { tokens = JSON.parse(readFileSync(tokensPath, "utf8")) }
-      catch (e) { err(config.tokensIn, `isn't valid JSON (${e.message})`, "re-pull it from the design system") }
+      catch (e) { err(tokensName, `isn't valid JSON (${e.message})`, "re-pull it from the design system") }
       if (tokens) {
-        validateTokens(tokens, config.tokensIn, err, warn)
-        checkClientRamps(tokens, config.tokensIn, system, warn, notes)
+        validateTokens(tokens, tokensName, err, warn)
+        checkClientRamps(tokens, tokensName, system, warn, notes)
       }
     }
   }
@@ -704,7 +720,7 @@ function main() {
   const repo = resolve(flag("--repo") ?? process.cwd())
   const { errors, warnings, notes } = args.includes("--template")
     ? validateTemplate(resolve(flag("--template")), resolve(flag("--tokens")))
-    : validate(repo, { preflight: args.includes("--preflight"), testedRange: flag("--tested-range"), system: flag("--system") && resolve(flag("--system")) })
+    : validate(repo, { preflight: args.includes("--preflight"), testedRange: flag("--tested-range"), system: flag("--system") && resolve(flag("--system")), tokens: flag("--tokens") && resolve(flag("--tokens")) })
   for (const n of notes ?? []) console.log(`note     ${n}`)
   for (const w of warnings) console.log(`warning  ${w.field} ${w.message} — ${w.fix}`)
   for (const e of errors) console.log(`error    ${e.field} ${e.message} — ${e.fix}`)

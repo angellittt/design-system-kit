@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// design-system-kit 0.11.0 · profile shadcn · figma: icon geometry — fix it in the kit, not per client
+// design-system-kit 0.12.0 · profile shadcn · figma: icon geometry — fix it in the kit, not per client
 /**
  * icons.mjs — the SVG bodies of the icons a Figma library needs, read from the
  * icon package the app actually installs (lucide-react by default), so Figma

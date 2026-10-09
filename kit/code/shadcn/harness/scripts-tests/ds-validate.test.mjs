@@ -1,5 +1,5 @@
 // @vitest-environment node
-// design-system-kit 0.11.0 · profile shadcn · harness: ds-validate tests
+// design-system-kit 0.12.0 · profile shadcn · harness: ds-validate tests
 import { describe, expect, it } from "vitest"
 import { spawnSync } from "node:child_process"
 import { join, dirname } from "node:path"
@@ -44,6 +44,22 @@ describe("ds-validate: config", () => {
   it("flags a componentFiles entry that names no file", () => {
     const config = { ...goodConfig(), componentFiles: { Button: ["buton.tsx"] } }
     expect(fields(validate(repo({ config })))).toContain("componentFiles.Button")
+  })
+
+  it("waits on Setup's design phase without a design system link or System snapshot", () => {
+    const config = { ...goodConfig(), setup: "awaiting-design", systemIn: ".ttt/system.md" }
+    delete config.designSystem
+    const r = validate(repo({ config }))
+    expect(r.errors).toEqual([])
+    expect(r.warnings.map((w) => w.field)).not.toContain("systemIn")
+    expect(r.notes.join("\n")).toMatch(/waiting on its design phase/)
+  })
+
+  it("accepts only awaiting-design as setup, and still needs the link without it", () => {
+    expect(fields(validate(repo({ config: { ...goodConfig(), setup: "done" } })))).toContain("setup")
+    const config = goodConfig()
+    delete config.designSystem
+    expect(fields(validate(repo({ config })))).toContain("designSystem")
   })
 
   it("refuses a kitVersion newer than the scripts, and only warns on an older one", () => {
@@ -111,6 +127,16 @@ describe("ds-validate: client-added ramps", () => {
     expect(r.errors).toEqual([])
     expect(r.warnings).toEqual([])
     expect(r.notes.join()).toMatch(/client-added ramps data/)
+  })
+
+  it("checks --tokens instead of the repo's snapshot (Setup's design phase)", () => {
+    const outside = snapshot()
+    outside.color.tokens.push(...ramp("data"))
+    const dir = repo({ files: { "out/tokens.json": outside, "out/system.md": SYSTEM.replace("`data`", "plum") } })
+    expect(validate(dir).warnings).toEqual([])
+    const r = validate(dir, { tokens: join(dir, "out/tokens.json"), system: join(dir, "out/system.md") })
+    expect(r.warnings.map((w) => w.field)).toEqual(["out/tokens.json › data-*"])
+    expect(fields(validate(dir, { tokens: join(dir, "out/missing.json") }))).toContain("--tokens")
   })
 
   it("warns when the System section doesn't list it, and not when it does", () => {

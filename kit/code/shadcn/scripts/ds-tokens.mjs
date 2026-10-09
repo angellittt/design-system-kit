@@ -1,9 +1,12 @@
 #!/usr/bin/env node
-// design-system-kit 0.11.0 · profile shadcn · kit file — fix it in the kit, not per client
+// design-system-kit 0.12.0 · profile shadcn · kit file — fix it in the kit, not per client
 /**
  * Design-system token generator — schema ttt-ds/1, profile shadcn.
  *
- *   node scripts/ds-tokens.mjs [path/to/tokens.json]
+ *   node scripts/ds-tokens.mjs [path/to/tokens.json] [--css <out.css>]
+ *
+ * `--css` writes the token file somewhere other than the config's tokensOut —
+ * Setup's design phase generates its tokens outside the repo checkout.
  *
  * Turns the token snapshot into the project's token CSS file: every token as
  * a CSS variable, Light and Dark keyed on [data-theme], {aliases} resolved to
@@ -31,7 +34,9 @@ import { fileURLToPath } from "node:url";
 const argv = process.argv.slice(2);
 const repoAt = argv.indexOf("--repo");
 const ROOT = resolve(repoAt === -1 ? process.cwd() : argv[repoAt + 1]);
-const positional = argv.filter((a, i) => !a.startsWith("--") && argv[i - 1] !== "--repo");
+const VALUE_FLAGS = ["--repo", "--css"];
+const positional = argv.filter((a, i) => !a.startsWith("--") && !VALUE_FLAGS.includes(argv[i - 1]));
+const cssAt = argv.indexOf("--css");
 const CONFIG_PATH = resolve(ROOT, ".ttt/design-system.json");
 
 // The profile's token mapping lives in ds-validate.mjs, so that one file can
@@ -78,7 +83,7 @@ function main() {
     ROOT,
     positional[0] ?? config.tokensIn ?? ".ttt/tokens.json",
   );
-  const outPath = resolve(ROOT, config.tokensOut);
+  const outPath = cssAt === -1 ? resolve(ROOT, config.tokensOut) : resolve(argv[cssAt + 1]);
   const typePrefix = config.typeClassPrefix ?? "type-";
 
   const data = JSON.parse(readFileSync(tokensPath, "utf8"));
@@ -285,7 +290,7 @@ function main() {
   writeFileSync(outPath, L.join("\n") + "\n");
 
   const typeCount = groups.reduce((n, g) => n + g.styles.length, 0);
-  console.log(`wrote ${outPath.slice(ROOT.length + 1)}`);
+  console.log(`wrote ${outPath.startsWith(ROOT + "/") ? outPath.slice(ROOT.length + 1) : outPath}`);
   console.log(
     `  ${primitives.length} primitive · ${semantic.length} semantic · ` +
       SCALAR_FAMILIES.map((f) => `${scalars[f].length} ${f}`).join(" · ") +

@@ -1,6 +1,6 @@
 # Common procedure — every design-system skill
 
-design-system-kit 0.11.0 · schema `ttt-ds/1`
+design-system-kit 0.12.0 · schema `ttt-ds/1`
 
 Setup, Sync, Components and Drift audit all follow these rules. Each one was
 learned from a run that went wrong without it; none is optional. The rules
@@ -38,6 +38,12 @@ skills use the plugin's `$KIT/ds-validate.mjs` like the rest.
 ---
 
 ## 1. Validate first
+
+A config with `"setup": "awaiting-design"` is a Setup still under way — the
+dev phase built the branch, the design phase or the finish hasn't run. Sync
+and Upgrade **stop** there: "Setup isn't finished in this repo — the designer
+runs `/ds-setup design`, then a dev `/ds-setup finish`." (`ds-validate`
+passes that config on purpose, so the branch's own checks pass.)
 
 Read the live System section (`project/01-system.md`) into a scratch file
 first — §2 needs it too — and run, in the repo:
@@ -127,7 +133,7 @@ now (design may have edited the entry, or the token, since):
 
 | Mark | Flip to ✓ only when |
 |---|---|
-| `Code pending` | The entry's linked PR is **merged** (`gh pr view <n> --json state,mergedAt`) **and** `main` holds what the entry describes now. For a design entry with no PR link, find the pull PR that carried it (its branch `ds-sync/pull-*`, merged after the entry) and check that `main`'s token snapshot matches the live `project/tokens.json` for every token the entry names. |
+| `Code pending` | The entry's linked PR is **merged** (`gh pr view <n> --json state,mergedAt`) **and** `main` holds what the entry describes now. For a design entry with no PR link, find the pull PR that carried it (its branch `ds-sync/pull-*`, merged after the entry) and check that `main`'s token snapshot matches the live `project/tokens.json` for every token the entry names. Setup's own entry ("Design system created …") with no PR link: the PR from its `ds-setup/*` branch (a split Setup's finish doesn't publish); add its link when you flip the mark. |
 | `Figma pending` | A read-back of the change in Figma (`figma.md` §5) — this run's, or an earlier run's recorded in its report — shows every variable or binding the entry names as the design system has it now: for a variable, its value or alias per mode, scopes, code syntax and description all match (`figma.md` §1). |
 
 - **Not verified, not flipped.** An open PR, a PR that merged an older value

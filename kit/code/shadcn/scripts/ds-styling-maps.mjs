@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// design-system-kit 0.11.0 · profile shadcn · kit file — fix it in the kit, not per client
+// design-system-kit 0.12.0 · profile shadcn · kit file — fix it in the kit, not per client
 /**
  * ds-styling-maps.mjs — the styling map in every implemented component's
  * README, generated from that component's code.
@@ -14,6 +14,9 @@
  *                                    # rewrite each token's "Used by" list
  *   node scripts/ds-styling-maps.mjs --using-in-code [<out.md>]
  *                                    # the design system's "Using in code" section
+ *
+ * Any of them takes `--tokens <tokens.json>` and `--css <token file>` to read
+ * a snapshot and token file from outside the repo (Setup's design phase).
  *
  * The contract fixes one format for every component:
  *
@@ -65,6 +68,14 @@ function readJsonc(path) {
 const dsConfig = JSON.parse(
   readFileSync(join(REPO, ".ttt/design-system.json"), "utf8")
 )
+
+// `--tokens <tokens.json>` and `--css <token file>` read a snapshot and token
+// file from outside the repo instead of tokensIn and tokensOut: Setup's design
+// phase builds the design system's files without touching the checkout.
+const rawArgs = process.argv.slice(2)
+const flag = (name) => { const i = rawArgs.indexOf(name); return i === -1 ? null : resolve(rawArgs[i + 1]) }
+const TOKENS_IN = flag("--tokens") ?? join(REPO, dsConfig.tokensIn)
+const TOKENS_OUT = flag("--css") ?? join(REPO, dsConfig.tokensOut)
 const componentsJson = JSON.parse(
   readFileSync(join(REPO, "components.json"), "utf8")
 )
@@ -85,7 +96,7 @@ function uiDir() {
 }
 
 const UI = uiDir()
-const tokens = JSON.parse(readFileSync(join(REPO, dsConfig.tokensIn), "utf8"))
+const tokens = JSON.parse(readFileSync(TOKENS_IN, "utf8"))
 
 /**
  * Components whose code spans more than one file, or whose file name is not
@@ -115,7 +126,7 @@ for (const [family, group] of Object.entries(tokens)) {
  */
 const cssVarAlias = new Map()
 {
-  const css = readFileSync(join(REPO, dsConfig.tokensOut), "utf8")
+  const css = readFileSync(TOKENS_OUT, "utf8")
   // The light theme and @theme block are enough: an alias chain is the same in
   // both themes, only its leaf value differs.
   // Names may carry an escaped dot (`--space-0\.5`); store them unescaped.
@@ -787,7 +798,7 @@ function writeUsedBy(inPath, outPath) {
 // ---------------------------------------------------------------------------
 
 function usingInCode() {
-  const css = readFileSync(join(REPO, dsConfig.tokensOut), "utf8")
+  const css = readFileSync(TOKENS_OUT, "utf8")
   const theme = /@theme inline \{([\s\S]*?)\n\}/.exec(css)?.[1] ?? ""
   const prefix = dsConfig.typeClassPrefix ?? "type-"
   const client = tokens.name ?? dsConfig.namespace ?? "this system"
@@ -878,7 +889,7 @@ function usingInCode() {
 
 // ---------------------------------------------------------------------------
 
-const args = process.argv.slice(2)
+const args = rawArgs.filter((a, i) => !["--tokens", "--css"].includes(a) && !["--tokens", "--css"].includes(rawArgs[i - 1]))
 if (args[0] === "--used-by") {
   if (!args[1]) {
     console.error("usage: ds-styling-maps.mjs --used-by <tokens.json> [<out.json>]")
@@ -898,6 +909,6 @@ if (args[0] === "--used-by") {
 } else if (args.length) {
   console.log(tableFor(args[0]))
 } else {
-  console.error("usage: ds-styling-maps.mjs <Component> | --all | --used-by <tokens.json> [<out>] | --using-in-code [<out.md>]")
+  console.error("usage: ds-styling-maps.mjs <Component> | --all | --used-by <tokens.json> [<out>] | --using-in-code [<out.md>]  [--tokens <tokens.json>] [--css <token file>]")
   process.exit(1)
 }

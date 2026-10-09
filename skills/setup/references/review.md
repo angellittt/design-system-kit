@@ -1,14 +1,14 @@
 # Review — the gate before Figma
 
-design-system-kit 0.11.0
+design-system-kit 0.12.0
 
 The designer reviews the design system in claude.ai before anything is built
 from it in Figma. This is a hard stop: Setup's turn ends here.
 
 ## 1. Hand it over
 
-Send the designer (the person running Setup, or whoever they name) one
-message with:
+Send the designer (the person running Setup — in a split Setup, the person
+running the design phase — or whoever they name) one message with:
 
 - the design system's link;
 - what to look at: the brand book's colour table, the previews in light and
@@ -45,6 +45,16 @@ component README — and compare with what Setup published:
 | **System section** | Keep theirs, and snapshot the live `01-system.md` into `.ttt/system.md` byte for byte. If its Client settings line changed, the app's `locale.ts` follows it (design's decision at review); then `ds:validate` and the tests, and commit. |
 | Brand book, Changelog prose | Keep theirs. Nothing to do in code. |
 | A component README or preview | Keep theirs, but a changed styling map, status or API is a component proposal, not a review edit (contract, Ownership): list it in the report for the Components skill. |
+
+**In the design phase** the repo-side half of the first two rows waits for
+the finish, which snapshots the live design system onto the branch anyway
+(`finish.md`). Do only the design-system half: for a token edit, save the
+live `tokens.json` to `<out>/tokens.json`, re-run
+`node $KIT/ds-contrast.mjs --tokens <out>/tokens.json` (a miss is still a
+stop), regenerate `<out>/ds-tokens.css` (`ds-tokens.mjs --css`), and rebuild
+and publish what differs, with `--tokens` and `--css` as in `generate.md`.
+A changed Client settings line goes in the handoff: the finish makes
+`locale.ts` follow it.
 
 Record what changed between your publish and approval — it goes in the
 report under "Values changed".

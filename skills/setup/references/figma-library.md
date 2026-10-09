@@ -1,6 +1,6 @@
 # Figma library — only after approval
 
-design-system-kit 0.11.0
+design-system-kit 0.12.0
 
 The Figma library is built from the **approved** design system — the live
 one you re-read after approval (`review.md` §3), never your local copy.
@@ -13,7 +13,7 @@ it goes in Gaps.
 
 **No approval in this chat → don't start.** No connector, or no editor seat
 on the destination → skip this step: say so, leave the changelog's Figma
-mark `pending`, open the PR anyway (`code.md` §7), and put "Figma library not
+mark `pending`, go on to the PR anyway (`finish.md`), and put "Figma library not
 built — re-run Setup's Figma step once connected" in Gaps.
 
 ## 0. Tools, the file, the pages
